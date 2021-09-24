@@ -96,7 +96,7 @@ function downloadCharts() {
         localfile = localfile.replace(" ", "_");
         let filename = dir_0_download + localfile + ".zip"
         cmd = "wget " + serverfile + ` --output-document=${filename}`;
-        if (executeCommand(cmd) != "") {
+        if (executeCommand(cmd) != 0) {
             console.log("NO CHARTS FOUND, make sure you enter a valid FAA sectional chart release date.");
             process.exit(1);
         }
@@ -325,12 +325,12 @@ function makeDirectory(dirname) {
 
 function executeCommand(command) {
     console.log(command)
-    let { stderr } = shell.exec(command, { silent: true });
-    if(stderr) {
+    const { stdout, stderr, code } = shell.exec(command, { silent: false });
+    if(code != 0) {
         console.log(stderr);
-        return stderr;
+        return code;
     }
-    return "";
+    return 0;
 }
 
 // helper function(s)
