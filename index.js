@@ -48,6 +48,7 @@ process.exit(0);
 function processArguments() {
 
     let args = process.argv.slice(2);
+    let mdy = [];
 
     if (args.length == 0) {
         console.log("NO DATE ARGUMENT, use either MM-dd-yyyy or MM/dd/yyyy date format");
@@ -95,7 +96,10 @@ function downloadCharts() {
         localfile = localfile.replace(" ", "_");
         let filename = dir_0_download + localfile + ".zip"
         cmd = "wget " + serverfile + ` --output-document=${filename}`;
-        executeCommand(cmd);
+        if (executeCommand(cmd) != "") {
+            console.log("NO CHARTS FOUND, make sure you enter a valid FAA sectional chart release date.");
+            process.exit(1);
+        }
     });
 }
 
@@ -321,15 +325,12 @@ function makeDirectory(dirname) {
 
 function executeCommand(command) {
     console.log(command)
-    try {
-        let { stderr } = shell.exec(command, { silent: true });
-        if(stderr) {
-            console.log(stderr);
-        }
+    let { stderr } = shell.exec(command, { silent: true });
+    if(stderr) {
+        console.log(stderr);
+        return stderr;
     }
-    catch(err) {
-        console.log(err);
-    }
+    return "";
 }
 
 // helper function(s)
