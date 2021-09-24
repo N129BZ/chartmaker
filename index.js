@@ -113,9 +113,6 @@ function unzipAndNormalize() {
         executeCommand(cmd);
     });
     
-    console.log("deleting all of the tfw files");
-    fs.rm(dir_1_unzipped + "*.tfw");
-    
     console.log("deleting all of the htm files");
     fs.rm(dir_1_unzipped + "*.htm");
     
@@ -126,16 +123,27 @@ function unzipAndNormalize() {
         let newname = replaceAll(file, " ", "_");
         newname = replaceAll(newname, "-", "_");
         newname = newname.replace("_SEC", "");
-    
+        
         cmd = `mv ${dir_1_unzipped}${escapedname} ${dir_1_unzipped}${newname}`;
         executeCommand(cmd);
+
+        // copy the GEO reference (.tfw) files to every single work folder
+        if (file.endsWith(".tfw")) {
+            let tfwname = dir_1_unzipped + newname;
+            fs.copyFileSync(tfwname, dir_2_normalized);
+            fs.copyFileSync(tfwname, dir_3_expanded);
+            fs.copyFileSync(tfwname, dir_4_clipped);
+            fs.copyFileSync(tfwname, dir_5_warped);
+            fs.copyFileSync(tfwname, dir_6_translated);
+            fs.copyFileSync(tfwname, dir_7_mbtiled);
+        }
     });
 
     console.log("normalizing and copying");
     
     files = fs.readdirSync(dir_1_unzipped); 
     files.forEach((file) => {
-        if (file.endsWith(".tif")) {
+        if (file.endsWith(".tif") || file.endsWith("tfw")) {
             let chartfile = dir_1_unzipped + file;
             let normfile = dir_2_normalized + file;
             
