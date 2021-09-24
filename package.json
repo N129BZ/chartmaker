@@ -1,0 +1,11 @@
+{
+  "name": "vfrsecchartmaker",
+  "version": "1.0.0",
+  "description": "Process FAA sectional chart TIF images into a single mbtiles database for xyz mapping",
+  "main": "index.js",
+  "dependencies": {
+    "better-sqlite3": "^7.4.3",
+    "fs": "^0.0.1-security",
+    "shelljs": "^0.8.4"
+  }
+}
