@@ -5,6 +5,8 @@ const shell = require('shelljs')
 const Database = require("better-sqlite3");
 
 let cmd = "";
+let hasargs = false;
+let chartdate = "";
 let workarea = __dirname + "/workarea/";
 
 // make all the working directories
@@ -30,6 +32,7 @@ makeDirectory(dir_7_mbtiled);
 makeDirectory(dir_8_mastermbtiles);
 
 // execute each step in sequence
+processArguments();
 copyMasterMbtiles();
 downloadCharts();
 unzipAndNormalize();
@@ -38,6 +41,40 @@ clipAndWarp();
 makeMbTiles();
 mergeAllMbtiles();
 
+console.log("Chart processing completed!");
+process.exit(0);
+
+
+function processArguments() {
+
+    let args = process.argv.slice(2);
+
+    if (args.length == 0) {
+        console.log("NO DATE ARGUMENT, use either MM-dd-yyyy or MM/dd/yyyy date format");
+        process.exit(1);
+    }
+
+    if (args[0].search("/") > -1) {
+        mdy = args[0].split("/");
+        hasargs = true;
+    }
+    else if (args[0].search("-") > -1) {
+        mdy = args[0].split("-");
+        hasargs = true;
+    }
+
+    if (!hasargs) {
+        console.log("NO DATE OR INVALID DATE ARGUMENT, Use MM-dd-yyyy or MM/dd/yyyy");
+        process.exit(1);
+    }
+    else {
+        chartdate = `${mdy[0]}-${mdy[1]}-${mdy[2]}`; 
+    }
+    if (Date.parse(chartdate) == NaN) {
+        "INVALID DATE FORMAT! Use MM-dd-yyyy or MM/dd/yyyy"
+        process.exit(1);
+    }
+}
 
 function copyMasterMbtiles() {
     let sourcedb = __dirname + "/vfrsectional.mbtiles";
@@ -48,7 +85,8 @@ function copyMasterMbtiles() {
 function downloadCharts() {
     let rawdata = fs.readFileSync(__dirname + '/chartlist.json');
     let list = JSON.parse(rawdata);
-    let faaurl = list.faaurl.replace("<chartdate>", "10-07-2021");
+    
+    let faaurl = list.faaurl.replace("<chartdate>", chartdate);
     let areas = list.areas;
 
     areas.forEach(area => {
