@@ -5,7 +5,7 @@
 2.) clone this repository - ***git clone https://github.com/N129BZ/VfrSecChartMaker.git***         
 3.) unzip the folder in ***clipshapes.zip*** into the base VfrSecChartMaker directory.   
 4.) from a terminal prompt in the VfrSecChartMaker directory, enter ***npm install***     
-5.) after step 3 completes, run the application with the command ****node index.js****     
+5.) after step 3 completes, run the app with the command **node index.js *chartdate*** using valid FAA sectional chart release date.     
     
 ### ToDo:    
 Add all of the other areas and chart types including Alaska, Hawaii, territories, and IFR charts, etc.    
