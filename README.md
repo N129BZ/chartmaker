@@ -8,4 +8,8 @@
 5.) after step 3 completes, run the application with the command ****node index.js****     
     
 ### ToDo:    
-Add all of the other areas and chart types including Alaska, Hawaii, territories, and IFR charts, etc.
+Add all of the other areas and chart types including Alaska, Hawaii, territories, and IFR charts, etc.    
+     
+      
+#### ***inspired by https://github.com/jlmcgraw/aviationCharts*** 
+
