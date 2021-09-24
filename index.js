@@ -198,7 +198,7 @@ function clipAndWarp(){
     // 3) tramslate to mbtiles file with base layer
     // 4) add zoom levels to mbtiles 
     //--------------------------------------------------------------
-    let clippedShapesDir = __dirname + "/clippingShapes/";
+    let clippedShapesDir = __dirname + "/clipshapes/";
     
     let files = fs.readdirSync(dir_3_expanded);
     files.forEach((file) => {
