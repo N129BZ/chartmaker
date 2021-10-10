@@ -3,13 +3,13 @@
 ### Instructions:   
 1.) requires ***node js*** and ***GDAL*** installed with apt (see below)  
 2.) clone this repository - ***git clone https://github.com/N129BZ/VfrSecChartMaker.git***         
-3.) unzip the folder in ***clipshapes.zip*** to the base VfrSecChartMaker directory.   
+3.) unzip the folder in ***clipshapes.zip*** to the VfrSecChartMaker directory.   
 4.) from a terminal prompt in the VfrSecChartMaker directory, enter ***npm install***     
 5.) after all setup procedures are complete, run the app via command **node makechart.js *chartdate*** using a valid FAA sectional chart release date.     
     
 # Install required utility applications
-sudo \
-    apt install         \
+```
+sudo apt install        \   
         graphicsmagick  \
         unzip           \
         imagemagick     \
@@ -17,11 +17,12 @@ sudo \
         python-imaging  \
         carton          \
         gdal-bin
+```
 
 # Run the Perl carton installer
 carton install
 
-# Get mbtiles utilities, clone into the VfrSecChartMaker root directory
+# Get mbtiles utilities, clone into the VfrSecChartMaker directory
 git clone https://github.com/mapbox/mbutil.git
 
 ### ToDo:    
