@@ -17,13 +17,11 @@ sudo apt install        \
         python-imaging  \
         carton          \
         gdal-bin
-```
-
-# Run the Perl carton installer
-carton install
-
-# Get mbtiles utilities, clone into the VfrSecChartMaker directory
+        
 git clone https://github.com/mapbox/mbutil.git
+
+carton install
+```
 
 ### ToDo:    
 Add all of the other areas and chart types including Alaska, Hawaii, territories, and IFR charts, etc.    
