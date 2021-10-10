@@ -1,7 +1,7 @@
 # VfrSecChartMaker - Download continental US VFR sectional chart TIF files and translate them all into a single mbtiles database.  
 
 ### Instructions:   
-1.) requires ***node js*** https://nodejs.org/dist/v14.18.0/node-v14.18.0-linux-x64.tar.xz 
+1.) requires ***node js*** https://nodejs.org/dist/v14.18.0/node-v14.18.0-linux-x64.tar.xz              
 2.) requires ***GDAL*** and other ancillary applications (installed with apt, see below)  
 3.) unzip ***clipshapes.zip*** to the VfrSecChartMaker directory.   
 4.) from a terminal prompt in the VfrSecChartMaker directory, enter ***npm install***     
