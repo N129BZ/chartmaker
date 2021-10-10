@@ -8,8 +8,8 @@
 5.) after all setup procedures are complete, run the app via command **node makechart.js *chartdate*** using a valid FAA sectional chart release date.     
     
 # Install required utility applications
-sudo \
-    apt install         \
+```
+sudo apt install        \   
         graphicsmagick  \
         unzip           \
         imagemagick     \
@@ -17,6 +17,7 @@ sudo \
         python-imaging  \
         carton          \
         gdal-bin
+```
 
 # Run the Perl carton installer
 carton install
