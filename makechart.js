@@ -144,7 +144,7 @@ function unzipAndNormalize() {
                 executeCommand(cmd);
             }
 
-            // copy the associated .tfw file into the processing directories
+            // copy the associated .tfw files into the processing directories
             fs.copyFileSync(tfwsrcfile, tfwdst2file);
             fs.copyFileSync(tfwsrcfile, tfwdst3file);
             fs.copyFileSync(tfwsrcfile, tfwdst4file);
