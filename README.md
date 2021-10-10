@@ -10,11 +10,9 @@
 # Install required utility applications
 ```
 sudo apt install        \   
-        graphicsmagick  \
         unzip           \
         imagemagick     \
         cpanminus       \
-        python-imaging  \
         carton          \
         gdal-bin
         
