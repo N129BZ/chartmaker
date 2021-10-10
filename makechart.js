@@ -2,7 +2,6 @@
 
 const fs = require("fs");
 const shell = require('shelljs')
-const Database = require("better-sqlite3");
 
 let cmd = "";
 let hasargs = false;
@@ -98,11 +97,11 @@ function downloadCharts() {
     let rawdata = fs.readFileSync(__dirname + '/chartlist.json');
     let list = JSON.parse(rawdata);
     
-    let faaurl = list.faaurl.replace("<chartdate>", chartdate);
+    let charturl = list.charturl.replace("<chartdate>", chartdate);
     let areas = list.areas;
 
     areas.forEach(area => {
-        let serverfile = faaurl.replace("<chartname>", area);
+        let serverfile = charturl.replace("<chartname>", area);
         let localfile = area.replace("-", "_");
         localfile = localfile.replace(" ", "_");
         let filename = dir_0_download + "/" + localfile + ".zip"
@@ -299,8 +298,7 @@ function makeMbTiles() {
     let cmd = "./mbutil/mb-util.py" +
                 " --scheme=tms" +              
                 " " + dir_8_merged +
-                " " + mbtiles
-    executeCommand(cmd);
+                " " + mbtilesfaa
 }
 
 function makeDirectory(dirname) {
