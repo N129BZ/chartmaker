@@ -22,9 +22,8 @@ let dir_9_mbtiled       = workarea + "9_mbtiled";
 
 // execute each step in sequence
 makeDirectories();
-//normalizeClipFiles();
 processArguments();
-//downloadCharts();
+downloadCharts();
 unzipAndNormalize();
 expandToRgb();
 clipAndWarp();
@@ -47,18 +46,6 @@ function makeDirectories() {
     makeDirectory(dir_7_tiled);
     makeDirectory(dir_8_merged);
     makeDirectory(dir_9_mbtiled);
-}
-
-
-function normalizeClipFiles() {
-    let clipdir = __dirname + "/clipshapes/";
-    let files = fs.readdirSync(clipdir);
-    files.forEach((file) => {
-        let oldname = clipdir + file;
-        let newname = clipdir + file.replace("_SEC.", ".");
-        cmd = `mv ${oldname} ${newname}`;
-        executeCommand(cmd);
-    });
 }
 
 function processArguments() {
