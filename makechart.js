@@ -132,12 +132,22 @@ function unzipAndNormalize() {
         if (file.endsWith(".tif")) {
             let chartfile = dir_1_unzipped + "/" + file;
             let normfile = dir_2_normalized + "/" + file;
-            
+            let tfwfile = file.replace(".tif", ".tfw");
+            let tfwsrcfile = dir_1_unzipped + "/" + tfwfile;
+            let tfwdst2file = dir_2_normalized + "/" + tfwfile;
+            let tfwdst3file = dir_3_expanded + "/" + tfwfile;
+            let tfwdst4file = dir_4_clipped + "/" + tfwfile;
+
             // Does this file have georeference info?
             if (getGrepResult(chartfile, "PROJCRS")) {
                 cmd = "mv --update --verbose " + chartfile + " " + normfile;
                 executeCommand(cmd);
             }
+
+            // copy the associated .tfw files into the processing directories
+            fs.copyFileSync(tfwsrcfile, tfwdst2file);
+            fs.copyFileSync(tfwsrcfile, tfwdst3file);
+            fs.copyFileSync(tfwsrcfile, tfwdst4file);
         }
     }); 
 }
