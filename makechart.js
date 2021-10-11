@@ -2,6 +2,7 @@
 
 const fs = require("fs");
 const shell = require('shelljs')
+const sqlite3 = require("sqlite3");
 
 let cmd = "";
 let hasargs = false;
@@ -330,28 +331,45 @@ function mergeTiles() {
     });    
 }
 
-/*
-function mergeTiles() {
-    let files = fs.readdirSync(dir_7_tiled);
-    files.forEach((file) => {
-        // Merge the individual charts into an overall chart
-        let sourcedir = dir_7_tiled + "/" + file;
-        let destdir = dir_8_merged;
-        let pgm = "perl ./merge_tile_sets.pl";
-        let cmd = pgm +
-                " " + sourcedir +
-                " " + destdir;
-        executeCommand(cmd);
-    });
-}
-*/
 function makeMbTiles() {
     let mbtiles = dir_9_mbtiled + "/usavfr.mbtiles";   
+    
     let cmd = "./mbutil/mb-util.py" +
                 " --scheme=tms" +              
                 " " + dir_8_merged +
                 " " + mbtiles
     executeCommand(cmd);
+    
+    // now add the metadata        
+    let tilesdb = new sqlite3.Database(mbtiles, sqlite3.OPEN_READWRITE, (err) => {
+        if (err) {
+            console.error(err);
+            return;
+        }
+    });
+    
+    let sql = "INSERT INTO metadata (name, value) VALUES ('name', 'usavfr')";
+    tilesdb.run(sql, (err) => {
+        if (err) console.error(err);
+    });
+    sql = "INSERT INTO metadata (name, value) VALUES ('type', 'baselayer')";;
+    tilesdb.run(sql, (err) => {
+        if (err) console.error(err);
+    });
+    sql = "INSERT INTO metadata (name, value) VALUES ('format', 'png')";
+    tilesdb.run(sql, (err) => {
+        if (err) console.error(err);
+    });
+    sql = "INSERT INTO metadata (name, value) VALUES ('minzoom', '5')";
+    tilesdb.run(sql, (err) => {
+        if (err) console.error(err);
+    });
+    sql = "NSERT INTO metadata (name, value) VALUES ('maxzoom', '11')";
+    tilesdb.run(sql, (err) => {
+        if (err) console.error(err);
+    });
+    
+    tilesdb.close();
 }
 
 function makeDirectory(dirname) {
