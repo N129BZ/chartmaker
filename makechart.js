@@ -21,14 +21,14 @@ let dir_8_merged        = workarea + "8_merged";
 let dir_9_mbtiled       = workarea + "9_mbtiled";
 
 // execute each step in sequence
-makeDirectories();
-processArguments();
-downloadCharts();
-unzipAndNormalize();
-expandToRgb();
-clipAndWarp();
-tileCharts();
-mergeTiles();
+//makeDirectories();
+//processArguments();
+//downloadCharts();
+//unzipAndNormalize();
+//expandToRgb();
+//clipAndWarp();
+//tileCharts();
+//mergeTiles();
 makeMbTiles();
 
 console.log("Chart processing completed!");
@@ -139,7 +139,7 @@ function unzipAndNormalize() {
             let tfwdst4file = dir_4_clipped + "/" + tfwfile;
 
             // Does this file have georeference info?
-            if (getGrepResult(chartfile, "PROJCRS")) {
+            if (getGdalInfo(chartfile, "PROJCRS")) {
                 cmd = "mv --update --verbose " + chartfile + " " + normfile;
                 executeCommand(cmd);
             }
@@ -277,6 +277,61 @@ function tileCharts() {
 }
 
 function mergeTiles() {
+    // loop through all of the area folders in dir_7_tiled
+    let areas = fs.readdirSync(dir_7_tiled);
+    areas.forEach((area) => {
+        let sourcearea = dir_7_tiled + "/" + area;
+        
+        // now loop through all of the z folders in the area
+        let zs = fs.readdirSync(sourcearea); 
+        zs.forEach((z) => {
+            let sourcez = sourcearea + "/" + z;
+            let destz = dir_8_merged + "/" + z;
+            if (fs.lstatSync(sourcez).isDirectory()) { 
+            
+                if (!fs.existsSync(destz)) {
+                    fs.mkdirSync(destz);
+                }
+                
+                // now loop through all of the y folders in the z folder 
+                let ys = fs.readdirSync(sourcez);
+                ys.forEach((y) => {
+                    let sourcey = sourcez + "/" + y;
+                    let desty = destz + "/" + y;
+                    
+                    if (!fs.existsSync(desty)) {
+                        fs.mkdirSync(desty);
+                    } 
+                    
+                    // finally, loop through all of the x images in the y folders
+                    let xs = fs.readdirSync(sourcey);
+                    xs.forEach((x) => {
+                        
+                        let sourcex = sourcey + "/" + x;
+                        let destx = desty + "/" + x;
+                        console.log(`merging ${sourcex} to ${destx}`);
+                        if (fs.existsSync(destx)) {
+                            // the x image exists, so it needs to be composited with ImageMagick
+                            console.log(`compositing ${sourcex} with ${destx}`);
+                            let cmd = "convert" +
+                                        " " + sourcex +
+                                        " " + destx + 
+                                        " -composite" +
+                                        " " + sourcex;
+                            executeCommand(cmd); 
+                        }
+                        else {
+                            fs.copyFileSync(sourcex, destx);
+                        }
+                    });
+                });
+            }
+        });
+    });    
+}
+
+/*
+function mergeTiles() {
     let files = fs.readdirSync(dir_7_tiled);
     files.forEach((file) => {
         // Merge the individual charts into an overall chart
@@ -289,13 +344,14 @@ function mergeTiles() {
         executeCommand(cmd);
     });
 }
-
+*/
 function makeMbTiles() {
     let mbtiles = dir_9_mbtiled + "/usavfr.mbtiles";   
     let cmd = "./mbutil/mb-util.py" +
                 " --scheme=tms" +              
                 " " + dir_8_merged +
-                " " + mbtilesfaa
+                " " + mbtiles
+    executeCommand(cmd);
 }
 
 function makeDirectory(dirname) {
@@ -322,7 +378,7 @@ function replaceAll(string, search, replace) {
     return string.split(search).join(replace);
 }
 
-function getGrepResult(file, searchtext) {
+function getGdalInfo(file, searchtext) {
     let gdalresults = __dirname + "/gdal.txt"
 
     cmd = "gdalinfo " + file + " -noct > " + gdalresults; 
