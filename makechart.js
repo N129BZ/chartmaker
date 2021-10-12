@@ -202,7 +202,7 @@ function clipAndWarp(){
             let warpedfile = `${dir_5_warped}/${basename}.vrt`;
             let translatedfile = `${dir_6_translated}/${basename}.tif`;
 
-            // Clip the file it to its clipping shape
+            // Clip the file using it's corresponding shape file
             console.log(`*** Clip to vrt --- gdalwarp ${file}`);
             cmd = "gdalwarp" +
                         " -of vrt" +
@@ -306,17 +306,19 @@ function mergeTiles() {
                     // finally, loop through all of the x images in the y folders
                     let xs = fs.readdirSync(sourcey);
                     xs.forEach((x) => {
-                        
                         let sourcex =`${sourcey}/${x}`;
                         let destx = `${desty}/${x}`;
+                      
                         console.log(`merging ${sourcex} to ${destx}`);
+                      
                         if (fs.existsSync(destx)) {
-                            // the x image exists, so it needs to be composited with ImageMagick
+                            // the x image exists, so it needs to be composited using ImageMagick
                             console.log(`compositing ${sourcex} with ${destx}`);
                             let cmd = `convert ${sourcex} ${destx} -composite ${sourcex}`;
                             executeCommand(cmd); 
                         }
                         else {
+                            // otherwise just copy the x image to the destination
                             fs.copyFileSync(sourcex, destx);
                         }
                     });
