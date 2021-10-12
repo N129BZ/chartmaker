@@ -19,12 +19,14 @@ The application accepts 2 arguments. Date is required, zoom range defaults to **
         examples: **node makechart.js -d 10-07-2021 -z 4-10** or **node.makechart.js -d 10-07-2021 -z 8**     
                         
 ### Install required utility applications
+* Note that on some versions of Ubuntu, ```python-imaging``` has been replaced by ```python-pil```
 ```
 sudo apt install        \   
         graphicsmagick  \
         imagemagick     \
         python-imaging  \
         gdal-bin        \
+        nodejs          \
         unzip
         
 # clone into the base VfrSecChartMaker directory
