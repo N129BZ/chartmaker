@@ -6,7 +6,6 @@ const sqlite3 = require("sqlite3").verbose();
 const { program } = require('commander');
 
 let cmd = "";
-let hasargs = false;
 let zoomrange = "5-11"; //default
 let chartdate = "";
 let workarea = `${__dirname}/workarea`;
@@ -51,16 +50,9 @@ function processArguments(options) {
 
     if (chdt.search("/") > -1) {
         mdy = chdt.split("/");
-        hasargs = true;
     }
     else if (chdt.search("-") > -1) {
         mdy = chdt.split("-");
-        hasargs = true;
-    }
-
-    if (!hasargs) {
-        console.log("NO DATE OR INVALID DATE ARGUMENT, Use mm-dd-yyyy or mm/dd/yyyy");
-        process.exit(1);
     }
     
     chartdate = `${mdy[0]}-${mdy[1]}-${mdy[2]}`;
@@ -70,7 +62,7 @@ function processArguments(options) {
         process.exit(1);
     }
 
-    console.log(`arguments processed: ${chartdate}, ${zoomrange}`);
+    console.log(`Arguments processed: ${chartdate}, ${zoomrange}`);
 }
 
 function makeDirectories() {
