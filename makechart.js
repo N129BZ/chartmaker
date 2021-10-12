@@ -9,7 +9,7 @@ let cmd = "";
 let hasargs = false;
 let chartdate = "";
 let workarea = __dirname + "/workarea/";
-let zoomrange = "5-11";
+let zoomrange = "5-11"; //default
 
 // make all the working directories
 let dir_0_download      = workarea + "0_download";
@@ -29,9 +29,9 @@ program
   .option('-z, --zoomrange <range>', 'enter a hyphen-seperated zoom range or a single zoom level', '5-11');
 program.showSuggestionAfterError();
 program.parse(process.argv);
-processArguments(program.opts());
 
 // execute each step in sequence
+processArguments(program.opts());
 makeDirectories();
 downloadCharts();
 unzipAndNormalize();
@@ -44,23 +44,9 @@ makeMbTiles();
 console.log("Chart processing completed!");
 process.exit(0);
 
-function makeDirectories() {
-    makeDirectory(workarea);
-    makeDirectory(dir_0_download);
-    makeDirectory(dir_1_unzipped);
-    makeDirectory(dir_2_normalized);
-    makeDirectory(dir_3_expanded);
-    makeDirectory(dir_4_clipped);
-    makeDirectory(dir_5_warped);
-    makeDirectory(dir_6_translated);
-    makeDirectory(dir_7_tiled);
-    makeDirectory(dir_8_merged);
-    makeDirectory(dir_9_mbtiled);
-}
-
 function processArguments(options) {
     let chdt = options.dateofchart.replace(" ", "");
-    let zoomrange = options.zoomrange.replace(" ", "");
+    zoomrange = options.zoomrange.replace(" ", "");
     let mdy = [];
 
     if (chdt.search("/") > -1) {
@@ -85,6 +71,20 @@ function processArguments(options) {
     }
 
     console.log(`arguments processed: ${chartdate}, ${zoomrange}`);
+}
+
+function makeDirectories() {
+    makeDirectory(workarea);
+    makeDirectory(dir_0_download);
+    makeDirectory(dir_1_unzipped);
+    makeDirectory(dir_2_normalized);
+    makeDirectory(dir_3_expanded);
+    makeDirectory(dir_4_clipped);
+    makeDirectory(dir_5_warped);
+    makeDirectory(dir_6_translated);
+    makeDirectory(dir_7_tiled);
+    makeDirectory(dir_8_merged);
+    makeDirectory(dir_9_mbtiled);
 }
 
 function downloadCharts() {
@@ -356,7 +356,7 @@ function makeMbTiles() {
     
     let zooms = zoomrange.split("-");
     let minzoom = zooms[0];
-    let maxzoom = "11"; // default 
+    let maxzoom = zooms[0];  
 
     if (zooms.length === 2) {
         maxzoom = zooms[1];
