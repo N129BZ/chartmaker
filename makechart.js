@@ -7,21 +7,21 @@ const { program } = require('commander');
 
 let cmd = "";
 let hasargs = false;
-let chartdate = "";
-let workarea = __dirname + "/workarea/";
 let zoomrange = "5-11"; //default
+let chartdate = "";
+let workarea = `${__dirname}/workarea`;
 
 // make all the working directories
-let dir_0_download      = workarea + "0_download";
-let dir_1_unzipped      = workarea + "1_unzipped";
-let dir_2_normalized    = workarea + "2_normalized";
-let dir_3_expanded      = workarea + "3_expanded";
-let dir_4_clipped       = workarea + "4_clipped";
-let dir_5_warped        = workarea + "5_warped";
-let dir_6_translated    = workarea + "6_translated";
-let dir_7_tiled         = workarea + "7_tiled";
-let dir_8_merged        = workarea + "8_merged";
-let dir_9_mbtiled       = workarea + "9_mbtiled";
+let dir_0_download      = `${workarea}/0_download`;
+let dir_1_unzipped      = `${workarea}/1_unzipped`;
+let dir_2_normalized    = `${workarea}/2_normalized`;
+let dir_3_expanded      = `${workarea}/3_expanded`;
+let dir_4_clipped       = `${workarea}/4_clipped`;
+let dir_5_warped        = `${workarea}/5_warped`;
+let dir_6_translated    = `${workarea}/6_translated`;
+let dir_7_tiled         = `${workarea}/7_tiled`;
+let dir_8_merged        = `${workarea}/8_merged`;
+let dir_9_mbtiled       = `${workarea}/9_mbtiled`;
 
 // get the commandline arguments
 program
