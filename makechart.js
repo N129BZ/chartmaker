@@ -319,7 +319,14 @@ function mergeTiles() {
 
 function makeMbTiles() {
     let mbtiles = `${dir_9_mbtiled}/usavfr.mbtiles`;   
-    
+    let zooms = zoomrange.split("-");
+    let minzoom = zooms[0];
+    let maxzoom = zooms[0];  
+
+    if (zooms.length === 2) {
+        maxzoom = zooms[1];
+    }
+
     let cmd = `./mbutil/mb-util.py --scheme=tms ${dir_8_merged} ${mbtiles}`;
     executeCommand(cmd);
     
@@ -330,14 +337,6 @@ function makeMbTiles() {
             return;
         }
     });
-    
-    let zooms = zoomrange.split("-");
-    let minzoom = zooms[0];
-    let maxzoom = zooms[0];  
-
-    if (zooms.length === 2) {
-        maxzoom = zooms[1];
-    }
     
     let sql = "INSERT INTO metadata (name, value) VALUES (?, ?)";
     tiledb.run(sql, ["name", "usavfr"]);
