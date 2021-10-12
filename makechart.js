@@ -373,7 +373,8 @@ function makeMbTiles() {
 }
 
 function makeDirectory(dirname) {
-    shell.exec(`mkdir ${dirname}, { silent: true }`);
+    let cmd = `mkdir ${dirname}`
+    executeCommand(cmd);
 }
 
 function executeCommand(command) {
