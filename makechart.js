@@ -31,14 +31,14 @@ program.parse(process.argv);
 processArguments(program.opts());
 
 // execute each step in sequence
-//makeDirectories();
-//downloadCharts();
-//unzipAndNormalize();
-//expandToRgb();
-//clipAndWarp();
-//tileCharts();
-//mergeTiles();
-//makeMbTiles();
+makeDirectories();
+downloadCharts();
+unzipAndNormalize();
+expandToRgb();
+clipAndWarp();
+tileCharts();
+mergeTiles();
+makeMbTiles();
 
 console.log("Chart processing completed!");
 process.exit(0);
@@ -79,7 +79,7 @@ function processArguments(options) {
     chartdate = `${mdy[0]}-${mdy[1]}-${mdy[2]}`;
     
     if (Date.parse(chartdate) == NaN) {
-        "INVALID DATE FORMAT! Use mm-dd-yyyy or mm/dd/yyyy"
+        console.log("INVALID DATE FORMAT! Use mm-dd-yyyy or mm/dd/yyyy");
         process.exit(1);
     }
 
