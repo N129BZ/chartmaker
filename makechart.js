@@ -11,7 +11,7 @@ let zoomrange = "5-11"; //default
 let chartdate = "";
 let workarea = `${__dirname}/workarea`;
 
-// make all the working directories
+// all of the working directories
 let dir_0_download      = `${workarea}/0_download`;
 let dir_1_unzipped      = `${workarea}/1_unzipped`;
 let dir_2_normalized    = `${workarea}/2_normalized`;
