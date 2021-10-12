@@ -33,9 +33,9 @@ program.parse(process.argv);
 // execute each step in sequence
 processArguments(program.opts());
 makeDirectories();
-downloadCharts();
-unzipAndNormalize();
-expandToRgb();
+//downloadCharts();
+//unzipAndNormalize();
+//expandToRgb();
 clipAndWarp();
 tileCharts();
 mergeTiles();
@@ -88,7 +88,7 @@ function makeDirectories() {
 }
 
 function downloadCharts() {
-    let rawdata = fs.readFileSync(__dirname + '/chartlist.json');
+    let rawdata = fs.readFileSync(`${__dirname}/chartlist.json`);
     let list = JSON.parse(rawdata);
     
     let charturl = list.charturl.replace("<chartdate>", chartdate);
@@ -98,8 +98,8 @@ function downloadCharts() {
         let serverfile = charturl.replace("<chartname>", area);
         let localfile = area.replace("-", "_");
         localfile = localfile.replace(" ", "_");
-        let filename = dir_0_download + "/" + localfile + ".zip"
-        cmd = "wget " + serverfile + ` --output-document=${filename}`;
+        let filename = `${dir_0_download}/${localfile}.zip`
+        cmd = `wget ${serverfile} --output-document=${filename}`;
 
         if (executeCommand(cmd) != 0) {
             console.log("NO CHARTS FOUND, make sure you enter a valid FAA sectional chart release date.");
@@ -118,7 +118,7 @@ function unzipAndNormalize() {
     });
     
     console.log("deleting all of the htm files");
-    fs.rm(dir_1_unzipped + "/*.htm");
+    fs.rm(`${dir_1_unzipped}/*.htm`);
     
     files = fs.readdirSync(dir_1_unzipped);
     
@@ -137,17 +137,17 @@ function unzipAndNormalize() {
     files = fs.readdirSync(dir_1_unzipped); 
     files.forEach((file) => {
         if (file.endsWith(".tif")) {
-            let chartfile = dir_1_unzipped + "/" + file;
-            let normfile = dir_2_normalized + "/" + file;
             let tfwfile = file.replace(".tif", ".tfw");
-            let tfwsrcfile = dir_1_unzipped + "/" + tfwfile;
-            let tfwdst2file = dir_2_normalized + "/" + tfwfile;
-            let tfwdst3file = dir_3_expanded + "/" + tfwfile;
-            let tfwdst4file = dir_4_clipped + "/" + tfwfile;
+            let chartfile = `${dir_1_unzipped}/${file}`;
+            let normfile = `${dir_2_normalized}/${file}`;
+            let tfwsrcfile = `${dir_1_unzipped}/${tfwfile}`;
+            let tfwdst2file = `${dir_2_normalized}/${tfwfile}`;
+            let tfwdst3file = `${dir_3_expanded}/${tfwfile}`;
+            let tfwdst4file = `${dir_4_clipped}/${tfwfile}`;
 
             // Does this file have georeference info?
             if (getGdalInfo(chartfile, "PROJCRS")) {
-                cmd = "mv --update --verbose " + chartfile + " " + normfile;
+                cmd = `mv --update --verbose ${chartfile} ${normfile}`;
                 executeCommand(cmd);
             }
 
@@ -166,8 +166,8 @@ function expandToRgb(){
         if (file.endsWith(".tif")) {
             console.log("*** Expand --- gdal_translate " + file);
             
-            let sourceChartName = dir_2_normalized + "/" + file;
-            let expandedfile = dir_3_expanded + "/" + file.replace(".tif", ".vrt");
+            let sourceChartName = `${dir_2_normalized}/${file}`;
+            let expandedfile = `${dir_3_expanded}/${file.replace(".tif", ".vrt")}`;
             
             console.log(`Expanding to ${expandedfile}`);
             cmd = "gdal_translate" + 
@@ -176,8 +176,7 @@ function expandToRgb(){
                     " -of VRT" +      
                     " -co TILED=YES" +       
                     " -co COMPRESS=LZW" +
-                    " " + sourceChartName + 
-                    " " + expandedfile;
+                    ` ${sourceChartName} ${expandedfile}`;
             executeCommand(cmd);
         }
     });
@@ -190,18 +189,18 @@ function clipAndWarp(){
     // 3) tramslate to mbtiles file with base layer
     // 4) add zoom levels to mbtiles 
     //--------------------------------------------------------------
-    let clippedShapesDir = __dirname + "/clipshapes";
+    let clippedShapesDir = `${__dirname}/clipshapes`;
     
     let files = fs.readdirSync(dir_3_expanded);
     files.forEach((file) => {
         if (file.endsWith(".vrt")) {
             // Get the file name without extension
             let basename = file.substring(0, file.length - 4);
-            let shapedfile = clippedShapesDir + "/" + basename + ".shp";
-            let expandedfile = dir_3_expanded + "/" + basename + ".vrt";
-            let clippedfile = dir_4_clipped + "/" + basename + ".vrt";
-            let warpedfile = dir_5_warped + "/" + basename + ".vrt";
-            let translatedfile = dir_6_translated + "/" + basename + ".tif";
+            let shapedfile = `${clippedShapesDir}/${basename}.shp`;
+            let expandedfile = `${dir_3_expanded}/${basename}.vrt`;
+            let clippedfile = `${dir_4_clipped}/${basename}.vrt`;
+            let warpedfile = `${dir_5_warped}/${basename}.vrt`;
+            let translatedfile = `${dir_6_translated}/${basename}.tif`;
 
             // Clip the file it to its clipping shape
             console.log(`*** Clip to vrt --- gdalwarp ${file}`);
@@ -219,8 +218,7 @@ function clipAndWarp(){
                         " -wo NUM_THREADS=ALL_CPUS" +   
                         " -wm 1024" +                   
                         " --config GDAL_CACHEMAX 1024" +
-                        " " + expandedfile +
-                        " " + clippedfile; 
+                        ` ${expandedfile} ${clippedfile}`; 
             executeCommand(cmd);
 
             console.log(`*** Warp to vrt --- gdalwarp ${file}`);
@@ -234,8 +232,7 @@ function clipAndWarp(){
                         " -wm 1024" +
                         " -co TILED=YES" +
                         " --config GDAL_CACHEMAX 1024" +
-                        " " + clippedfile +
-                        " " + warpedfile;
+                        ` ${clippedfile} ${warpedfile}`;
             executeCommand(cmd);
             
             console.log(`***  Translate to tif --- gdal_translate ${basename}.vrt`);
@@ -246,8 +243,7 @@ function clipAndWarp(){
                         " -co PREDICTOR=1" +
                         " -co ZLEVEL=9" +
                         " --config GDAL_CACHEMAX 1024" +
-                        " " + warpedfile + 
-                        " " + translatedfile;
+                        ` ${warpedfile} ${translatedfile}`;
             executeCommand(cmd);
             
             console.log(`***  Add zoom layers to tif --- gdaladdo ${basename}.tif`);
@@ -257,7 +253,7 @@ function clipAndWarp(){
                     " --config INTERLEAVE_OVERVIEW PIXEL" + 
                     " --config COMPRESS_OVERVIEW JPEG" +
                     " --config BIGTIFF_OVERVIEW IF_NEEDED" +
-                    " " + translatedfile + 
+                    ` ${translatedfile}` + 
                     " 2 4 8 16 32 64" 
             executeCommand(cmd);
         }
@@ -268,16 +264,13 @@ function tileCharts() {
     let files = fs.readdirSync(dir_6_translated);
     files.forEach((file) => {
         if (file.endsWith(".tif")) {        
-            let sourcechart = dir_6_translated + "/" + file;
-            let tiledir = dir_7_tiled + "/" + file.replace(".tif", "");
+            let sourcechart = `${dir_6_translated}/${file}`;
+            let tiledir = `${dir_7_tiled}/${file.replace(".tif", "")}`;
             
             console.log(`--------Tiling ${file}------------`);
             
             // Create tiles from the source raster
-            let cmd = "gdal2tiles.py" +
-                            ` --zoom="${zoomrange}"` +             
-                            " " + sourcechart + 
-                            " " + tiledir;
+            let cmd = `gdal2tiles.py --zoom="${zoomrange} ${sourcechart} ${tiledir}`;
             executeCommand(cmd);
         }
     });
@@ -287,13 +280,13 @@ function mergeTiles() {
     // loop through all of the area folders in dir_7_tiled
     let areas = fs.readdirSync(dir_7_tiled);
     areas.forEach((area) => {
-        let sourcearea = dir_7_tiled + "/" + area;
+        let sourcearea = `${dir_7_tiled}/${area}`;
         
         // now loop through all of the z folders in the area
         let zs = fs.readdirSync(sourcearea); 
         zs.forEach((z) => {
-            let sourcez = sourcearea + "/" + z;
-            let destz = dir_8_merged + "/" + z;
+            let sourcez = `${sourcearea}/${z}`;
+            let destz = `${dir_8_merged}/${z}`;
             if (fs.lstatSync(sourcez).isDirectory()) { 
             
                 if (!fs.existsSync(destz)) {
@@ -303,8 +296,8 @@ function mergeTiles() {
                 // now loop through all of the y folders in the z folder 
                 let ys = fs.readdirSync(sourcez);
                 ys.forEach((y) => {
-                    let sourcey = sourcez + "/" + y;
-                    let desty = destz + "/" + y;
+                    let sourcey = `${sourcez}/${y}`;
+                    let desty = `${destz}/${y}`;
                     
                     if (!fs.existsSync(desty)) {
                         fs.mkdirSync(desty);
@@ -314,17 +307,13 @@ function mergeTiles() {
                     let xs = fs.readdirSync(sourcey);
                     xs.forEach((x) => {
                         
-                        let sourcex = sourcey + "/" + x;
-                        let destx = desty + "/" + x;
+                        let sourcex =`${sourcey}/${x}`;
+                        let destx = `${desty}/${x}`;
                         console.log(`merging ${sourcex} to ${destx}`);
                         if (fs.existsSync(destx)) {
                             // the x image exists, so it needs to be composited with ImageMagick
                             console.log(`compositing ${sourcex} with ${destx}`);
-                            let cmd = "convert" +
-                                        " " + sourcex +
-                                        " " + destx + 
-                                        " -composite" +
-                                        " " + sourcex;
+                            let cmd = `convert ${sourcex} ${destx} -composite ${sourcex}`;
                             executeCommand(cmd); 
                         }
                         else {
@@ -338,12 +327,9 @@ function mergeTiles() {
 }
 
 function makeMbTiles() {
-    let mbtiles = dir_9_mbtiled + "/usavfr.mbtiles";   
+    let mbtiles = `${dir_9_mbtiled}/usavfr.mbtiles`;   
     
-    let cmd = "./mbutil/mb-util.py" +
-                " --scheme=tms" +              
-                " " + dir_8_merged +
-                " " + mbtiles
+    let cmd = `./mbutil/mb-util.py --scheme=tms ${dir_8_merged} ${mbtiles}`;
     executeCommand(cmd);
     
     // now add the metadata        
@@ -387,7 +373,7 @@ function makeMbTiles() {
 }
 
 function makeDirectory(dirname) {
-    shell.exec("mkdir " + dirname, { silent: true });
+    shell.exec(`mkdir ${dirname}, { silent: true }`);
 }
 
 function executeCommand(command) {
@@ -411,9 +397,9 @@ function replaceAll(string, search, replace) {
 }
 
 function getGdalInfo(file, searchtext) {
-    let gdalresults = __dirname + "/gdal.txt"
+    let gdalresults = `${__dirname}/gdal.txt`;
 
-    cmd = "gdalinfo " + file + " -noct > " + gdalresults; 
+    cmd = `gdalinfo ${file} -noct > ${gdalresults}`; 
     console.log(cmd);
 
     let { stderr } = shell.exec(cmd, { silent: true })
