@@ -32,9 +32,9 @@ program.parse(process.argv);
 // execute each step in sequence
 processArguments(program.opts());
 makeWorkingFolders();
-//downloadCharts();
-//unzipAndNormalize();
-//expandToRgb();
+downloadCharts();
+unzipAndNormalize();
+expandToRgb();
 clipAndWarp();
 tileCharts();
 mergeTiles();
@@ -138,14 +138,14 @@ function unzipAndNormalize() {
             let tfwdst3file = `${dir_3_expanded}/${tfwfile}`;
             let tfwdst4file = `${dir_4_clipped}/${tfwfile}`;
             let tfwdst5file = `${dir_5_warped}/${tfwfile}`;
-            
+          
             // Does this file have georeference info?
             if (getGdalInfo(chartfile, "PROJCRS")) {
                 cmd = `mv --update --verbose ${chartfile} ${normfile}`;
                 executeCommand(cmd);
             }
 
-            // copy the associated .tfw files into the processing directories
+            // copy the .tfw files into the processing directories
             fs.copyFileSync(tfwsrcfile, tfwdst2file);
             fs.copyFileSync(tfwsrcfile, tfwdst3file);
             fs.copyFileSync(tfwsrcfile, tfwdst4file);
