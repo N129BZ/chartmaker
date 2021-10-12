@@ -10,7 +10,7 @@ let zoomrange = "5-11"; //default
 let chartdate = "";
 let workarea = `${__dirname}/workarea`;
 
-// all of the working directories
+// all of the processing directory names
 let dir_0_download      = `${workarea}/0_download`;
 let dir_1_unzipped      = `${workarea}/1_unzipped`;
 let dir_2_normalized    = `${workarea}/2_normalized`;
@@ -22,6 +22,19 @@ let dir_7_tiled         = `${workarea}/7_tiled`;
 let dir_8_merged        = `${workarea}/8_merged`;
 let dir_9_mbtiled       = `${workarea}/9_mbtiled`;
 
+// make the processing directories
+fs.mkdirSync(workarea);
+fs.mkdirSync(dir_0_download);
+fs.mkdirSync(dir_1_unzipped);
+fs.mkdirSync(dir_2_normalized);
+fs.mkdirSync(dir_3_expanded);
+fs.mkdirSync(dir_4_clipped);
+fs.mkdirSync(dir_5_warped);
+fs.mkdirSync(dir_6_translated);
+fs.mkdirSync(dir_7_tiled);
+fs.mkdirSync(dir_8_merged);
+fs.mkdirSync(dir_9_mbtiled);
+
 // get the commandline arguments
 program
   .requiredOption('-d, --dateofchart <mm-dd-YYYY>', 'enter a valid date in the format mm-dd-YYYY')
@@ -31,7 +44,7 @@ program.parse(process.argv);
 
 // execute each step in sequence
 processArguments(program.opts());
-makeDirectories();
+
 downloadCharts();
 unzipAndNormalize();
 expandToRgb();
@@ -63,20 +76,6 @@ function processArguments(options) {
     }
 
     console.log(`Arguments processed: ${chartdate}, ${zoomrange}`);
-}
-
-function makeDirectories() {
-    makeDirectory(workarea);
-    makeDirectory(dir_0_download);
-    makeDirectory(dir_1_unzipped);
-    makeDirectory(dir_2_normalized);
-    makeDirectory(dir_3_expanded);
-    makeDirectory(dir_4_clipped);
-    makeDirectory(dir_5_warped);
-    makeDirectory(dir_6_translated);
-    makeDirectory(dir_7_tiled);
-    makeDirectory(dir_8_merged);
-    makeDirectory(dir_9_mbtiled);
 }
 
 function downloadCharts() {
@@ -203,7 +202,6 @@ function clipAndWarp(){
                         " -crop_to_cutline" +
                         " -cblend 10" +
                         " -r lanczos" +                  
-                        " -dstalpha" +                  
                         " -co ALPHA=YES" +           
                         " -co TILED=YES" +             
                         " -multi" +                     
@@ -349,11 +347,6 @@ function makeMbTiles() {
     tiledb.run(sql, ["minzoom", `${minzoom}`]);
     tiledb.run(sql, ["maxzoom", `${maxzoom}`]);
     tiledb.close();
-}
-
-function makeDirectory(dirname) {
-    let cmd = `mkdir ${dirname}`
-    executeCommand(cmd);
 }
 
 function executeCommand(command) {
