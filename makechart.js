@@ -354,6 +354,14 @@ function makeMbTiles() {
         }
     });
     
+    let zooms = zoomrange.split("-");
+    let minzoom = zooms[0];
+    let maxzoom = "11"; // default 
+
+    if (zooms.length === 2) {
+        maxzoom = zooms[1];
+    }
+    
     let sql = "INSERT INTO metadata (name, value) VALUES ('name', 'usavfr')";
     tilesdb.run(sql, (err) => {
         if (err) console.error(err);
@@ -366,11 +374,11 @@ function makeMbTiles() {
     tilesdb.run(sql, (err) => {
         if (err) console.error(err);
     });
-    sql = "INSERT INTO metadata (name, value) VALUES ('minzoom', '5')";
+    sql = `INSERT INTO metadata (name, value) VALUES ('minzoom', '${minzoom}')`;
     tilesdb.run(sql, (err) => {
         if (err) console.error(err);
     });
-    sql = "NSERT INTO metadata (name, value) VALUES ('maxzoom', '11')";
+    sql = `INSERT INTO metadata (name, value) VALUES ('maxzoom', '${maxzoom}')`;
     tilesdb.run(sql, (err) => {
         if (err) console.error(err);
     });
