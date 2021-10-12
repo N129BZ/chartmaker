@@ -188,7 +188,7 @@ function clipAndWarp(){
         if (file.endsWith(".vrt")) {
             // Get the file name without extension
             let basename = file.substring(0, file.length - 4);
-            let shapedfile = `${clippedShapesDir}/${basename}.shp`;
+            let shapefile = `${clippedShapesDir}/${basename}.shp`;
             let expandedfile = `${dir_3_expanded}/${basename}.vrt`;
             let clippedfile = `${dir_4_clipped}/${basename}.vrt`;
             let warpedfile = `${dir_5_warped}/${basename}.vrt`;
@@ -199,7 +199,7 @@ function clipAndWarp(){
             cmd = "gdalwarp" +
                         " -of vrt" +
                         " -overwrite" + 
-                        ` -cutline "${shapedfile}"` + 
+                        ` -cutline "${shapefile}"` + 
                         " -crop_to_cutline" +
                         " -cblend 10" +
                         " -r lanczos" +                  
