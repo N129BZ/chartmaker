@@ -22,19 +22,6 @@ let dir_7_tiled         = `${workarea}/7_tiled`;
 let dir_8_merged        = `${workarea}/8_merged`;
 let dir_9_mbtiled       = `${workarea}/9_mbtiled`;
 
-// make the processing directories
-fs.mkdirSync(workarea);
-fs.mkdirSync(dir_0_download);
-fs.mkdirSync(dir_1_unzipped);
-fs.mkdirSync(dir_2_normalized);
-fs.mkdirSync(dir_3_expanded);
-fs.mkdirSync(dir_4_clipped);
-fs.mkdirSync(dir_5_warped);
-fs.mkdirSync(dir_6_translated);
-fs.mkdirSync(dir_7_tiled);
-fs.mkdirSync(dir_8_merged);
-fs.mkdirSync(dir_9_mbtiled);
-
 // get the commandline arguments
 program
   .requiredOption('-d, --dateofchart <mm-dd-YYYY>', 'enter a valid date in the format mm-dd-YYYY')
@@ -44,9 +31,10 @@ program.parse(process.argv);
 
 // execute each step in sequence
 processArguments(program.opts());
-downloadCharts();
-unzipAndNormalize();
-expandToRgb();
+makeWorkingFolders();
+//downloadCharts();
+//unzipAndNormalize();
+//expandToRgb();
 clipAndWarp();
 tileCharts();
 mergeTiles();
@@ -75,6 +63,21 @@ function processArguments(options) {
     }
 
     console.log(`Arguments processed: ${chartdate}, ${zoomrange}`);
+}
+
+function makeWorkingFolders() {
+    // make the processing directories if they don't exist.
+    if (!fs.existsSync(`${workarea}`)) fs.mkdirSync(`${workarea}`);
+    if (!fs.existsSync(`${dir_0_download}`)) fs.mkdirSync(`${dir_0_download}`);
+    if (!fs.existsSync(`${dir_1_unzipped}`)) fs.mkdirSync(`${dir_1_unzipped}`);
+    if (!fs.existsSync(`${dir_2_normalized}`)) fs.mkdirSync(`${dir_2_normalized}`);
+    if (!fs.existsSync(`${dir_3_expanded}`)) fs.mkdirSync(`${dir_3_expanded}`);
+    if (!fs.existsSync(`${dir_4_clipped}`)) fs.mkdirSync(`${dir_4_clipped}`);
+    if (!fs.existsSync(`${dir_5_warped}`)) fs.mkdirSync(`${dir_5_warped}`);
+    if (!fs.existsSync(`${dir_6_translated}`)) fs.mkdirSync(`${dir_6_translated}`);
+    if (!fs.existsSync(`${dir_7_tiled}`)) fs.mkdirSync(`${dir_7_tiled}`);
+    if (!fs.existsSync(`${dir_8_merged}`)) fs.mkdirSync(`${dir_8_merged}`);
+    if (!fs.existsSync(`${dir_9_mbtiled}`)) fs.mkdirSync(`${dir_9_mbtiled}`);
 }
 
 function downloadCharts() {
@@ -242,8 +245,7 @@ function clipAndWarp(){
                     " --config INTERLEAVE_OVERVIEW PIXEL" + 
                     " --config COMPRESS_OVERVIEW JPEG" +
                     " --config BIGTIFF_OVERVIEW IF_NEEDED" +
-                    ` ${translatedfile}` + 
-                    " 2 4 8 16 32 64" 
+                    ` ${translatedfile} 2 4 8 16 32 64`; 
             executeCommand(cmd);
         }
     });
@@ -318,33 +320,34 @@ function mergeTiles() {
 }
 
 function makeMbTiles() {
-    let mbtiles = `${dir_9_mbtiled}/usavfr.mbtiles`;   
     let zooms = zoomrange.split("-");
     let minzoom = zooms[0];
-    let maxzoom = zooms[0];  
-
+    let maxzoom = zooms[0];
+    
     if (zooms.length === 2) {
         maxzoom = zooms[1];
     }
 
+    // create a metadata.json file in the root of the tiles directory,
+    // mbutil will use this for generating a metadata table in the database.  
+    let metajson = `{ 
+        "name": "usavfr",
+        "description": "VFR Sectional Charts",
+        "version": "1",
+        "type": "baselayer",
+        "format": "png",
+        "minzoom": "${minzoom}",
+        "maxzoom": "${maxzoom}" 
+    }`;
+    let fpath = `${dir_8_merged}/metadata.json`; 
+    let fd = fs.openSync(fpath, 'w');
+    fs.writeSync(fd, metajson);
+    fs.closeSync(fd);
+    
+    let mbtiles = `${dir_9_mbtiled}/usavfr.mbtiles`;   
     let cmd = `./mbutil/mb-util.py --scheme=tms ${dir_8_merged} ${mbtiles}`;
+    
     executeCommand(cmd);
-    
-    // now add the metadata        
-    let tiledb = new sqlite3.Database(mbtiles, sqlite3.OPEN_READWRITE, (err) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
-    });
-    
-    let sql = "INSERT INTO metadata (name, value) VALUES (?, ?)";
-    tiledb.run(sql, ["name", "usavfr"]);
-    tiledb.run(sql, ["type", "baselayer"]);
-    tiledb.run(sql, ["format", "png"]);
-    tiledb.run(sql, ["minzoom", `${minzoom}`]);
-    tiledb.run(sql, ["maxzoom", `${maxzoom}`]);
-    tiledb.close();
 }
 
 function executeCommand(command) {
