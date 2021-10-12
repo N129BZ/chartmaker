@@ -23,6 +23,7 @@ let dir_7_tiled         = workarea + "7_tiled";
 let dir_8_merged        = workarea + "8_merged";
 let dir_9_mbtiled       = workarea + "9_mbtiled";
 
+// get the commandline arguments
 program
   .requiredOption('-d, --dateofchart <mm-dd-YYYY>', 'enter a valid date in the format mm-dd-YYYY')
   .option('-z, --zoomrange <range>', 'enter a hyphen-seperated zoom range or a single zoom level', '5-11');
@@ -357,7 +358,7 @@ function makeMbTiles() {
     tilesdb.run(sql, (err) => {
         if (err) console.error(err);
     });
-    sql = "INSERT INTO metadata (name, value) VALUES ('type', 'baselayer')";;
+    sql = "INSERT INTO metadata (name, value) VALUES ('type', 'baselayer')";
     tilesdb.run(sql, (err) => {
         if (err) console.error(err);
     });
