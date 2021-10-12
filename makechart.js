@@ -2,7 +2,7 @@
 
 const fs = require("fs");
 const shell = require('shelljs')
-const sqlite3 = require("sqlite3");
+const sqlite3 = require("sqlite3").verbose();
 const { program } = require('commander');
 
 let cmd = "";
@@ -348,27 +348,12 @@ function makeMbTiles() {
         maxzoom = zooms[1];
     }
     
-    let sql = "INSERT INTO metadata (name, value) VALUES ('name', 'usavfr')";
-    tiledb.run(sql, (err) => {
-        if (err) console.error(err);
-    });
-    sql = "INSERT INTO metadata (name, value) VALUES ('type', 'baselayer')";
-    tiledb.run(sql, (err) => {
-        if (err) console.error(err);
-    });
-    sql = "INSERT INTO metadata (name, value) VALUES ('format', 'png')";
-    tiledb.run(sql, (err) => {
-        if (err) console.error(err);
-    });
-    sql = `INSERT INTO metadata (name, value) VALUES ('minzoom', '${minzoom}')`;
-    tiledb.run(sql, (err) => {
-        if (err) console.error(err);
-    });
-    sql = `INSERT INTO metadata (name, value) VALUES ('maxzoom', '${maxzoom}')`;
-    tiledb.run(sql, (err) => {
-        if (err) console.error(err);
-    });
-    
+    let sql = "INSERT INTO metadata (name, value) VALUES (?, ?)";
+    tiledb.run(sql, ["name", "usavfr"]);
+    tiledb.run(sql, ["type", "baselayer"]);
+    tiledb.run(sql, ["format", "png"]);
+    tiledb.run(sql, ["minzoom", `${minzoom}`]);
+    tiledb.run(sql, ["maxzoom", `${maxzoom}`]);
     tiledb.close();
 }
 
