@@ -333,7 +333,7 @@ function makeMbTiles() {
     executeCommand(cmd);
     
     // now add the metadata        
-    let tilesdb = new sqlite3.Database(mbtiles, sqlite3.OPEN_READWRITE, (err) => {
+    let tiledb = new sqlite3.Database(mbtiles, sqlite3.OPEN_READWRITE, (err) => {
         if (err) {
             console.error(err);
             return;
@@ -349,27 +349,27 @@ function makeMbTiles() {
     }
     
     let sql = "INSERT INTO metadata (name, value) VALUES ('name', 'usavfr')";
-    tilesdb.run(sql, (err) => {
+    tiledb.run(sql, (err) => {
         if (err) console.error(err);
     });
     sql = "INSERT INTO metadata (name, value) VALUES ('type', 'baselayer')";
-    tilesdb.run(sql, (err) => {
+    tiledb.run(sql, (err) => {
         if (err) console.error(err);
     });
     sql = "INSERT INTO metadata (name, value) VALUES ('format', 'png')";
-    tilesdb.run(sql, (err) => {
+    tiledb.run(sql, (err) => {
         if (err) console.error(err);
     });
     sql = `INSERT INTO metadata (name, value) VALUES ('minzoom', '${minzoom}')`;
-    tilesdb.run(sql, (err) => {
+    tiledb.run(sql, (err) => {
         if (err) console.error(err);
     });
     sql = `INSERT INTO metadata (name, value) VALUES ('maxzoom', '${maxzoom}')`;
-    tilesdb.run(sql, (err) => {
+    tiledb.run(sql, (err) => {
         if (err) console.error(err);
     });
     
-    tilesdb.close();
+    tiledb.close();
 }
 
 function makeDirectory(dirname) {
