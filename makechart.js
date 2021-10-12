@@ -2,7 +2,6 @@
 
 const fs = require("fs");
 const shell = require('shelljs')
-const sqlite3 = require("sqlite3").verbose();
 const { program } = require('commander');
 
 let cmd = "";
@@ -111,7 +110,7 @@ function unzipAndNormalize() {
     });
     
     console.log("deleting all of the htm files");
-    fs.rm(`${dir_1_unzipped}/*.htm`);
+    fs.rmSync(`${dir_1_unzipped}/*.htm`);
     
     files = fs.readdirSync(dir_1_unzipped);
     
@@ -133,12 +132,15 @@ function unzipAndNormalize() {
             let tfwfile = file.replace(".tif", ".tfw");
             let chartfile = `${dir_1_unzipped}/${file}`;
             let normfile = `${dir_2_normalized}/${file}`;
+            
+            /*
             let tfwsrcfile = `${dir_1_unzipped}/${tfwfile}`;
             let tfwdst2file = `${dir_2_normalized}/${tfwfile}`;
             let tfwdst3file = `${dir_3_expanded}/${tfwfile}`;
             let tfwdst4file = `${dir_4_clipped}/${tfwfile}`;
             let tfwdst5file = `${dir_5_warped}/${tfwfile}`;
-          
+            */
+
             // Does this file have georeference info?
             if (getGdalInfo(chartfile, "PROJCRS")) {
                 cmd = `mv --update --verbose ${chartfile} ${normfile}`;
@@ -146,10 +148,10 @@ function unzipAndNormalize() {
             }
 
             // copy the .tfw files into the processing directories
-            fs.copyFileSync(tfwsrcfile, tfwdst2file);
-            fs.copyFileSync(tfwsrcfile, tfwdst3file);
-            fs.copyFileSync(tfwsrcfile, tfwdst4file);
-            fs.copyFileSync(tfwsrcfile, tfwdst5file);
+            //fs.copyFileSync(tfwsrcfile, tfwdst2file);
+            //fs.copyFileSync(tfwsrcfile, tfwdst3file);
+            //fs.copyFileSync(tfwsrcfile, tfwdst4file);
+            //fs.copyFileSync(tfwsrcfile, tfwdst5file);
         }
     }); 
 }
@@ -239,14 +241,11 @@ function clipAndWarp(){
                         " --config GDAL_CACHEMAX 1024" +
                         ` ${warpedfile} ${translatedfile}`;
             executeCommand(cmd);
-            
-            console.log(`***  Add zoom layers to tif --- gdaladdo ${basename}.tif`);
             cmd = "gdaladdo" + 
                     " -ro" +
                     " -r average" + 
                     " --config INTERLEAVE_OVERVIEW PIXEL" + 
                     " --config COMPRESS_OVERVIEW JPEG" +
-                    " --config BIGTIFF_OVERVIEW IF_NEEDED" +
                     ` ${translatedfile} 2 4 8 16 32 64`; 
             executeCommand(cmd);
         }
@@ -270,6 +269,15 @@ function tileCharts() {
 }
 
 function mergeTiles() {
+    let files = fs.readdirSync(dir_7_tiled);
+    files.forEach((file) => {
+        // Merge the individual charts into an overall chart
+        let sourcedir = dir_7_tiled + "/" + file;
+        let destdir = dir_8_merged;
+        let cmd = `perl ./mergetiles.pl ${sourcedir} ${destdir}`;
+        executeCommand(cmd);
+    });
+    /*
     // loop through all of the area folders in dir_7_tiled
     let areas = fs.readdirSync(dir_7_tiled);
     areas.forEach((area) => {
@@ -281,6 +289,8 @@ function mergeTiles() {
             let sourcez = `${sourcearea}/${z}`;
             let destz = `${dir_8_merged}/${z}`;
             if (fs.lstatSync(sourcez).isDirectory()) { 
+    }
+    
             
                 if (!fs.existsSync(destz)) {
                     fs.mkdirSync(destz);
@@ -318,7 +328,8 @@ function mergeTiles() {
                 });
             }
         });
-    });    
+    });
+    */    
 }
 
 function makeMbTiles() {
