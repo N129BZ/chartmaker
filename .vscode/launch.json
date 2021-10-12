@@ -9,7 +9,7 @@
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}/makechart.js",
-            "args": ["10-07-2021"]
+            "args": ["-d 10-07-2021", "-z 5-11"]
         }
     ]
 }

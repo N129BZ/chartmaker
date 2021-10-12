@@ -5,6 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "better-sqlite3": "^7.4.3",
+    "commander": "^8.2.0",
     "fs": "^0.0.1-security",
     "shelljs": "^0.8.4",
     "sqlite3": "^5.0.2"

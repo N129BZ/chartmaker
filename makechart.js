@@ -3,11 +3,13 @@
 const fs = require("fs");
 const shell = require('shelljs')
 const sqlite3 = require("sqlite3");
+const { program } = require('commander');
 
 let cmd = "";
 let hasargs = false;
 let chartdate = "";
 let workarea = __dirname + "/workarea/";
+let zoomrange = "5-11";
 
 // make all the working directories
 let dir_0_download      = workarea + "0_download";
@@ -21,16 +23,22 @@ let dir_7_tiled         = workarea + "7_tiled";
 let dir_8_merged        = workarea + "8_merged";
 let dir_9_mbtiled       = workarea + "9_mbtiled";
 
+program
+  .requiredOption('-d, --dateofchart <mm-dd-YYYY>', 'enter a valid date in the format mm-dd-YYYY')
+  .option('-z, --zoomrange <range>', 'enter a hyphen-seperated zoom range or a single zoom level', '5-11');
+program.showSuggestionAfterError();
+program.parse(process.argv);
+processArguments(program.opts());
+
 // execute each step in sequence
 //makeDirectories();
-//processArguments();
 //downloadCharts();
 //unzipAndNormalize();
 //expandToRgb();
 //clipAndWarp();
 //tileCharts();
 //mergeTiles();
-makeMbTiles();
+//makeMbTiles();
 
 console.log("Chart processing completed!");
 process.exit(0);
@@ -49,22 +57,17 @@ function makeDirectories() {
     makeDirectory(dir_9_mbtiled);
 }
 
-function processArguments() {
-
-    let args = process.argv.slice(2);
+function processArguments(options) {
+    let chdt = options.dateofchart.replace(" ", "");
+    let zoomrange = options.zoomrange.replace(" ", "");
     let mdy = [];
 
-    if (args.length == 0) {
-        console.log("NO DATE ARGUMENT, use either mm-dd-yyyy or mm/dd/yyyy date format");
-        process.exit(1);
-    }
-
-    if (args[0].search("/") > -1) {
-        mdy = args[0].split("/");
+    if (chdt.search("/") > -1) {
+        mdy = chdt.split("/");
         hasargs = true;
     }
-    else if (args[0].search("-") > -1) {
-        mdy = args[0].split("-");
+    else if (chdt.search("-") > -1) {
+        mdy = chdt.split("-");
         hasargs = true;
     }
 
@@ -79,6 +82,8 @@ function processArguments() {
         "INVALID DATE FORMAT! Use mm-dd-yyyy or mm/dd/yyyy"
         process.exit(1);
     }
+
+    console.log(`arguments processed: ${chartdate}, ${zoomrange}`);
 }
 
 function downloadCharts() {
@@ -269,7 +274,7 @@ function tileCharts() {
             
             // Create tiles from the source raster
             let cmd = "gdal2tiles.py" +
-                            " --zoom=4-11" +             
+                            ` --zoom="${zoomrange}"` +             
                             " " + sourcechart + 
                             " " + tiledir;
             executeCommand(cmd);
