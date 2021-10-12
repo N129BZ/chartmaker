@@ -27,10 +27,17 @@ sudo apt install        \
         python-imaging  \
         gdal-bin        \
         nodejs          \
+        node-sqlite3    \
+        node.shelljs    \
+        node.commander  \
+        npm             \
         unzip
         
 # clone into the base VfrSecChartMaker directory
 git clone https://github.com/mapbox/mbutil.git
+
+# install commander into the base VfrSecChartMaker directory
+npm install commander
 
 ```
 ### Additional information       
