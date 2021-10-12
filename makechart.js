@@ -262,7 +262,7 @@ function tileCharts() {
             console.log(`--------Tiling ${file}------------`);
             
             // Create tiles from the source raster
-            let cmd = `gdal2tiles.py --zoom="${zoomrange} ${sourcechart} ${tiledir}`;
+            let cmd = `gdal2tiles.py --zoom="${zoomrange}" ${sourcechart} ${tiledir}`;
             executeCommand(cmd);
         }
     });
