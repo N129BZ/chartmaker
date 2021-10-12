@@ -44,7 +44,6 @@ program.parse(process.argv);
 
 // execute each step in sequence
 processArguments(program.opts());
-
 downloadCharts();
 unzipAndNormalize();
 expandToRgb();
