@@ -184,10 +184,10 @@ function expandToRgb(){
 
 function clipAndWarp(){
     //--------------------------------------------------------------
-    // 1) Clip the source file first then 
+    // 1) Clip the source file 
     // 2) warp to EPSG:3857 so that final output pixels are square
-    // 3) tramslate to mbtiles file with base layer
-    // 4) add zoom levels to mbtiles 
+    // 3) translate from vrt to Georeferenced tif 
+    // 4) add zoom levels to tif 
     //--------------------------------------------------------------
     let clippedShapesDir = `${__dirname}/clipshapes`;
     
