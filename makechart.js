@@ -183,12 +183,12 @@ function expandToRgb(){
 }
 
 function clipAndWarp(){
-    //--------------------------------------------------------------
-    // 1) Clip the source file 
-    // 2) warp to EPSG:3857 so that final output pixels are square
-    // 3) translate from vrt to Georeferenced tif 
-    // 4) add zoom levels to tif 
-    //--------------------------------------------------------------
+    /*------------------------------------------------------------
+     1) Clip the source file 
+     2) warp to EPSG:3857 so that final output pixels are square
+     3) translate from vrt to Georeferenced tif 
+     4) add zoom levels to tif 
+    --------------------------------------------------------------*/
     let clippedShapesDir = `${__dirname}/clipshapes`;
     
     let files = fs.readdirSync(dir_3_expanded);
