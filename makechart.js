@@ -5,7 +5,7 @@ const shell = require('shelljs')
 const { program } = require('commander');
 
 let cmd = "";
-let zoomrange = "5-11"; //default
+let zoomrange = "4-11"; //default
 let chartdate = "";
 let workarea = __dirname + "/workarea";
 
@@ -44,7 +44,31 @@ process.exit(0);
 
 function processArguments(options) {
     let chdt = options.dateofchart.replace(" ", "");
-    zoomrange = options.zoomrange.replace(" ", "");
+    let zrng = options.zoomrange.replace(" ", "");
+
+    // if user specified a range, validate number(s)
+    let rngerror = false;
+    if (zrng.search("-") > -1) {
+        
+        let rgs = zrng.split("-");
+        if (isNaN(rgs[0]) || isNaN(rgs[1])) {
+            rngerror = true;
+        }
+    }
+    else {
+        if (isNaN(zrng)) {
+            rngerror = true;
+        }
+    }
+
+    if (rngerror) {
+        console.log("ERROR PARSING RANGE! Use n-n or just n where n is a number");
+        process.exit(1);
+    }
+    else {
+        zoomrange = zrng;
+    }
+    
     let mdy = [];
 
     if (chdt.search("/") > -1) {
@@ -192,7 +216,7 @@ function clipAndWarp(){
             let clippedfile = dir_4_clipped + "/" + basename + ".vrt";
             let warpedfile = dir_5_warped + "/" + basename + ".vrt";
             let translatedfile = dir_6_translated + "/" + basename + ".tif";
-
+            
             // Clip the file using it's corresponding shape file
             console.log(`*** Clip to vrt --- gdalwarp ${file}`);
             cmd = "gdalwarp" +
@@ -238,7 +262,7 @@ function clipAndWarp(){
                         " " + warpedfile + 
                         " " + translatedfile;
             executeCommand(cmd);
-
+            
             console.log(`***  Add overlays --- gdaladdo ${basename}.tif`);
             cmd = "gdaladdo" + 
                     " -ro" +
@@ -272,6 +296,18 @@ function tileCharts() {
     });
 }
 
+function mergeTiles() {
+    let dirs = fs.readdirSync(dir_7_tiled);
+    dirs.forEach((subdir) => {
+        // Merge the individual charts into an overall chart
+        let sourcedir = dir_7_tiled + "/" + subdir;
+        let destdir = dir_8_merged;
+        let cmd = `perl ./mergetiles.pl ${sourcedir} ${destdir}`;
+        executeCommand(cmd);
+    });
+}
+
+/*
 function mergeTiles() {
     // loop through all of the area folders in dir_7_tiled
     let areas = fs.readdirSync(dir_7_tiled);
@@ -324,6 +360,7 @@ function mergeTiles() {
         });
     });    
 }
+*/
 
 function makeMbTiles() {
     let zooms = zoomrange.split("-");
@@ -339,7 +376,7 @@ function makeMbTiles() {
     let metajson = `{ 
         "name": "usavfr",
         "description": "VFR Sectional Charts",
-        "version": "1",
+        "version": "1.0",
         "type": "baselayer",
         "format": "png",
         "minzoom": "${minzoom}",
@@ -351,7 +388,7 @@ function makeMbTiles() {
     fs.closeSync(fd);
     
     let mbtiles = dir_9_mbtiled + "/usavfr.mbtiles";   
-    let cmd = "./mbutil/mb-util.py" + 
+    let cmd = "python ./mbutil/mb-util" + 
                        " --scheme=tms" + 
                        " " + dir_8_merged + 
                        " " + mbtiles;
