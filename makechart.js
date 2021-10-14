@@ -150,25 +150,14 @@ function unzipAndNormalize() {
     files = fs.readdirSync(dir_1_unzipped); 
     files.forEach((file) => {
         if (file.endsWith(".tif")) {
-            let tfwfile = file.replace(".tif", ".tfw");
             let chartfile = dir_1_unzipped + "/" + file;
             let normfile = dir_2_normalized + "/" + file;
             
-            let tfwsrcfile = dir_1_unzipped + "/" + tfwfile;
-            let tfwdst2file = dir_2_normalized + "/" + tfwfile;
-            let tfwdst3file = dir_3_expanded + "/" + tfwfile;
-            let tfwdst4file = dir_4_clipped + "/" + tfwfile;
-
             // Does this file have georeference info?
             if (getGdalInfo(chartfile, "PROJCRS")) {
                 cmd = "mv --update --verbose " + chartfile + " " + normfile;
                 executeCommand(cmd);
             }
-
-            // copy the .tfw files into the processing directories
-            fs.copyFileSync(tfwsrcfile, tfwdst2file);
-            fs.copyFileSync(tfwsrcfile, tfwdst3file);
-            fs.copyFileSync(tfwsrcfile, tfwdst4file);
         }
     }); 
 }
@@ -183,15 +172,32 @@ function expandToRgb(){
             let sourceChartName = dir_2_normalized + "/" + file;
             let expandedfile = dir_3_expanded + "/" + file.replace(".tif", ".vrt");
             
-            console.log(`Expanding to ${expandedfile}`);
-            cmd = "gdal_translate" + 
-                    " -expand rgb" +         
-                    " -strict" +              
-                    " -of VRT" +      
-                    " -co TILED=YES" +       
-                    " -co COMPRESS=LZW" +
-                    " " + sourceChartName + 
-                    " " + expandedfile;
+            // Expand this file to RGBA if it has a color table
+            if (getGdalInfo(sourceChartName, "Color Table")){
+
+                console.log(`***  ${sourceChartName} has color table, need to expand to RGB:`);            
+                
+                cmd = "gdal_translate" + 
+                        " -expand rgb" +         
+                        " -strict" +              
+                        " -of VRT" +             
+                        ` -co "TILED=YES"` +       
+                        ` -co "COMPRESS=LZW"` +    
+                        " " + sourceChartName + 
+                        " " + expandedfile;
+            }
+            else {
+                console.log(`***  ${sourceChartName} does not have color table, do not need to expand to RGB`);
+                
+                cmd = "gdal_translate" +          
+                        " -strict" +
+                        " -of VRT" +
+                        ` -co "TILED=YES"` +
+                        ` -co "COMPRESS=LZW"` +
+                        " " + sourceChartName
+                        " " + expandedfile;
+            }
+
             executeCommand(cmd);
         }
     });
@@ -225,9 +231,10 @@ function clipAndWarp(){
                         ` -cutline "${shapefile}"` + 
                         " -crop_to_cutline" +
                         " -cblend 10" +
-                        " -r lanczos" +                  
-                        " -co ALPHA=YES" +           
-                        " -co TILED=YES" +             
+                        " -r lanczos" +   
+                        " -dstalpha" +               
+                        ` -co "ALPHA=YES"` +           
+                        ` -co "TILED=YES"` +             
                         " -multi" +                     
                         " -wo NUM_THREADS=ALL_CPUS" +   
                         " -wm 1024" +                   
@@ -245,7 +252,7 @@ function clipAndWarp(){
                         " -multi" +
                         " -wo NUM_THREADS=ALL_CPUS" +
                         " -wm 1024" +
-                        " -co TILED=YES" +
+                        ` -co "TILED=YES"` +
                         " --config GDAL_CACHEMAX 1024" +
                         " " + clippedfile + 
                         " " + warpedfile;
@@ -254,10 +261,10 @@ function clipAndWarp(){
             console.log(`***  Translate to tif --- gdal_translate ${basename}.vrt`);
             cmd = "gdal_translate" +
                         " -strict" +
-                        " -co TILED=YES" +
-                        " -co COMPRESS=DEFLATE" +
-                        " -co PREDICTOR=1" +
-                        " -co ZLEVEL=9" +
+                        ` -co "TILED=YES"` +
+                        ` -co "COMPRESS=DEFLATE"` +
+                        ` -co "PREDICTOR=1"` +
+                        ` -co "ZLEVEL=9"` +
                         " --config GDAL_CACHEMAX 1024" +
                         " " + warpedfile + 
                         " " + translatedfile;
@@ -269,6 +276,7 @@ function clipAndWarp(){
                     " -r average" + 
                     " --config INTERLEAVE_OVERVIEW PIXEL" + 
                     " --config COMPRESS_OVERVIEW JPEG" +
+                    " --config BIGTIFF_OVERVIEW IF_NEEDED" +
                     " " + translatedfile + 
                     " 2 4 8 16 32 64"; 
             executeCommand(cmd);
@@ -306,61 +314,6 @@ function mergeTiles() {
         executeCommand(cmd);
     });
 }
-
-/*
-function mergeTiles() {
-    // loop through all of the area folders in dir_7_tiled
-    let areas = fs.readdirSync(dir_7_tiled);
-    areas.forEach((area) => {
-        let sourcearea = `${dir_7_tiled}/${area}`;
-        
-        // now loop through all of the z folders in the area
-        let zs = fs.readdirSync(sourcearea); 
-        zs.forEach((z) => {
-            let sourcez = sourcearea + "/" + z;
-            let destz = dir_8_merged + "/" + z;
-            if (fs.lstatSync(sourcez).isDirectory()) {         
-                if (!fs.existsSync(destz)) {
-                    fs.mkdirSync(destz);
-                }
-                
-                // now loop through all of the y folders in the z folder 
-                let ys = fs.readdirSync(sourcez);
-                ys.forEach((y) => {
-                    let sourcey = sourcez + "/" + y;
-                    let desty = destz + "/" + y
-                    
-                    if (!fs.existsSync(desty)) {
-                        fs.mkdirSync(desty);
-                    } 
-                    
-                    // finally, loop through all of the x images in the y folders
-                    let xs = fs.readdirSync(sourcey);
-                    xs.forEach((x) => {
-                        let sourcex = sourcey + "/" + x;
-                        let destx = desty + "/" + x;
-                      
-                        console.log(`merging ${sourcex} to ${destx}`);
-                      
-                        if (fs.existsSync(destx)) {
-                            // the x image exists, so it needs to be composited using ImageMagick
-                            let cmd = "convert" + 
-                                           " " + sourcex + 
-                                           " " + destx + 
-                                           " -composite " + sourcex;
-                            executeCommand(cmd); 
-                        }
-                        else {
-                            // otherwise just copy the x image to the destination
-                            fs.copyFileSync(sourcex, destx);
-                        }
-                    });
-                });
-            }
-        });
-    });    
-}
-*/
 
 function makeMbTiles() {
     let zooms = zoomrange.split("-");
@@ -429,7 +382,7 @@ function getGdalInfo(file, searchtext) {
     
     let gdaldata = fs.readFileSync(gdalresults, {encoding:'utf8', flag:'r'});         
     let retval = (gdaldata.toString().search(searchtext) > -1) 
-    fs.rm(gdalresults);
+    fs.rmSync(gdalresults);
     
     return retval;
 }
