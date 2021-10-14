@@ -1,7 +1,7 @@
 # VfrSecChartMaker - Download US VFR sectional chart TIF files and translate them all into a single mbtiles database.  
 
 ### Instructions:   
-1.) requires ***node js*** and several ***sudo apt install*** applications (see below.)  
+1.) requires several supporting applications to be installed, using the method for your system (Debian example below)              
 2.) clone this repository - ***git clone https://github.com/N129BZ/VfrSecChartMaker.git***    
 3.) clone the Mapbox mbtile application (see below) into the base VfrSecChartMaker directory.       
 4.) unzip ***clipshapes.zip*** to the base VfrSecChartMaker directory.   
@@ -55,7 +55,7 @@ node makechart.js -d 10-07-2021 -z 5-11
 
 ```
 ### Additional information       
-The charts are downloaded from the FAA VFR digital raster chart repository by processing a list of chartnames in **chartlist.json.** You can edit this file to include as many or as few area charts as you want. The default list includes all 51 area chart names, covering the continental USA, Alaska, and Hawaii. **The chartnames on the list do not include the ".zip" extension and they must exactly match the FAA's spelling, including any spaces, dashes or underscores.** The downloading process will normalize the resultant graphic filenames with underscores in place of dashes or spaces.     
+The charts are downloaded from the FAA VFR digital raster chart repository by processing a list of chartnames in **chartlist.json.** You can edit this file to include as many or as few area charts as you want. The default list includes all 51 area chart names, covering the continental USA, Alaska, and Hawaii. **The chartnames on the list do not include the ".zip" extension and they must exactly match the FAA's spelling, including any spaces, dashes or underscores.** The unzipping process will normalize the resultant graphic filenames with underscores in place of dashes or spaces.     
        
 As of October 1, 2021, the official chart release is for **10-07-2021.**  You can view that FAA list at: https://aeronav.faa.gov/visual/10-07-2021/sectional-files.  The file **chartdates.json** file is also included and contains the 56-day cycle of official publishing dates for FAA VFR raster charts, going out to the year 2044. **Also note that the FAA publishes these chart files *20 days before* an official release date.**    
 ```
