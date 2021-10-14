@@ -209,10 +209,10 @@ function expandToRgb(){
 
 function clipAndWarp(){
     /*--------------------------------------------------------------
-     1) Clip the source file 
+     1) clip the source file with it's clipping shape file 
      2) warp to EPSG:3857 so that final output pixels are square
-     3) tramslate to tif file
-     4) add zoom levels to tif 
+     3) tramslate the vrt to a Georeferenced tif file
+     4) add overlay pyramid to tif 
     --------------------------------------------------------------*/
     let clippedShapesDir = __dirname + "/clipshapes";
     
