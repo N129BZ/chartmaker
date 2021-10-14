@@ -1,4 +1,4 @@
-# VfrSecChartMaker - Download continental US VFR sectional chart TIF files and translate them all into a single mbtiles database.  
+# VfrSecChartMaker - Download US VFR sectional chart TIF files and translate them all into a single mbtiles database.  
 
 ### Instructions:   
 1.) requires ***node js*** and several ***sudo apt install*** applications (see below.)  
@@ -40,7 +40,9 @@ npm install fs
 
 ```
 ### Additional information       
-The charts are downloaded from the FAA digital raster chart repository. VfrSectionalChartMaker uses a JSON file with the list of charts to be downloaded. You can change that list to include as many or as few area charts as you want. The list includes 37 area chart names which covers the continental USA. The only "gotcha" here is that the area names must exactly match the FAA's spelling, including dashes or underscores, without the ".zip" extension. The processing will normalize the resultant graphic files with underscores in place of dashes or spaces. As of today, 10-11-2021, the official chart release is for 10-07-2021.  You can view that list at: https://aeronav.faa.gov/visual/10-07-2021/sectional-files    
+The charts are downloaded from the FAA VFR digital raster chart repository by processing a list of chartnames in **chartlist.json.** You can edit this file to include as many or as few area charts as you want. The default list includes all 51 area chart names, covering the continental USA, Alaska, and Hawaii. **The chartnames on the list do not include the ".zip" extension and they must exactly match the FAA's spelling, including any spaces, dashes or underscores.** The downloading process will normalize the resultant graphic filenames with underscores in place of dashes or spaces.     
+       
+As of October 1, 2021, the official chart release is for **10-07-2021.**  You can view that FAA list at: https://aeronav.faa.gov/visual/10-07-2021/sectional-files.  The file **chartdates.json** file is also included and contains the 56-day cycle of official publishing dates for FAA VFR raster charts, going out to year 2044.     
 ```
 {
     "charturl": "https://aeronav.faa.gov/visual/<chartdate>/sectional-files/<chartname>.zip",
@@ -51,35 +53,49 @@ The charts are downloaded from the FAA digital raster chart repository. VfrSecti
             "Bethel",
             "Billings",
             "Brownsville",
+            "Cape_Lisburne",
             "Charlotte",
             "Cheyenne",
             "Chicago",
             "Cincinnati",
+            "Cold_Bay",
             "Dallas-Ft_Worth",
+            "Dawson",
             "Denver",
             "Detroit",
+            "Dutch_Harbor",
             "El_Paso",
+            "Fairbanks",
             "Great_Falls",
             "Green_Bay",
+            "Halifax",
+            "Hawaiian_Islands",
             "Houston",
             "Jacksonville",
+            "Juneau",
             "Kansas_City",
+            "Ketchikan",
             "Klamath_Falls",
+            "Kodiak",
             "Lake_Huron",
             "Las_Vegas",
             "Los_Angeles",
             "McGrath",
             "Memphis",
+            "Montreal",
             "Miami",
             "New_Orleans",
             "New_York",
+            "Nome",
             "Omaha", 
             "Phoenix",
-            "St_Louis",
+            "Point_Barrow",
             "Salt_Lake_City",
             "San_Antonio",
             "San_Francisco",
             "Seattle",
+            "Seward",
+            "St_Louis",
             "Twin_Cities",
             "Washington",
             "Wichita"            
@@ -88,7 +104,7 @@ The charts are downloaded from the FAA digital raster chart repository. VfrSecti
 ```
 
 ### ToDo:    
-Add all of the other areas and chart types including Alaska, Hawaii, territories, and IFR charts, etc.    
+Add other chart types including IFR charts, etc.    
      
       
 #### ***inspired by https://github.com/jlmcgraw/aviationCharts*** 
