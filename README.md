@@ -27,7 +27,6 @@ sudo apt install        \
         python-imaging  \
         gdal-bin        \
         nodejs          \
-        node-sqlite3    \
         node.shelljs    \
         node.commander  \
         npm             \
