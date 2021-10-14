@@ -30,7 +30,7 @@ sudo apt install        \
         npm             \
         unzip
         
-# clone into the base VfrSecChartMaker directory
+# clone Mapbox Utilities into the base VfrSecChartMaker directory
 git clone https://github.com/mapbox/mbutil.git     
       
 # install node required packages into the base VfrSecChartMaker directory
