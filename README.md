@@ -1,7 +1,7 @@
 # VfrSecChartMaker - Download US VFR sectional chart TIF files and translate them all into a single mbtiles database.  
 
 ### Instructions:   
-1.) this application requires several supporting applications to be installed on your system. (see ***Debian*** example below)              
+1.) this application requires several supporting applications to be installed on your system - see ***Debian*** example below.              
 2.) clone this repository - ***git clone https://github.com/N129BZ/VfrSecChartMaker.git***    
 3.) clone the Mapbox mbtile application (see below) into the base VfrSecChartMaker directory.       
 4.) unzip ***clipshapes.zip*** to the base VfrSecChartMaker directory.   
