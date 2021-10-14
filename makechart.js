@@ -31,12 +31,12 @@ program.parse(process.argv);
 // execute each step in sequence
 processArguments(program.opts());
 makeWorkingFolders();
-downloadCharts();
-unzipAndNormalize();
-expandToRgb();
-clipAndWarp();
-tileCharts();
-mergeTiles();
+//downloadCharts();
+//unzipAndNormalize();
+//expandToRgb();
+//clipAndWarp();
+//tileCharts();
+//mergeTiles();
 makeMbTiles();
 
 console.log("Chart processing completed!");
@@ -345,7 +345,7 @@ function makeMbTiles() {
     fs.closeSync(fd);
 
     let mbtiles = dir_9_mbtiled + "/usavfr.mbtiles";   
-    let cmd = "./mbutil/mb-util.py" +
+    let cmd = "./mbutil/mb-util" +
                 " --scheme=tms" +              
                 " " + dir_8_merged +
                 " " + mbtiles
