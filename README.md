@@ -18,10 +18,12 @@ The application accepts 2 arguments. Date is required, zoom range defaults to **
 2.) The optional zoom range argument should be in the format ***-z n-n***, or you can use a single zoom level ***n***                
         examples: **node makechart.js -d 10-07-2021 -z 4-10** or **node.makechart.js -d 10-07-2021 -z 8**     
                         
-### Install required utility applications
+### Full Installation example on a Debian distro (your system may be different)
 * Note that on some versions of Ubuntu, ```python-imaging``` has been replaced by ```python-pil```
 ```
-sudo apt install        \   
+# install required dependencies using apt as sudo
+sudo apt install        \    
+        git             \       
         graphicsmagick  \
         imagemagick     \
         python-imaging  \
@@ -29,20 +31,33 @@ sudo apt install        \
         nodejs          \
         npm             \
         unzip
-        
-# clone Mapbox Utilities into the base VfrSecChartMaker directory
+
+# change directory to where you will clone VfrSecChartMaker, for example:
+cd /myinstalldirectory
+
+# clone VfrSecChartMaker
+git clone https:github.com/N129BZ/VfrSecChartMaker.git
+
+# change directory to VfrSecChartMaker
+cd /myinstalldirectory/VfrSecChartMaker
+
+# clone Mapbox Utilities
 git clone https://github.com/mapbox/mbutil.git     
-      
-# install node required packages into the base VfrSecChartMaker directory
-npm install commander      
-npm install shelljs   
-npm install fs      
+
+# unzip clipshapes.zip 
+unzip clishapes.zip
+
+# install required node packages
+npm install      
+
+# run the application
+node makechart.js -d 10-07-2021 -z 5-11
 
 ```
 ### Additional information       
 The charts are downloaded from the FAA VFR digital raster chart repository by processing a list of chartnames in **chartlist.json.** You can edit this file to include as many or as few area charts as you want. The default list includes all 51 area chart names, covering the continental USA, Alaska, and Hawaii. **The chartnames on the list do not include the ".zip" extension and they must exactly match the FAA's spelling, including any spaces, dashes or underscores.** The downloading process will normalize the resultant graphic filenames with underscores in place of dashes or spaces.     
        
-As of October 1, 2021, the official chart release is for **10-07-2021.**  You can view that FAA list at: https://aeronav.faa.gov/visual/10-07-2021/sectional-files.  The file **chartdates.json** file is also included and contains the 56-day cycle of official publishing dates for FAA VFR raster charts, going out to year 2044.     
+As of October 1, 2021, the official chart release is for **10-07-2021.**  You can view that FAA list at: https://aeronav.faa.gov/visual/10-07-2021/sectional-files.  The file **chartdates.json** file is also included and contains the 56-day cycle of official publishing dates for FAA VFR raster charts, going out to the year 2044.     
 ```
 {
     "charturl": "https://aeronav.faa.gov/visual/<chartdate>/sectional-files/<chartname>.zip",
