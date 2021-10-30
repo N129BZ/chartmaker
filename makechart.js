@@ -115,8 +115,8 @@ function downloadCharts() {
         let serverfile = charturl.replace("<chartname>", area);
         let localfile = area.replace("-", "_");
         localfile = localfile.replace(" ", "_");
-        let filename = dir_0_download + "/" + localfile + ".zip"
-        cmd = "wget " + serverfile + ` --output-document=${filename}`;
+        let filename = `${dir_0_download}/${localfile}.zip`;
+        cmd = `wget ${serverfile} --output-document=${filename}`;
 
         if (executeCommand(cmd) != 0) {
             console.log("NO CHARTS FOUND, make sure you enter a valid FAA sectional chart release date.");
@@ -179,10 +179,10 @@ function expandToRgb(){
 
                 console.log(`***  ${sourceChartName} has color table, need to expand to RGB:`);            
                 
-                cmd = "gdal_translate" + 
-                        " -expand rgb" +         
-                        " -strict" +              
-                        " -of VRT" +             
+                cmd = `gdal_translate` + 
+                        ` -expand rgb` +         
+                        ` -strict` +              
+                        ` -of VRT` +             
                         ` -co "TILED=YES"` +       
                         ` -co "COMPRESS=LZW"` +    
                         ` ${sourceChartName}` + 
@@ -191,9 +191,9 @@ function expandToRgb(){
             else {
                 console.log(`***  ${sourceChartName} does not have color table, do not need to expand to RGB`);
                 
-                cmd = "gdal_translate" +          
-                        " -strict" +
-                        " -of VRT" +
+                cmd = `gdal_translate` +          
+                        ` -strict` +
+                        ` -of VRT` +
                         ` -co "TILED=YES"` +
                         ` -co "COMPRESS=LZW"` +
                         ` ${sourceChartName}` +
@@ -226,58 +226,58 @@ function clipAndWarp(){
 
             // Clip the file it to its clipping shape
             console.log(`*** Clip to vrt --- gdalwarp ${basename}.vrt`);
-            cmd = "gdalwarp" +
-                        " -of vrt" +
-                        " -overwrite" + 
+            cmd = `gdalwarp` +
+                        ` -of vrt` +
+                        ` -overwrite` + 
                         ` -cutline "${shapedfile}"` + 
-                        " -crop_to_cutline" +
-                        " -cblend 10" +
-                        " -r lanczos" +                  
-                        " -dstalpha" +                  
+                        ` -crop_to_cutline` +
+                        ` -cblend 10` +
+                        ` -r lanczos` +                  
+                        ` -dstalpha` +                  
                         ` -co "ALPHA=YES"` +           
                         ` -co "TILED=YES"` +             
-                        " -multi" +                     
-                        " -wo NUM_THREADS=ALL_CPUS" +   
-                        " -wm 1024" +                   
-                        " --config GDAL_CACHEMAX 1024" +
+                        ` -multi` +                     
+                        ` -wo NUM_THREADS=ALL_CPUS` +   
+                        ` -wm 1024` +                   
+                        ` --config GDAL_CACHEMAX 1024` +
                         ` ${expandedfile}` +
                         ` ${clippedfile}`; 
             executeCommand(cmd);
 
             console.log(`*** Warp to vrt --- gdalwarp ${basename}.vrt`);
-            cmd = "gdalwarp" +
-                        " -of vrt" +
-                        " -t_srs EPSG:3857" + 
-                        " -r lanczos" +
-                        " -overwrite" +
-                        " -multi" +
-                        " -wo NUM_THREADS=ALL_CPUS" +
-                        " -wm 1024" +
+            cmd = `gdalwarp` +
+                        ` -of vrt` +
+                        ` -t_srs EPSG:3857` + 
+                        ` -r lanczos` +
+                        ` -overwrite` +
+                        ` -multi` +
+                        ` -wo NUM_THREADS=ALL_CPUS` +
+                        ` -wm 1024` +
                         ` -co "TILED=YES"` +
-                        " --config GDAL_CACHEMAX 1024" +
+                        ` --config GDAL_CACHEMAX 1024` +
                         ` ${clippedfile}` +
                         ` ${warpedfile}`;
             executeCommand(cmd);
             
             console.log(`***  Translate to tif --- gdal_translate ${basename}.tif`);
-            cmd = "gdal_translate" +
-                        " -strict" +
+            cmd = `gdal_translate` +
+                        ` -strict` +
                         ` -co "TILED=YES"` +
                         ` -co "COMPRESS=DEFLATE"` +
                         ` -co "PREDICTOR=1"` +
                         ` -co "ZLEVEL=9"` +
-                        " --config GDAL_CACHEMAX 1024" +
+                        ` --config GDAL_CACHEMAX 1024` +
                         ` ${warpedfile}` +
                         ` ${translatedfile}`;
             executeCommand(cmd);
             
             console.log(`***  Add zoom layers to tif --- gdaladdo ${basename}.tif`);
-            cmd = "gdaladdo" + 
-                    " -ro" +
-                    " -r average" + 
-                    " --config INTERLEAVE_OVERVIEW PIXEL" + 
-                    " --config COMPRESS_OVERVIEW JPEG" +
-                    " --config BIGTIFF_OVERVIEW IF_NEEDED" +
+            cmd = `gdaladdo` + 
+                    ` -ro` +
+                    ` -r average` + 
+                    ` --config INTERLEAVE_OVERVIEW PIXEL` + 
+                    ` --config COMPRESS_OVERVIEW JPEG` +
+                    ` --config BIGTIFF_OVERVIEW IF_NEEDED` +
                     ` ${translatedfile} 2 4 8 16 32 64`; 
             executeCommand(cmd);
         }
@@ -296,10 +296,7 @@ function tileCharts() {
             console.log(`--------Tiling ${file}------------`);
             
             // Create tiles from the source raster
-            let cmd = "gdal2tiles.py" +
-                            ` --zoom=${zoomrange}` +             
-                            ` ${sourcechart}` + 
-                            ` ${tiledir}`;
+            let cmd = `gdal2tiles.py --zoom=${zoomrange} ${sourcechart} ${tiledir}`;
             executeCommand(cmd);
         }
     });
@@ -340,11 +337,8 @@ function makeMbTiles() {
     fs.writeSync(fd, metajson);
     fs.closeSync(fd);
 
-    let mbtiles = dir_9_mbtiled + "/usavfr.mbtiles";   
-    let cmd = "python3 ./mbutil/mb-util" +
-                " --scheme=tms" +              
-                ` ${dir_8_merged}` +
-                ` ${mbtiles}`;
+    let mbtiles = `${dir_9_mbtiled}/usavfr.mbtiles`;   
+    let cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_8_merged} ${mbtiles}`;
     executeCommand(cmd);
 }
 
