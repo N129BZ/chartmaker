@@ -178,26 +178,11 @@ function expandToRgb(){
             if (getGdalInfo(sourceChartName, "Color Table")){
 
                 console.log(`***  ${sourceChartName} has color table, need to expand to RGB:`);            
-                
-                cmd = `gdal_translate` + 
-                        ` -expand rgb` +         
-                        ` -strict` +              
-                        ` -of VRT` +             
-                        ` -co "TILED=YES"` +       
-                        ` -co "COMPRESS=LZW"` +    
-                        ` ${sourceChartName}` + 
-                        ` ${expandedfile}`;
+                cmd = `gdal_translate -expand rgb -strict -of VRT -co "TILED=YES" -co "COMPRESS=LZW" ${sourceChartName} ${expandedfile}`;
             }
             else {
                 console.log(`***  ${sourceChartName} does not have color table, do not need to expand to RGB`);
-                
-                cmd = `gdal_translate` +          
-                        ` -strict` +
-                        ` -of VRT` +
-                        ` -co "TILED=YES"` +
-                        ` -co "COMPRESS=LZW"` +
-                        ` ${sourceChartName}` +
-                        ` ${expandedfile}`;
+                cmd = `gdal_translate -strict -of VRT -co "TILED=YES" -co "COMPRESS=LZW" ${sourceChartName} ${expandedfile}`;
             }
             executeCommand(cmd);
         }
@@ -226,59 +211,19 @@ function clipAndWarp(){
 
             // Clip the file it to its clipping shape
             console.log(`*** Clip to vrt --- gdalwarp ${basename}.vrt`);
-            cmd = `gdalwarp` +
-                        ` -of vrt` +
-                        ` -overwrite` + 
-                        ` -cutline "${shapedfile}"` + 
-                        ` -crop_to_cutline` +
-                        ` -cblend 10` +
-                        ` -r lanczos` +                  
-                        ` -dstalpha` +                  
-                        ` -co "ALPHA=YES"` +           
-                        ` -co "TILED=YES"` +             
-                        ` -multi` +                     
-                        ` -wo NUM_THREADS=ALL_CPUS` +   
-                        ` -wm 1024` +                   
-                        ` --config GDAL_CACHEMAX 1024` +
-                        ` ${expandedfile}` +
-                        ` ${clippedfile}`; 
+            cmd = `gdalwarp -of vrt -overwrite -cutline "${shapedfile}" -crop_to_cutline -cblend 10 -r lanczos -dstalpha -co "ALPHA=YES" -co "TILED=YES" -multi -wo NUM_THREADS=ALL_CPUS -wm 1024 --config GDAL_CACHEMAX 1024 ${expandedfile} ${clippedfile}`; 
             executeCommand(cmd);
 
             console.log(`*** Warp to vrt --- gdalwarp ${basename}.vrt`);
-            cmd = `gdalwarp` +
-                        ` -of vrt` +
-                        ` -t_srs EPSG:3857` + 
-                        ` -r lanczos` +
-                        ` -overwrite` +
-                        ` -multi` +
-                        ` -wo NUM_THREADS=ALL_CPUS` +
-                        ` -wm 1024` +
-                        ` -co "TILED=YES"` +
-                        ` --config GDAL_CACHEMAX 1024` +
-                        ` ${clippedfile}` +
-                        ` ${warpedfile}`;
+            cmd = `gdalwarp -of vrt -t_srs EPSG:3857 -r lanczos -overwrite -multi -wo NUM_THREADS=ALL_CPUS -wm 1024 -co "TILED=YES" --config GDAL_CACHEMAX 1024 ${clippedfile} ${warpedfile}`;
             executeCommand(cmd);
             
             console.log(`***  Translate to tif --- gdal_translate ${basename}.tif`);
-            cmd = `gdal_translate` +
-                        ` -strict` +
-                        ` -co "TILED=YES"` +
-                        ` -co "COMPRESS=DEFLATE"` +
-                        ` -co "PREDICTOR=1"` +
-                        ` -co "ZLEVEL=9"` +
-                        ` --config GDAL_CACHEMAX 1024` +
-                        ` ${warpedfile}` +
-                        ` ${translatedfile}`;
+            cmd = `gdal_translate -strict -co "TILED=YES" -co "COMPRESS=DEFLATE" -co "PREDICTOR=1" -co "ZLEVEL=9" --config GDAL_CACHEMAX 1024 ${warpedfile} ${translatedfile}`;
             executeCommand(cmd);
             
             console.log(`***  Add zoom layers to tif --- gdaladdo ${basename}.tif`);
-            cmd = `gdaladdo` + 
-                    ` -ro` +
-                    ` -r average` + 
-                    ` --config INTERLEAVE_OVERVIEW PIXEL` + 
-                    ` --config COMPRESS_OVERVIEW JPEG` +
-                    ` --config BIGTIFF_OVERVIEW IF_NEEDED` +
-                    ` ${translatedfile} 2 4 8 16 32 64`; 
+            cmd = `gdaladdo -ro -r average --config INTERLEAVE_OVERVIEW PIXEL --config COMPRESS_OVERVIEW JPEG --config BIGTIFF_OVERVIEW IF_NEEDED ${translatedfile} 2 4 8 16 32 64`; 
             executeCommand(cmd);
         }
     });
