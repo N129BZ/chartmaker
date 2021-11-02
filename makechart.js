@@ -31,9 +31,9 @@ program.parse(process.argv);
 // execute each step in sequence
 processArguments(program.opts());
 makeWorkingFolders();
-downloadCharts();
-unzipAndNormalize();
-expandToRgb();
+//downloadCharts();
+//unzipAndNormalize();
+//expandToRgb();
 clipAndWarp();
 tileCharts();
 mergeTiles();
@@ -81,7 +81,7 @@ function processArguments(options) {
     
     chartdate = `${mdy[0]}-${mdy[1]}-${mdy[2]}`;
     
-    if (Date.parse(chartdate) == NaN) {
+    if (Date.parse(chartdate) === NaN) {
         console.log("INVALID DATE FORMAT! Use mm-dd-yyyy or mm/dd/yyyy");
         process.exit(1);
     }
@@ -223,7 +223,7 @@ function clipAndWarp(){
             executeCommand(cmd);
             
             console.log(`***  Add zoom layers to tif --- gdaladdo ${basename}.tif`);
-            cmd = `gdaladdo -ro -r average --config INTERLEAVE_OVERVIEW PIXEL --config COMPRESS_OVERVIEW JPEG --config BIGTIFF_OVERVIEW IF_NEEDED ${translatedfile} 2 4 8 16 32 64`; 
+            cmd = `gdaladdo -ro -r nearest --config INTERLEAVE_OVERVIEW PIXEL --config COMPRESS_OVERVIEW JPEG --config BIGTIFF_OVERVIEW IF_NEEDED ${translatedfile} 2 4 8 16 32 64`; 
             executeCommand(cmd);
         }
     });

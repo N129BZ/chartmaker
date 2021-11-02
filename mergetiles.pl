@@ -109,11 +109,9 @@ sub main {
                                 "$base_tiles_directory/$zoomlevel/$x/$y"
                             );
                         }
-
                     }
                 }
             }
         }
-
     }
 }
