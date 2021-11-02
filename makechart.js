@@ -31,9 +31,9 @@ program.parse(process.argv);
 // execute each step in sequence
 processArguments(program.opts());
 makeWorkingFolders();
-//downloadCharts();
-//unzipAndNormalize();
-//expandToRgb();
+downloadCharts();
+unzipAndNormalize();
+expandToRgb();
 clipAndWarp();
 tileCharts();
 mergeTiles();
