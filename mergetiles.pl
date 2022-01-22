@@ -99,9 +99,8 @@ sub main {
                         # If both base and overlay tiles exist then composite them together with "convert"
                         if ( -e "$base_tiles_directory/$zoomlevel/$x/$y" ) {
                             print "Merging: /$zoomlevel/$x/$y               \r";
-                            qx(convert "$base_tiles_directory/$zoomlevel/$x/$y" "$overlay_tiles_directory/$zoomlevel/$x/$y" -composite "$base_tiles_directory/$zoomlevel/$x/$y");
+                            qx(convert "$base_tiles_directory/$zoomlevel/$x/$y" "$overlay_tiles_directory/$zoomlevel/$x/$y" -gravity center -composite "$base_tiles_directory/$zoomlevel/$x/$y");
                         }
-
                         # Otherwise do a regular copy from overlay tile to base directory
                         else {
                             copy(

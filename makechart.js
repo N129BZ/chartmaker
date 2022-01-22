@@ -5,7 +5,7 @@ const shell = require('shelljs')
 const { program } = require('commander');
 
 let cmd = "";
-let zoomrange = "4-11"; //default
+let zoomrange = "5-11"; //default
 let chartdate = "";
 let workarea = `${__dirname}/workarea`;
 
@@ -19,7 +19,7 @@ let dir_5_warped        = `${workarea}/5_warped`;
 let dir_6_translated    = `${workarea}/6_translated`;
 let dir_7_tiled         = `${workarea}/7_tiled`;
 let dir_8_merged        = `${workarea}/8_merged`;
-let dir_9_mbtiled       = `${workarea}/9_mbtiled`;
+let dir_9_dbtiles       = `${workarea}/9_dbtiles`;
 
 // get the commandline arguments
 program
@@ -28,16 +28,25 @@ program
 program.showSuggestionAfterError();
 program.parse(process.argv);
 
+let rawdata; 
+let list; 
+let charturl; 
+let areas; 
+let tiledbname; 
+
 // execute each step in sequence
 processArguments(program.opts());
 makeWorkingFolders();
 downloadCharts();
 unzipAndNormalize();
 expandToRgb();
-clipAndWarp();
-tileCharts();
+processImages();
 mergeTiles();
 makeMbTiles();
+convertPngsToJpegs();
+addOverviewsToMbtiles();
+
+// TODO: Edit the metadata table in the JPG database
 
 console.log("Chart processing completed!");
 process.exit(0);
@@ -86,6 +95,11 @@ function processArguments(options) {
         process.exit(1);
     }
 
+    rawdata = fs.readFileSync(`${__dirname}/chartlist.json`);
+    list = JSON.parse(rawdata);
+    charturl = list.charturl.replace("<chartdate>", chartdate);
+    areas = list.areas;
+    tiledbname = list.tiledbname;
     console.log(`Arguments processed: ${chartdate}, ${zoomrange}`);
 }
 
@@ -101,16 +115,10 @@ function makeWorkingFolders() {
     if (!fs.existsSync(dir_6_translated)) fs.mkdirSync(dir_6_translated);
     if (!fs.existsSync(dir_7_tiled)) fs.mkdirSync(dir_7_tiled);
     if (!fs.existsSync(dir_8_merged)) fs.mkdirSync(dir_8_merged);
-    if (!fs.existsSync(dir_9_mbtiled)) fs.mkdirSync(dir_9_mbtiled);
+    if (!fs.existsSync(dir_9_dbtiles)) fs.mkdirSync(dir_9_dbtiles);
 }
 
 function downloadCharts() {
-    let rawdata = fs.readFileSync(`${__dirname}/chartlist.json`);
-    let list = JSON.parse(rawdata);
-    
-    let charturl = list.charturl.replace("<chartdate>", chartdate);
-    let areas = list.areas;
-
     areas.forEach(area => {
         let serverfile = charturl.replace("<chartname>", area);
         let localfile = area.replace("-", "_");
@@ -178,23 +186,23 @@ function expandToRgb(){
             if (getGdalInfo(sourceChartName, "Color Table")){
 
                 console.log(`***  ${sourceChartName} has color table, need to expand to RGB:`);            
-                cmd = `gdal_translate -expand rgb -strict -of VRT -co "TILED=YES" -co "COMPRESS=LZW" ${sourceChartName} ${expandedfile}`;
+                cmd = `gdal_translate -expand rgb -strict -of VRT -co "TILED=YES" -co "COMPRESS=JPEG" ${sourceChartName} ${expandedfile}`;
             }
             else {
                 console.log(`***  ${sourceChartName} does not have color table, do not need to expand to RGB`);
-                cmd = `gdal_translate -strict -of VRT -co "TILED=YES" -co "COMPRESS=LZW" ${sourceChartName} ${expandedfile}`;
+                cmd = `gdal_translate -strict -of VRT -co "TILED=YES" -co "COMPRESS=JPEG" ${sourceChartName} ${expandedfile}`;
             }
             executeCommand(cmd);
         }
     });
 }
 
-function clipAndWarp(){
+function processImages(){
     /*--------------------------------------------------------------
-     1) clip the source file with it's clipping shape file 
+     1) clip the source image to VRT with the associat-co "COMPRESS=DEFLATE" -co "PREd shape file 
      2) warp to EPSG:3857 so that final output pixels are square
-     3) tramslate the vrt to a Georeferenced tif file
-     4) add overlay pyramid to tif 
+     3) tramslate the VRT back into a GTIFF file
+     4) add zoom overlays to the GTIFF 
     --------------------------------------------------------------*/
     let clippedShapesDir = `${__dirname}/clipshapes`;
     
@@ -203,45 +211,30 @@ function clipAndWarp(){
         if (file.endsWith(".vrt")) {
             // Get the file name without extension
             let basename = file.replace(".vrt", "");
+
+            console.log(`************** Processing chart: ${basename} **************`);
+
             let shapedfile = `${clippedShapesDir}/${basename}.shp`;
             let expandedfile = `${dir_3_expanded}/${basename}.vrt`;
             let clippedfile = `${dir_4_clipped}/${basename}.vrt`;
             let warpedfile = `${dir_5_warped}/${basename}.vrt`;
             let translatedfile = `${dir_6_translated}/${basename}.tif`;
-
-            // Clip the file it to its clipping shape
-            console.log(`*** Clip to vrt --- gdalwarp ${basename}.vrt`);
+            let tiledir = `${dir_7_tiled}/${basename}`;
+            
+            console.log(`  * Clip to VRT`);
             cmd = `gdalwarp -of vrt -overwrite -cutline "${shapedfile}" -crop_to_cutline -cblend 10 -r lanczos -dstalpha -co "ALPHA=YES" -co "TILED=YES" -multi -wo NUM_THREADS=ALL_CPUS -wm 1024 --config GDAL_CACHEMAX 1024 ${expandedfile} ${clippedfile}`; 
             executeCommand(cmd);
 
-            console.log(`*** Warp to vrt --- gdalwarp ${basename}.vrt`);
+            console.log(`  * Warp VRT to EPSG:3857`);
             cmd = `gdalwarp -of vrt -t_srs EPSG:3857 -r lanczos -overwrite -multi -wo NUM_THREADS=ALL_CPUS -wm 1024 -co "TILED=YES" --config GDAL_CACHEMAX 1024 ${clippedfile} ${warpedfile}`;
             executeCommand(cmd);
             
-            console.log(`***  Translate to tif --- gdal_translate ${basename}.tif`);
-            cmd = `gdal_translate -strict -co "TILED=YES" -co "COMPRESS=DEFLATE" -co "PREDICTOR=1" -co "ZLEVEL=9" --config GDAL_CACHEMAX 1024 ${warpedfile} ${translatedfile}`;
+            console.log(`  * Translate VRT to GTIFF`);
+            cmd = `gdal_translate -strict -co "TILED=YES" -co "COMPRESS=DEFLATE" -co "PREDICTOR=1" -co "ZLEVEL=9" -co "GDAL_NUM_THREADS=ALL_CPUS" --config GDAL_CACHEMAX 1024 ${warpedfile} ${translatedfile}`;
             executeCommand(cmd);
             
-            console.log(`***  Add zoom layers to tif --- gdaladdo ${basename}.tif`);
-            cmd = `gdaladdo -ro -r nearest --config INTERLEAVE_OVERVIEW PIXEL --config COMPRESS_OVERVIEW JPEG --config BIGTIFF_OVERVIEW IF_NEEDED ${translatedfile} 2 4 8 16 32 64`; 
-            executeCommand(cmd);
-        }
-    });
-}
-
-function tileCharts() {
-    let files = fs.readdirSync(dir_6_translated);
-    
-    files.forEach((file) => {
-        if (file.endsWith(".tif")) { 
-            let basename = file.replace(".tif", "");       
-            let sourcechart = `${dir_6_translated}/${file}`;
-            let tiledir = `${dir_7_tiled}/${basename}`;
-            
-            console.log(`--------Tiling ${file}------------`);
-            
-            // Create tiles from the source raster
-            let cmd = `gdal2tiles.py --zoom=${zoomrange} ${sourcechart} ${tiledir}`;
+            console.log(`  * Tile GTIFF`);
+            cmd = `gdal2tiles.py --zoom=11 ${translatedfile} ${tiledir}`;
             executeCommand(cmd);
         }
     });
@@ -252,12 +245,14 @@ function mergeTiles() {
     files.forEach((file) => {
         // Merge the individual area tiles into one overall tileset
         let sourcedir = `${dir_7_tiled}/${file}`;
+        console.log(`  * Merging ${sourcedir} tiles`);
         let cmd = `perl ./mergetiles.pl ${sourcedir} ${dir_8_merged}`;
         executeCommand(cmd);
     });
 }
 
 function makeMbTiles() {
+    console.log(`  * Making MBTILES database`);
     let zooms = zoomrange.split("-");
     let minzoom = zooms[0];
     let maxzoom = zooms[0];
@@ -269,12 +264,12 @@ function makeMbTiles() {
     // create a metadata.json file in the root of the tiles directory,
     // mbutil will use this to generate a metadata table in the database.  
     let metajson = `{ 
-        "name": "usavfr",
+        "name": "vfrpng",
         "description": "VFR Sectional Charts",
         "version": "1",
         "type": "baselayer",
         "format": "png",
-        "minzoom": "${minzoom}",
+        "minzoom": "${minzoom}", 
         "maxzoom": "${maxzoom}" 
     }`;
     let fpath = `${dir_8_merged}/metadata.json`; 
@@ -282,13 +277,28 @@ function makeMbTiles() {
     fs.writeSync(fd, metajson);
     fs.closeSync(fd);
 
-    let mbtiles = `${dir_9_mbtiled}/usavfr.mbtiles`;   
-    let cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_8_merged} ${mbtiles}`;
+    let mbtiles = `${dir_9_dbtiles}/vfrpng.mbtiles`;   
+    let cmd = `python3 ./mbutil/mb-util --scheme=tms --silent ${dir_8_merged} ${mbtiles}`;
     executeCommand(cmd);
 }
 
+function convertPngsToJpegs() {
+    console.log(`  * Converting mbtiles to JPEG format`);
+    let mbtilespng = `${dir_9_dbtiles}/vfrpng.mbtiles`;
+    let mbtilesjpg = `${dir_9_dbtiles}/${tiledbname}`;
+    let cmd = `gdal_translate -co "TILE_FORMAT=JPEG" -of MBTILES ${mbtilespng} ${mbtilesjpg}`;
+    executeCommand(cmd);
+}
+
+function addOverviewsToMbtiles() {
+    let mbtilesfile = `${dir_9_dbtiles}/${tiledbname}`;
+    console.log(`  * Add zoom overlays to MBTILES`);
+    cmd = `gdaladdo -r nearest ${mbtilesfile} 2 4 8 16 32 64`;
+    executeCommand(cmd);        
+}
+
 function executeCommand(command) {
-    console.log(command)
+    //console.log(command)
     try {
         const { stdout, stderr, code } = shell.exec(command, { silent: false });
         if(code != 0) {
