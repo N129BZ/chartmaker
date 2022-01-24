@@ -4,6 +4,7 @@
   "description": "Process FAA sectional chart TIF images into a single mbtiles database for xyz mapping",
   "main": "index.js",
   "dependencies": {
+    "canvas": "^2.7.0",
     "commander": "^8.2.0",
     "fs": "^0.0.1-security",
     "shelljs": "^0.8.4"

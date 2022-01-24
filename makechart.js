@@ -3,6 +3,7 @@
 const fs = require("fs");
 const shell = require('shelljs')
 const { program } = require('commander');
+const Canvas = require('canvas');
 
 let cmd = "";
 let zoomrange = "5-11"; //default
@@ -39,53 +40,48 @@ processArguments(program.opts());
 makeWorkingFolders();
 downloadCharts();
 unzipAndNormalize();
-expandToRgb();
 processImages();
-mergeTiles();
+mergeTiles(); 
 makeMbTiles();
-convertPngsToJpegs();
+convertPngToJpeg();
 addOverviewsToMbtiles();
-
-// TODO: Edit the metadata table in the JPG database
 
 console.log("Chart processing completed!");
 process.exit(0);
 
 
 function processArguments(options) {
-    let chdt = options.dateofchart.replace(" ", "");
-    let zrng = options.zoomrange.replace(" ", "");
+    let chdate = options.dateofchart.replace(" ", "");
+    let zrange = options.zoomrange.replace(" ", "");
+    let error = false;
 
-    // if user specified a range, validate number(s)
-    let rngerror = false;
-    if (zrng.search("-") > -1) {
-        
-        let rgs = zrng.split("-");
-        if (isNaN(rgs[0]) || isNaN(rgs[1])) {
-            rngerror = true;
+    if (zrange.search("-") > -1) {
+        let ranges = zrange.split("-");
+        if (isNaN(ranges[0]) || isNaN(ranges[1])) {
+            error = true;
         }
     }
     else {
-        if (isNaN(zrng)) {
-            rngerror = true;
+        if (isNaN(zrange)) {
+            error = true;
         }
     }
 
-    if (rngerror) {
+    if (error) {
         console.log("ERROR PARSING RANGE! Use n-n or just n where n is a number");
         process.exit(1);
     }
     else {
-        zoomrange = zrng;
+        zoomrange = zrange;
     }
     
     let mdy = [];
 
-    if (chdt.search("/") > -1) {
-        mdy = chdt.split("/");
+    if (chdate.search("/") > -1) {
+        mdy = chdate.split("/");
     }
-    else if (chdt.search("-") > -1) {
-        mdy = chdt.split("-");
+    else if (chdate.search("-") > -1) {
+        mdy = chdate.split("-");
     }
     
     chartdate = `${mdy[0]}-${mdy[1]}-${mdy[2]}`;
@@ -171,32 +167,6 @@ function unzipAndNormalize() {
     }); 
 }
 
-function expandToRgb(){
-    let files = fs.readdirSync(dir_2_normalized);
-
-    files.forEach((file) => { 
-        if (file.endsWith(".tif")) {
-            console.log("*** Expand --- gdal_translate " + file);
-
-            let vrtfile = file.replace(".tif", ".vrt");
-            let sourceChartName = `${dir_2_normalized}/${file}`;
-            let expandedfile = `${dir_3_expanded}/${vrtfile}`;
-            
-            // Expand this file to RGBA if it has a color table
-            if (getGdalInfo(sourceChartName, "Color Table")){
-
-                console.log(`***  ${sourceChartName} has color table, need to expand to RGB:`);            
-                cmd = `gdal_translate -expand rgb -strict -of VRT -co "TILED=YES" -co "COMPRESS=JPEG" ${sourceChartName} ${expandedfile}`;
-            }
-            else {
-                console.log(`***  ${sourceChartName} does not have color table, do not need to expand to RGB`);
-                cmd = `gdal_translate -strict -of VRT -co "TILED=YES" -co "COMPRESS=JPEG" ${sourceChartName} ${expandedfile}`;
-            }
-            executeCommand(cmd);
-        }
-    });
-}
-
 function processImages(){
     /*--------------------------------------------------------------
      1) clip the source image to VRT with the associat-co "COMPRESS=DEFLATE" -co "PREd shape file 
@@ -206,35 +176,46 @@ function processImages(){
     --------------------------------------------------------------*/
     let clippedShapesDir = `${__dirname}/clipshapes`;
     
-    let files = fs.readdirSync(dir_3_expanded);
+    let files = fs.readdirSync(dir_2_normalized);
     files.forEach((file) => {
-        if (file.endsWith(".vrt")) {
-            // Get the file name without extension
-            let basename = file.replace(".vrt", "");
+        if (file.endsWith(".tif")) {
+            
+            let basename = file.replace(".tif", "");
 
             console.log(`************** Processing chart: ${basename} **************`);
-
-            let shapedfile = `${clippedShapesDir}/${basename}.shp`;
+            
+            let shapefile = `${clippedShapesDir}/${basename}.shp`;
+            let normalizedfile = `${dir_2_normalized}/${basename}.tif`;
             let expandedfile = `${dir_3_expanded}/${basename}.vrt`;
             let clippedfile = `${dir_4_clipped}/${basename}.vrt`;
             let warpedfile = `${dir_5_warped}/${basename}.vrt`;
             let translatedfile = `${dir_6_translated}/${basename}.tif`;
             let tiledir = `${dir_7_tiled}/${basename}`;
             
-            console.log(`  * Clip to VRT`);
-            cmd = `gdalwarp -of vrt -overwrite -cutline "${shapedfile}" -crop_to_cutline -cblend 10 -r lanczos -dstalpha -co "ALPHA=YES" -co "TILED=YES" -multi -wo NUM_THREADS=ALL_CPUS -wm 1024 --config GDAL_CACHEMAX 1024 ${expandedfile} ${clippedfile}`; 
+            if (getGdalInfo(normalizedfile, "Color Table")){
+                console.log(`  * Translate color table to RGB GTiff`);
+                cmd = `gdal_translate -strict -of vrt -expand rgb ${normalizedfile} ${expandedfile}`;
+            }
+            else {
+                console.log(`  * No color table expansion needed`)
+                cmd = `gdal_translate -strict -of ${normalizedfile} ${expandedfile}`;
+            }
             executeCommand(cmd);
 
-            console.log(`  * Warp VRT to EPSG:3857`);
-            cmd = `gdalwarp -of vrt -t_srs EPSG:3857 -r lanczos -overwrite -multi -wo NUM_THREADS=ALL_CPUS -wm 1024 -co "TILED=YES" --config GDAL_CACHEMAX 1024 ${clippedfile} ${warpedfile}`;
+            console.log(`  * Clip border off of virtual image`);
+            cmd = `gdalwarp -of vrt -r lanczos -multi -cutline "${shapefile}" -crop_to_cutline -cblend 10 -dstalpha -co ALPHA=YES -wo NUM_THREADS=ALL_CPUS -wm 1024 --config GDAL_CACHEMAX 1024 ${expandedfile} ${clippedfile}`; 
+            executeCommand(cmd);
+
+            console.log(`  * Warp virtual image to EPSG:3857`);
+            cmd = `gdalwarp -of vrt -t_srs EPSG:3857 -r lanczos -multi -wo NUM_THREADS=ALL_CPUS -wm 1024 --config GDAL_CACHEMAX 1024 ${clippedfile} ${warpedfile}`;
             executeCommand(cmd);
             
-            console.log(`  * Translate VRT to GTIFF`);
-            cmd = `gdal_translate -strict -co "TILED=YES" -co "COMPRESS=DEFLATE" -co "PREDICTOR=1" -co "ZLEVEL=9" -co "GDAL_NUM_THREADS=ALL_CPUS" --config GDAL_CACHEMAX 1024 ${warpedfile} ${translatedfile}`;
+            console.log(`  * Translate clipped & warped virtual image back into GTiff`);
+            cmd = `gdal_translate -co TILED=YES -co COMPRESS=JPEG -co JPEG_QUALITY=90 -co INTERLEAVE=PIXEL -co NUM_THREADS=ALL_CPUS ${warpedfile} ${translatedfile}`;
             executeCommand(cmd);
             
             console.log(`  * Tile GTIFF`);
-            cmd = `gdal2tiles.py --zoom=11 ${translatedfile} ${tiledir}`;
+            cmd = `gdal2tiles.py --zoom=11 --processes=4 -x ${translatedfile} ${tiledir}`;
             executeCommand(cmd);
         }
     });
@@ -264,12 +245,12 @@ function makeMbTiles() {
     // create a metadata.json file in the root of the tiles directory,
     // mbutil will use this to generate a metadata table in the database.  
     let metajson = `{ 
-        "name": "vfrpng",
+        "name": "temp",
         "description": "VFR Sectional Charts",
-        "version": "1",
+        "version": "1.0",
         "type": "baselayer",
         "format": "png",
-        "minzoom": "${minzoom}", 
+        "minzoom": "${maxzoom}", 
         "maxzoom": "${maxzoom}" 
     }`;
     let fpath = `${dir_8_merged}/metadata.json`; 
@@ -277,28 +258,27 @@ function makeMbTiles() {
     fs.writeSync(fd, metajson);
     fs.closeSync(fd);
 
-    let mbtiles = `${dir_9_dbtiles}/vfrpng.mbtiles`;   
-    let cmd = `python3 ./mbutil/mb-util --scheme=tms --silent ${dir_8_merged} ${mbtiles}`;
+    let mbtiles = `${dir_9_dbtiles}/temp.mbtiles`;   
+    let cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_8_merged} ${mbtiles}`;
     executeCommand(cmd);
 }
 
-function convertPngsToJpegs() {
+function convertPngToJpeg() {
     console.log(`  * Converting mbtiles to JPEG format`);
-    let mbtilespng = `${dir_9_dbtiles}/vfrpng.mbtiles`;
+    let mbtilespng = `${dir_9_dbtiles}/temp.mbtiles`;
     let mbtilesjpg = `${dir_9_dbtiles}/${tiledbname}`;
-    let cmd = `gdal_translate -co "TILE_FORMAT=JPEG" -of MBTILES ${mbtilespng} ${mbtilesjpg}`;
+    let cmd = `gdal_translate -co TILE_FORMAT=JPEG -co COMPRESS=JPEG -co JPEG_QUALITY=90 -co INTERLEAVE=PIXEL -co PHOTOMETRIC=YCBCR -co NUM_THREADS=ALL_CPUS --config GDAL_CACHEMAX 1024 -of MBTILES ${mbtilespng} ${mbtilesjpg}`;
     executeCommand(cmd);
 }
 
 function addOverviewsToMbtiles() {
     let mbtilesfile = `${dir_9_dbtiles}/${tiledbname}`;
     console.log(`  * Add zoom overlays to MBTILES`);
-    cmd = `gdaladdo -r nearest ${mbtilesfile} 2 4 8 16 32 64`;
+    cmd = `gdaladdo -r average --config INTERLEAVE_OVERVIEW PIXEL --config PHOTOMETRIC_OVERVIEW YCBCR --config COMPRESS_OVERVIEW JPEG --config JPEG_QUALITY_OVERVIEW 90 --config GDAL_NUM_THREADS ALL_CPUS ${mbtilesfile} 2 4 8 16 32 64`;
     executeCommand(cmd);        
 }
 
 function executeCommand(command) {
-    //console.log(command)
     try {
         const { stdout, stderr, code } = shell.exec(command, { silent: false });
         if(code != 0) {
@@ -321,8 +301,7 @@ function getGdalInfo(file, searchtext) {
     let gdalresults = `${__dirname}/gdal.txt`
 
     cmd = `gdalinfo ${file} -noct > ${gdalresults}`; 
-    console.log(cmd);
-
+    
     let { stderr } = shell.exec(cmd, { silent: true })
     if (stderr) {
         console.log(stderr);
@@ -333,4 +312,21 @@ function getGdalInfo(file, searchtext) {
     fs.rmSync(gdalresults);
     
     return retval;
+}
+
+function isTransparentImage(imagepath) {
+    let retval = 0;
+    let imagedata = fs.readFileSync(imagepath);
+    let img = new Canvas.Image(); 
+    img.src = imagedata;
+    let canvas = new Canvas.Canvas(img.width, img.height); 
+    let ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+    let data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    let opacity = 0;
+    for (let i = 0; i < data.length; i += 4) {
+        opacity += data[i + 3];
+    }
+    retval = (opacity / 255) / (data.length / 4);
+    return (retval === 0);
 }
