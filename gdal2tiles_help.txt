@@ -1,0 +1,64 @@
+Usage: gdal2tiles.py [options] input_file [output]
+
+Options:
+  --version             show program's version number and exit
+  -h, --help            show this help message and exit
+  -p PROFILE, --profile=PROFILE
+                        Tile cutting profile (mercator,geodetic,raster,LINZAnt
+                        articaMapTilegrid,APSTILE) - default 'mercator'
+                        (Google Maps compatible)
+  -r RESAMPLING, --resampling=RESAMPLING
+                        Resampling method (average,near,bilinear,cubic,cubicsp
+                        line,lanczos,antialias,mode,max,min,med,q1,q3) -
+                        default 'average'
+  -s SRS, --s_srs=SRS   The spatial reference system used for the source input
+                        data
+  -z ZOOM, --zoom=ZOOM  Zoom levels to render (format:'2-5' or '10').
+  -e, --resume          Resume mode. Generate only missing files.
+  -a NODATA, --srcnodata=NODATA
+                        Value in the input dataset considered as transparent
+  -d, --tmscompatible   When using the geodetic profile, specifies the base
+                        resolution as 0.703125 or 2 tiles at zoom level 0.
+  --xyz                 Use XYZ tile numbering (OSM Slippy Map tiles) instead
+                        of TMS
+  -v, --verbose         Print status messages to stdout
+  -x, --exclude         Exclude transparent tiles from result tileset
+  -q, --quiet           Disable messages and status to stdout
+  --processes=NB_PROCESSES
+                        Number of processes to use for tiling
+  --tilesize=PIXELS     Width and height in pixel of a tile
+
+  KML (Google Earth) options:
+    Options for generated Google Earth SuperOverlay metadata
+
+    -k, --force-kml     Generate KML for Google Earth - default for 'geodetic'
+                        profile and 'raster' in EPSG:4326. For a dataset with
+                        different projection use with caution!
+    -n, --no-kml        Avoid automatic generation of KML files for EPSG:4326
+    -u URL, --url=URL   URL address where the generated tiles are going to be
+                        published
+
+  Web viewer options:
+    Options for generated HTML viewers a la Google Maps
+
+    -w WEBVIEWER, --webviewer=WEBVIEWER
+                        Web viewer to generate
+                        (all,google,openlayers,leaflet,mapml,none) - default
+                        'all'
+    -t TITLE, --title=TITLE
+                        Title of the map
+    -c COPYRIGHT, --copyright=COPYRIGHT
+                        Copyright for the map
+    -g GOOGLEKEY, --googlekey=GOOGLEKEY
+                        Google Maps API key from
+                        http://code.google.com/apis/maps/signup.html
+    -b BINGKEY, --bingkey=BINGKEY
+                        Bing Maps API key from https://www.bingmapsportal.com/
+
+  MapML options:
+    Options for generated MapML file
+
+    --mapml-template    Filename of a template mapml file where variables will
+                        be substituted. If not specified, the generic
+                        template_tiles.mapml file from GDAL data resources
+                        will be used

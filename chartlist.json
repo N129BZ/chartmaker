@@ -1,6 +1,6 @@
 {
     "charturl": "https://aeronav.faa.gov/visual/<chartdate>/sectional-files/<chartname>.zip",
-    "tiledbname": "usavfr.mbtiles",
+    "tiledbname": "vfrjpg.mbtiles",
     "areas":
         [
             "Albuquerque",
