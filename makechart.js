@@ -36,6 +36,7 @@ let tiledbname;
 let cleanMerge = false;
 let tiledImageQuality = 90;
 let stepsCompleted = 0;
+let renameWorkFolder = true;
 
 processArguments(program.opts());
 makeWorkingFolders();
@@ -49,7 +50,7 @@ quantizePngImages();
 makeMbTiles();
 
 // assuming we got here, re-name the working folder as the chart date
-if (stepsCompleted === 9) {
+if (stepsCompleted === 9 && renameWorkFolder) {
     fs.renameSync(workarea, `${__dirname}/chart_process_${chartdate}`);
 }
 
@@ -60,14 +61,15 @@ process.exit(0);
 function processArguments(options) {
     let chdate = options.dateofchart.replace(" ", "");
     let error = false;
-
     let rawdata = fs.readFileSync(`${__dirname}/settings.json`);
+
     settings = JSON.parse(rawdata);
     charturl = settings.charturl.replace("<chartdate>", chartdate);
     areas = settings.areas;
     tiledbname = settings.tiledbname;
     cleanMerge = settings.cleanMergeFolderAtQuantize;
     tiledImageQuality = settings.tiledImageQuality;
+    renameWorkFolder = settings.renameWorkFolderOnCompletion;
 
     let zrange = settings.zoomRange;
 
