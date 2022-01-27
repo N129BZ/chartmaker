@@ -25,7 +25,7 @@ const dir_9_dbtiles       = `${workarea}/9_dbtiles`;
 
 // get the commandline arguments
 program
-  .requiredOption('-d, --dateofchart <mm-dd-YYYY>', 'enter a valid date in the format mm-dd-YYYY');
+    .option('-d, --dateofchart <mm-dd-YYYY>', 'enter a valid date in the format mm-dd-YYYY');
 program.showSuggestionAfterError();
 program.parse(process.argv);
 
@@ -40,8 +40,6 @@ let renameWorkFolder = true;
 
 processArguments(program.opts());
 makeWorkingFolders();
-
-// execute each step in sequence 
 downloadCharts();
 unzipAndNormalize();
 processImages();
@@ -49,7 +47,8 @@ mergeTiles();
 quantizePngImages();
 makeMbTiles();
 
-// assuming we got here, re-name the working folder as the chart date
+// if we got here, if all steps completed and the user settings
+// indicate, re-name the working folder as the chart date
 if (stepsCompleted === 9 && renameWorkFolder) {
     fs.renameSync(workarea, `${__dirname}/chart_process_${chartdate}`);
 }
@@ -59,10 +58,11 @@ process.exit(0);
 
 
 function processArguments(options) {
-    let chdate = options.dateofchart.replace(" ", "");
+    console.log(options);
+
     let error = false;
     let rawdata = fs.readFileSync(`${__dirname}/settings.json`);
-
+    
     settings = JSON.parse(rawdata);
     charturl = settings.charturl.replace("<chartdate>", chartdate);
     areas = settings.areas;
@@ -85,22 +85,27 @@ function processArguments(options) {
         }
     }
 
-    let mdy = [];
+    if (options.dateofchart === undefined) {
+        loadBestChartDate();
+    }
+    else {
+        let chdate = options.dateofchart.replace(" ", "");
+        let mdy = [];
 
-    if (chdate.search("/") > -1) {
-        mdy = chdate.split("/");
+        if (chdate.search("/") > -1) {
+            mdy = chdate.split("/");
+        }
+        else if (chdate.search("-") > -1) {
+            mdy = chdate.split("-");
+        }
+        
+        chartdate = `${mdy[0]}-${mdy[1]}-${mdy[2]}`;
+        
+        if (Date.parse(chartdate) === NaN) {
+            console.log("INVALID DATE FORMAT! Use mm-dd-yyyy or mm/dd/yyyy");
+            process.exit(1);
+        }
     }
-    else if (chdate.search("-") > -1) {
-        mdy = chdate.split("-");
-    }
-    
-    chartdate = `${mdy[0]}-${mdy[1]}-${mdy[2]}`;
-    
-    if (Date.parse(chartdate) === NaN) {
-        console.log("INVALID DATE FORMAT! Use mm-dd-yyyy or mm/dd/yyyy");
-        process.exit(1);
-    }
-
     console.log(`Arguments processed: ${chartdate}`);
 }
 
@@ -119,6 +124,12 @@ function makeWorkingFolders() {
     if (!fs.existsSync(dir_8_quantized)) fs.mkdirSync(dir_8_quantized);
     if (!fs.existsSync(dir_9_dbtiles)) fs.mkdirSync(dir_9_dbtiles);
 }
+
+class dateObject {
+    constructor(date) {
+        this.date = new Date(date);
+    }
+};
 
 function downloadCharts() {
     areas.forEach(area => {
@@ -319,6 +330,31 @@ function executeCommand(command) {
     }
 }
 
+function loadBestChartDate() {
+    let thisdate = new  Date();
+    let thistime = thisdate.getTime();
+    let cdates = [];
+
+    settings.chartdates.forEach((cdate) => {
+        cdates.push(new Date(cdate))
+    });
+    
+    let sortedDates = cdates.sort((a, b) => b.date - a.date).reverse();
+    cdates.every((obj) => {
+        let dtime = obj.getTime();
+        let tdiff = dtime - thistime;
+        let tdays = tdiff / (1000 * 3600 * 24);
+        if (Math.abs(tdays) <= 20) {
+            let m = pad2(obj.getMonth()+1); // months (0-11)
+            let d = pad2(obj.getDate());    // day (1-31)
+            let y= obj.getFullYear();
+            chartdate = `${d}-${m}-${y}`;
+            return true;
+        }
+    })
+    console.log(chartdate);
+}
+
 // helper function(s)
 function replaceAll(string, search, replace) {
     return string.split(search).join(replace);
@@ -339,4 +375,8 @@ function getGdalInfo(file, searchtext) {
     fs.rmSync(gdalresults);
     
     return retval;
+}
+
+function pad2(n) {
+    return (n < 10 ? '0' : '') + n;
 }
