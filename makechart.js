@@ -3,40 +3,44 @@
 const fs = require("fs");
 const shell = require('shelljs')
 const { program } = require('commander');
-const Canvas = require('canvas');
 
+// global editable variables
 let cmd = "";
 let zoomrange = "5-11"; //default
 let chartdate = "";
 let workarea = `${__dirname}/workarea`;
 
-// make all the working directories
-let dir_0_download      = `${workarea}/0_download`;
-let dir_1_unzipped      = `${workarea}/1_unzipped`;
-let dir_2_normalized    = `${workarea}/2_normalized`;
-let dir_3_clipped       = `${workarea}/3_clipped`;
-let dir_4_warped        = `${workarea}/4_warped`;
-let dir_5_expanded      = `${workarea}/5_expanded`;
-let dir_6_tiled         = `${workarea}/6_tiled`;
-let dir_7_merged        = `${workarea}/7_merged`;
-let dir_8_dbtiles       = `${workarea}/8_dbtiles`;
+// working directory constants
+const dir_0_download      = `${workarea}/0_download`;
+const dir_1_unzipped      = `${workarea}/1_unzipped`;
+const dir_2_normalized    = `${workarea}/2_normalized`;
+const dir_3_expanded      = `${workarea}/3_expanded`;
+const dir_4_clipped       = `${workarea}/4_clipped`;
+const dir_5_warped        = `${workarea}/5_warped`;
+const dir_6_translated    = `${workarea}/6_translated`;
+const dir_7_tiled         = `${workarea}/7_tiled`;
+const dir_8_merged        = `${workarea}/8_merged`;
+const dir_8_quantized     = `${workarea}/8_quantized`;
+const dir_9_dbtiles       = `${workarea}/9_dbtiles`;
 
 // get the commandline arguments
 program
-  .requiredOption('-d, --dateofchart <mm-dd-YYYY>', 'enter a valid date in the format mm-dd-YYYY')
-  .option('-z, --zoomrange <range>', 'enter a hyphen-seperated zoom range or a single zoom level', '4-11');
+  .requiredOption('-d, --dateofchart <mm-dd-YYYY>', 'enter a valid date in the format mm-dd-YYYY');
 program.showSuggestionAfterError();
 program.parse(process.argv);
 
-let rawdata; 
-let list; 
+let settings; 
 let charturl; 
 let areas; 
 let tiledbname;
+let cleanMerge = false;
+let tiledImageQuality = 90;
+let stepsCompleted = 0;
 
-// execute each step in sequence
 processArguments(program.opts());
 makeWorkingFolders();
+
+// execute each step in sequence 
 downloadCharts();
 unzipAndNormalize();
 processImages();
@@ -44,14 +48,28 @@ mergeTiles();
 quantizePngImages();
 makeMbTiles();
 
+// assuming we got here, re-name the working folder as the chart date
+if (stepsCompleted === 9) {
+    fs.renameSync(workarea, `${__dirname}/chart_process_${chartdate}`);
+}
+
 console.log("Chart processing completed!");
 process.exit(0);
 
 
 function processArguments(options) {
     let chdate = options.dateofchart.replace(" ", "");
-    let zrange = options.zoomrange.replace(" ", "");
     let error = false;
+
+    let rawdata = fs.readFileSync(`${__dirname}/settings.json`);
+    settings = JSON.parse(rawdata);
+    charturl = settings.charturl.replace("<chartdate>", chartdate);
+    areas = settings.areas;
+    tiledbname = settings.tiledbname;
+    cleanMerge = settings.cleanMergeFolderAtQuantize;
+    tiledImageQuality = settings.tiledImageQuality;
+
+    let zrange = settings.zoomRange;
 
     if (zrange.search("-") > -1) {
         let ranges = zrange.split("-");
@@ -65,14 +83,6 @@ function processArguments(options) {
         }
     }
 
-    if (error) {
-        console.log("ERROR PARSING RANGE! Use n-n or just n where n is a number");
-        process.exit(1);
-    }
-    else {
-        zoomrange = zrange;
-    }
-    
     let mdy = [];
 
     if (chdate.search("/") > -1) {
@@ -89,12 +99,7 @@ function processArguments(options) {
         process.exit(1);
     }
 
-    rawdata = fs.readFileSync(`${__dirname}/chartlist.json`);
-    list = JSON.parse(rawdata);
-    charturl = list.charturl.replace("<chartdate>", chartdate);
-    areas = list.areas;
-    tiledbname = list.tiledbname;
-    console.log(`Arguments processed: ${chartdate}, ${zoomrange}`);
+    console.log(`Arguments processed: ${chartdate}`);
 }
 
 function makeWorkingFolders() {
@@ -103,12 +108,14 @@ function makeWorkingFolders() {
     if (!fs.existsSync(dir_0_download)) fs.mkdirSync(dir_0_download);
     if (!fs.existsSync(dir_1_unzipped)) fs.mkdirSync(dir_1_unzipped);
     if (!fs.existsSync(dir_2_normalized)) fs.mkdirSync(dir_2_normalized);
-    if (!fs.existsSync(dir_3_clipped)) fs.mkdirSync(dir_3_clipped);
-    if (!fs.existsSync(dir_4_warped)) fs.mkdirSync(dir_4_warped);
-    if (!fs.existsSync(dir_5_expanded)) fs.mkdirSync(dir_5_expanded);
-    if (!fs.existsSync(dir_6_tiled)) fs.mkdirSync(dir_6_tiled);
-    if (!fs.existsSync(dir_7_merged)) fs.mkdirSync(dir_7_merged);
-    if (!fs.existsSync(dir_8_dbtiles)) fs.mkdirSync(dir_8_dbtiles);
+    if (!fs.existsSync(dir_3_expanded)) fs.mkdirSync(dir_3_expanded);
+    if (!fs.existsSync(dir_4_clipped)) fs.mkdirSync(dir_4_clipped);
+    if (!fs.existsSync(dir_5_warped)) fs.mkdirSync(dir_5_warped);
+    if (!fs.existsSync(dir_6_translated)) fs.mkdirSync(dir_6_translated);
+    if (!fs.existsSync(dir_7_tiled)) fs.mkdirSync(dir_7_tiled);
+    if (!fs.existsSync(dir_8_merged)) fs.mkdirSync(dir_8_merged);
+    if (!fs.existsSync(dir_8_quantized)) fs.mkdirSync(dir_8_quantized);
+    if (!fs.existsSync(dir_9_dbtiles)) fs.mkdirSync(dir_9_dbtiles);
 }
 
 function downloadCharts() {
@@ -183,62 +190,84 @@ function processImages(){
             
             let shapefile = `${clippedShapesDir}/${basename}.shp`;
             let normalizedfile = `${dir_2_normalized}/${basename}.tif`;
-            let clippedfile = `${dir_3_clipped}/${basename}.vrt`;
-            let warpedfile = `${dir_4_warped}/${basename}.vrt`;
-            let expandedfile = `${dir_5_expanded}/${basename}.tif`;
-            let tiledir = `${dir_6_tiled}/${basename}`;
-        
-            console.log(`  * Clip border off of virtual image`);
-            cmd = `gdalwarp -of vrt -cutline "${shapefile}" -crop_to_cutline -cblend 10 ${normalizedfile} ${clippedfile}`; 
-            executeCommand(cmd);
+            let expandedfile = `${dir_3_expanded}/${basename}.vrt`;
+            let clippedfile = `${dir_4_clipped}/${basename}.vrt`;
+            let warpedfile = `${dir_5_warped}/${basename}.vrt`;
+            let translatedfile = `${dir_6_translated}/${basename}.tif`;
+            let tiledir = `${dir_7_tiled}/${basename}`;
 
-            console.log(`  * Warp virtual image to EPSG:3857`);
-            cmd = `gdalwarp -of vrt -t_srs EPSG:3857 ${clippedfile} ${warpedfile}`;
+            console.log(`*** Translate color table to RGBA GTiff ***`);
+            cmd = `gdal_translate -strict -of vrt -expand rgba ${normalizedfile} ${expandedfile}`;
             executeCommand(cmd);
             
-            console.log('  * Expand to RGBA');
-            cmd = `gdal_translate ${warpedfile} ${expandedfile} -expand rgba -co NUM_THREADS=ALL_CPUS`;
+            console.log(`*** Clip border off of virtual image ***`);
+            cmd = `gdalwarp -of vrt -r lanczos -multi -cutline "${shapefile}" -crop_to_cutline -cblend 10 -dstalpha -co ALPHA=YES -wo NUM_THREADS=ALL_CPUS -wm 1024 --config GDAL_CACHEMAX 1024 ${expandedfile} ${clippedfile}`; 
+            executeCommand(cmd);
+            
+            console.log(`*** Warp virtual image to EPSG:3857 ***`);
+            cmd = `gdalwarp -of vrt -t_srs EPSG:3857 -r lanczos -multi -wo NUM_THREADS=ALL_CPUS -wm 1024 --config GDAL_CACHEMAX 1024 ${clippedfile} ${warpedfile}`;
+            executeCommand(cmd);
+            
+            console.log(`*** Translate virtual image back to GTiff ***`);
+            cmd = `gdal_translate -co TILED=YES -co NUM_THREADS=ALL_CPUS ${warpedfile} ${translatedfile}`;
             executeCommand(cmd);
         
-            console.log(`  * Add gdaladdo overviews`);
-            cmd = `gdaladdo -r nearest --config GDAL_NUM_THREADS ALL_CPUS ${expandedfile} 2 4 8 16 32 64`;
+            console.log(`*** Add gdaladdo overviews ***`);
+            cmd = `gdaladdo -r average --config GDAL_NUM_THREADS ALL_CPUS ${translatedfile} 2 4 8 16 32 64`;
             executeCommand(cmd); 
             
-            console.log(`  * Tile images in TMS format`);
-            cmd = `gdal2tiles.py --zoom=${zoomrange} --processes=4 --exclude --tmscompatible --webviewer=openlayers ${expandedfile} ${tiledir}`;
+            console.log(`*** Tile images in TMS format ***`);
+            cmd = `gdal2tiles.py --zoom=${zoomrange} --processes=4 --tmscompatible --webviewer=openlayers ${translatedfile} ${tiledir}`;
             executeCommand(cmd);
         }
     });
+    stepsCompleted += 6;
 }
 
 function mergeTiles() {
-    let zoomfolders = fs.readdirSync(dir_6_tiled);
-    zoomfolders.forEach((zoom) => {
-        let mergesource = `${dir_6_tiled}/${zoom}`;
-        let cmd = `perl ./mergetiles.pl ${mergesource} ${dir_7_merged}`;
-        console.log(`  * Merging ${mergesource} tiles`);
+    let chartfolders = fs.readdirSync(dir_7_tiled);
+    chartfolders.forEach((chart) => {
+        let mergesource = `${dir_7_tiled}/${chart}`;
+        let cmd = `perl ./mergetiles.pl ${mergesource} ${dir_8_merged}`;
+        console.log(`*** Merging ${chart} tiles`);
         executeCommand(cmd);
     });
+    stepsCompleted++;
 }
 
 function quantizePngImages() {
-    let mergefolder = fs.readdirSync(dir_7_merged);
+    let mergefolder = fs.readdirSync(dir_8_merged);
+    let imgcount = 0;
     mergefolder.forEach((zoomlevel) => {
-        let zoomfolder = `${dir_7_merged}/${zoomlevel}`;
-        if (fs.statSync(zoomfolder).isDirectory()) {
+        let zoomfolder = `${dir_8_merged}/${zoomlevel}`;
+        if (fs.statSync(zoomfolder).isDirectory()) {    
+            let quantzoomfolder = `${dir_8_quantized}/${zoomlevel}`;
+            if (!fs.existsSync(quantzoomfolder)) {
+                fs.mkdirSync(quantzoomfolder);
+            }
             let xfolders = fs.readdirSync(zoomfolder);
             xfolders.forEach((xfolder) => {
                 let yfolders = `${zoomfolder}/${xfolder}`;
+                let quantyfolders = `${quantzoomfolder}/${xfolder}`;
+                if (!fs.existsSync(quantyfolders)) {
+                    fs.mkdirSync(quantyfolders);
+                }
                 let images = fs.readdirSync(yfolders);
                 images.forEach((image) => {
+                    imgcount ++;
                     let imgpath = `${yfolders}/${image}`;
-                    cmd = `pngquant --ext .png --force 256  ${imgpath}`;
-                    console.log(`Processing image: ${imgpath}`);
+                    let outpath = `${quantyfolders}/${image}`;
+                    console.log(`*** quantizing image # ${imgcount}: ${zoomlevel}/${xfolder}/${image}`);
+                    cmd = `pngquant --quality ${tiledImageQuality} ${imgpath} --output ${outpath}`;
                     executeCommand(cmd);
+                    if (cleanMerge) {
+                        fs.rmSync(imgpath);
+                    }
                 });
             });
         }
     });
+    stepsCompleted++;
 }
 
 function makeMbTiles() {            
@@ -262,14 +291,16 @@ function makeMbTiles() {
         "minzoom": "${minzoom}", 
         "maxzoom": "${maxzoom}" 
     }`;
-    let fpath = `${dir_7_merged}/metadata.json`; 
+    let fpath = `${dir_8_quantized}/metadata.json`; 
     let fd = fs.openSync(fpath, 'w');
     fs.writeSync(fd, metajson);
     fs.closeSync(fd);
 
-    let mbtiles = `${dir_8_dbtiles}/${tiledbname}.mbtiles`;   
-    let cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_7_merged} ${mbtiles}`;
+    let mbtiles = `${dir_9_dbtiles}/${tiledbname}.mbtiles`;   
+    let cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_8_quantized} ${mbtiles}`;
     executeCommand(cmd);
+
+    stepsCompleted++;
 }
 
 function executeCommand(command) {
@@ -306,21 +337,4 @@ function getGdalInfo(file, searchtext) {
     fs.rmSync(gdalresults);
     
     return retval;
-}
-
-function isTransparentImage(imagepath) {
-    let retval = 0;
-    let imagedata = fs.readFileSync(imagepath);
-    let img = new Canvas.Image(); 
-    img.src = imagedata;
-    let canvas = new Canvas.Canvas(img.width, img.height); 
-    let ctx = canvas.getContext("2d");
-    ctx.drawImage(img, 0, 0);
-    let data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-    let opacity = 0;
-    for (let i = 0; i < data.length; i += 4) {
-        opacity += data[i + 3];
-    }
-    retval = (opacity / 255) / (data.length / 4);
-    return (retval === 0);
 }
