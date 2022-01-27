@@ -9,11 +9,11 @@
 6.) run the app via command **node makechart.js *-d chartdate*** using a valid FAA sectional chart release date.        
 7.) go do something else, the process will take several hours to complete.
      
-### Command line arguments    
-The application requires a Date argument.     
+### Command line arguments and settings.json  
+The application requires a Date argument and also has several user settings.     
         
 1.) The required date argument should be in the format ***-d mm-dd-YYYY***            
-        example: **node makechart.js -d 10-07-2021**        
+        example: **node makechart.js -d 01-27-2022**        
             
 2.) Check other application settings in the ***settings.json*** file.                 
 *  For example, the zoom range value can be in the format ***-z n-n***, or you can use a single zoom level ***n***                
