@@ -6,7 +6,7 @@ const { program } = require('commander');
 
 // global editable variables
 let cmd = "";
-let zoomrange = "5-11"; //default
+let zoomrange; 
 let chartdate = "";
 let workarea = `${__dirname}/workarea`;
 
@@ -39,6 +39,7 @@ let stepsCompleted = 0;
 let renameWorkFolder = true;
 
 processArguments(program.opts());
+
 makeWorkingFolders();
 downloadCharts();
 unzipAndNormalize();
@@ -56,58 +57,6 @@ if (stepsCompleted === 9 && renameWorkFolder) {
 console.log("Chart processing completed!");
 process.exit(0);
 
-
-function processArguments(options) {
-    console.log(options);
-
-    let error = false;
-    let rawdata = fs.readFileSync(`${__dirname}/settings.json`);
-    
-    settings = JSON.parse(rawdata);
-    charturl = settings.charturl.replace("<chartdate>", chartdate);
-    areas = settings.areas;
-    tiledbname = settings.tiledbname;
-    cleanMerge = settings.cleanMergeFolderAtQuantize;
-    tiledImageQuality = settings.tiledImageQuality;
-    renameWorkFolder = settings.renameWorkFolderOnCompletion;
-
-    let zrange = settings.zoomRange;
-
-    if (zrange.search("-") > -1) {
-        let ranges = zrange.split("-");
-        if (isNaN(ranges[0]) || isNaN(ranges[1])) {
-            error = true;
-        }
-    }
-    else {
-        if (isNaN(zrange)) {
-            error = true;
-        }
-    }
-
-    if (options.dateofchart === undefined) {
-        loadBestChartDate();
-    }
-    else {
-        let chdate = options.dateofchart.replace(" ", "");
-        let mdy = [];
-
-        if (chdate.search("/") > -1) {
-            mdy = chdate.split("/");
-        }
-        else if (chdate.search("-") > -1) {
-            mdy = chdate.split("-");
-        }
-        
-        chartdate = `${mdy[0]}-${mdy[1]}-${mdy[2]}`;
-        
-        if (Date.parse(chartdate) === NaN) {
-            console.log("INVALID DATE FORMAT! Use mm-dd-yyyy or mm/dd/yyyy");
-            process.exit(1);
-        }
-    }
-    console.log(`Arguments processed: ${chartdate}`);
-}
 
 function makeWorkingFolders() {
     // make the processing directories if they don't exist.
@@ -208,7 +157,7 @@ function processImages(){
             let warpedfile = `${dir_5_warped}/${basename}.vrt`;
             let translatedfile = `${dir_6_translated}/${basename}.tif`;
             let tiledir = `${dir_7_tiled}/${basename}`;
-
+            
             console.log(`*** Translate color table to RGBA GTiff ***`);
             cmd = `gdal_translate -strict -of vrt -expand rgba ${normalizedfile} ${expandedfile}`;
             executeCommand(cmd);
@@ -224,9 +173,9 @@ function processImages(){
             console.log(`*** Translate virtual image back to GTiff ***`);
             cmd = `gdal_translate -co TILED=YES -co NUM_THREADS=ALL_CPUS ${warpedfile} ${translatedfile}`;
             executeCommand(cmd);
-        
+            
             console.log(`*** Add gdaladdo overviews ***`);
-            cmd = `gdaladdo -r average --config GDAL_NUM_THREADS ALL_CPUS ${translatedfile} 2 4 8 16 32 64`;
+            cmd = `gdaladdo -r average --config GDAL_NUM_THREADS ALL_CPUS ${translatedfile}`;
             executeCommand(cmd); 
             
             console.log(`*** Tile images in TMS format ***`);
@@ -330,29 +279,84 @@ function executeCommand(command) {
     }
 }
 
+function processArguments(options) {
+    console.log(options);
+
+    let error = false;
+    let rawdata = fs.readFileSync(`${__dirname}/settings.json`);
+    
+    settings = JSON.parse(rawdata);
+    charturl = settings.charturl.replace("<chartdate>", chartdate);
+    areas = settings.areas;
+    tiledbname = settings.tiledbname;
+    cleanMerge = settings.cleanMergeFolderAtQuantize;
+    tiledImageQuality = settings.tiledImageQuality;
+    renameWorkFolder = settings.renameWorkFolderOnCompletion;
+
+    let zrange = settings.zoomRange;
+
+    if (zrange.search("-") > -1) {
+        let ranges = zrange.split("-");
+        if (isNaN(ranges[0]) || isNaN(ranges[1])) {
+            error = true;
+        }
+    }
+    else {
+        if (isNaN(zrange)) {
+            error = true;
+        }
+    }
+    zoomrange = zrange;
+
+    if (options.dateofchart === undefined) {
+        loadBestChartDate();
+    }
+    else {
+        let chdate = options.dateofchart.replace(" ", "");
+        let mdy = [];
+
+        if (chdate.search("/") > -1) {
+            mdy = chdate.split("/");
+        }
+        else if (chdate.search("-") > -1) {
+            mdy = chdate.split("-");
+        }
+        
+        chartdate = `${mdy[0]}-${mdy[1]}-${mdy[2]}`;
+        
+        if (Date.parse(chartdate) === NaN) {
+            console.log("INVALID DATE FORMAT! Use mm-dd-yyyy or mm/dd/yyyy");
+            process.exit(1);
+        }
+    }
+    console.log(`Arguments processed: ${chartdate}, ${zoomrange}`);
+}
+
 function loadBestChartDate() {
     let thisdate = new  Date();
     let thistime = thisdate.getTime();
     let cdates = [];
-
+    let found = false;
     settings.chartdates.forEach((cdate) => {
         cdates.push(new Date(cdate))
     });
     
     let sortedDates = cdates.sort((a, b) => b.date - a.date).reverse();
-    cdates.every((obj) => {
-        let dtime = obj.getTime();
-        let tdiff = dtime - thistime;
-        let tdays = tdiff / (1000 * 3600 * 24);
-        if (Math.abs(tdays) <= 20) {
-            let m = pad2(obj.getMonth()+1); // months (0-11)
-            let d = pad2(obj.getDate());    // day (1-31)
-            let y= obj.getFullYear();
-            chartdate = `${d}-${m}-${y}`;
-            return true;
+    cdates.forEach((obj) => {
+        if (!found) {
+            let dtime = obj.getTime();
+            let tdiff = dtime - thistime;
+            let tdays = tdiff / (1000 * 3600 * 24);
+            if (Math.abs(tdays) <= 20) {
+                let m = pad2(obj.getMonth()+1); // months (0-11)
+                let d = pad2(obj.getDate());    // day (1-31)
+                let y= obj.getFullYear();
+                chartdate = `${m}-${d}-${y}`;
+                console.log(chartdate);
+                found = true;
+            }
         }
     })
-    console.log(chartdate);
 }
 
 // helper function(s)
