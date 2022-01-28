@@ -350,7 +350,6 @@ function loadBestChartDate() {
                 let d = pad2(obj.getDate());    // day (1-31)
                 let y= obj.getFullYear();
                 chartdate = `${m}-${d}-${y}`;
-                console.log(chartdate);
                 found = true;
             }
         }
