@@ -3,7 +3,7 @@
     "tiledbname": "usavfr",
     "tiledImageQuality": 70,
     "cleanMergeFolderAtQuantize": false,
-    "renameWorkFolderOnCompletion": false,
+    "renameWorkAreaOnCompletion": false,
     "zoomRange": "5-11",
     "areas":
         [
