@@ -6,16 +6,14 @@
 3.) clone the Mapbox mbtile application (see below) into the base VfrSecChartMaker directory.       
 4.) unzip ***clipshapes.zip*** to the base VfrSecChartMaker directory.   
 5.) from a terminal prompt in the VfrSecChartMaker directory, enter ***npm install***     
-6.) run the app via command **node makechart.js *-d chartdate*** using a valid FAA sectional chart release date.        
+6.) run the app via command **node makechart.js**         
 7.) go do something else, the process will take several hours to complete.
      
-### Command line arguments and settings.json  
-The application requires a Date argument and also has several user settings.     
-        
-1.) The required date argument should be in the format ***-d mm-dd-YYYY***            
-        example: **node makechart.js -d 01-27-2022**        
-            
-2.) Check other application settings in the ***settings.json*** file.                 
+### Settings.json  
+The application has several user editable settings. By default, the appropriate chart date will be automatically selected          
+from the list of official FAA chart dates in the settings file.  Alternatively, you can pass a valid chart date argument                         
+when launching the application, in the format ***-d MM-dd-YYYY***.  Valid chart dates are contained in settings.json.                   
+                   
 *  For example, the zoom range value can be in the format ***-z n-n***, or you can use a single zoom level ***n***                
 *  You can also change the ***tiledImageQuality*** setting for an even smaller mbtiles file.  
 *  To save disk space, you can set ***cleanMergeFolderAtQuantize*** to true.
@@ -23,7 +21,9 @@ The application requires a Date argument and also has several user settings.
    *  Quantized images are preserved in their own folder, these will be less than 1/3 the size of the merge folder
 *  To preserve all of the processing folders, you can set ***renameWorkFolderOnCompletion*** to true.
    *  This setting will rename the **workarea** folder to include the processed chart date. 
-                        
+                   
+***(See details below in additional information for the all application settings.)***                                    
+
 ### Full Installation example on a Debian distro (your system may be different)
 * Note that on some versions of Ubuntu, ```python-imaging``` has been replaced by ```python-pil```
 ```
