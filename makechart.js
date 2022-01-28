@@ -38,8 +38,14 @@ let tiledImageQuality = 90;
 let stepsCompleted = 0;
 let renameWorkArea = true;
 
-processArguments(program.opts());
+class quantizedImage {
+    constructor(cmd, srcpath) {
+        this.command = cmd;
+        this.srcpath = srcpath;
+    }
+};
 
+processArguments(program.opts());
 makeWorkingFolders();
 downloadCharts();
 unzipAndNormalize();
@@ -73,12 +79,6 @@ function makeWorkingFolders() {
     if (!fs.existsSync(dir_8_quantized)) fs.mkdirSync(dir_8_quantized);
     if (!fs.existsSync(dir_9_dbtiles)) fs.mkdirSync(dir_9_dbtiles);
 }
-
-class dateObject {
-    constructor(date) {
-        this.date = new Date(date);
-    }
-};
 
 function downloadCharts() {
     areas.forEach(area => {
@@ -141,66 +141,80 @@ function processImages(){
      4) add zoom overlays to the GTIFF 
     --------------------------------------------------------------*/
     let clippedShapesDir = `${__dirname}/clipshapes`;
-    
-    let files = fs.readdirSync(dir_2_normalized);
-    files.forEach((file) => {
-        console.log(file);
-        if (file.endsWith(".tif")) {
-            
-            let basename = file.replace(".tif", "");
 
-            console.log(`************** Processing chart: ${basename} **************`);
-            
-            let shapefile = `${clippedShapesDir}/${basename}.shp`;
-            let normalizedfile = `${dir_2_normalized}/${basename}.tif`;
-            let expandedfile = `${dir_3_expanded}/${basename}.vrt`;
-            let clippedfile = `${dir_4_clipped}/${basename}.vrt`;
-            let warpedfile = `${dir_5_warped}/${basename}.vrt`;
-            let translatedfile = `${dir_6_translated}/${basename}.tif`;
-            let tiledir = `${dir_7_tiled}/${basename}`;
-            
-            console.log(`*** Translate color table to RGBA GTiff ***`);
-            cmd = `gdal_translate -strict -of vrt -expand rgba ${normalizedfile} ${expandedfile}`;
-            executeCommand(cmd);
-            
-            console.log(`*** Clip border off of virtual image ***`);
-            cmd = `gdalwarp -of vrt -r lanczos -multi -cutline "${shapefile}" -crop_to_cutline -cblend 10 -dstalpha -co ALPHA=YES -wo NUM_THREADS=ALL_CPUS -wm 1024 --config GDAL_CACHEMAX 1024 ${expandedfile} ${clippedfile}`; 
-            executeCommand(cmd);
-            
-            console.log(`*** Warp virtual image to EPSG:3857 ***`);
-            cmd = `gdalwarp -of vrt -t_srs EPSG:3857 -r lanczos -multi -wo NUM_THREADS=ALL_CPUS -wm 1024 --config GDAL_CACHEMAX 1024 ${clippedfile} ${warpedfile}`;
-            executeCommand(cmd);
-            
-            console.log(`*** Translate virtual image back to GTiff ***`);
-            cmd = `gdal_translate -co TILED=YES -co NUM_THREADS=ALL_CPUS ${warpedfile} ${translatedfile}`;
-            executeCommand(cmd);
-            
-            console.log(`*** Add gdaladdo overviews ***`);
-            cmd = `gdaladdo -r average --config GDAL_NUM_THREADS ALL_CPUS ${translatedfile}`;
-            executeCommand(cmd); 
-            
-            console.log(`*** Tile images in TMS format ***`);
-            cmd = `gdal2tiles.py --zoom=${zoomrange} --processes=4 --tmscompatible --webviewer=openlayers ${translatedfile} ${tiledir}`;
-            executeCommand(cmd);
-        }
+    settings.areas.forEach((area) => {
+        
+        console.log(`\r\n\r\n\r\n\r\n************** Processing chart: ${area} **************`);
+        
+        let shapefile = `${clippedShapesDir}/${area}.shp`;
+        let normalizedfile = `${dir_2_normalized}/${area}.tif`;
+        let expandedfile = `${dir_3_expanded}/${area}.vrt`;
+        let clippedfile = `${dir_4_clipped}/${area}.vrt`;
+        let warpedfile = `${dir_5_warped}/${area}.vrt`;
+        let translatedfile = `${dir_6_translated}/${area}.tif`;
+        let tiledir = `${dir_7_tiled}/${area}`;
+        
+        console.log(`*** Expand color table to RGBA GTiff ***`);
+        cmd = `gdal_translate -strict -of vrt -expand rgba ${normalizedfile} ${expandedfile}`;
+        executeCommand(cmd);
+        
+        console.log(`*** Clip border off of virtual image ***`);
+        cmd = `gdalwarp -of vrt -r lanczos -multi -cutline "${shapefile}" -crop_to_cutline -cblend 10 -dstalpha -co ALPHA=YES -wo NUM_THREADS=ALL_CPUS -wm 1024 --config GDAL_CACHEMAX 1024 ${expandedfile} ${clippedfile}`; 
+        executeCommand(cmd);
+        
+        console.log(`*** Warp virtual image to EPSG:3857 ***`);
+        cmd = `gdalwarp -of vrt -t_srs EPSG:3857 -r lanczos -multi -wo NUM_THREADS=ALL_CPUS -wm 1024 --config GDAL_CACHEMAX 1024 ${clippedfile} ${warpedfile}`;
+        executeCommand(cmd);
+        
+        console.log(`*** Translate virtual image back to GTiff ***`);
+        cmd = `gdal_translate -co TILED=YES -co NUM_THREADS=ALL_CPUS ${warpedfile} ${translatedfile}`;
+        executeCommand(cmd);
+        
+        console.log(`*** Add gdaladdo overviews ***`);
+        cmd = `gdaladdo -r average --config GDAL_NUM_THREADS ALL_CPUS ${translatedfile}`;
+        executeCommand(cmd); 
+        
+        console.log(`*** Tile images in TMS format ***`);
+        cmd = `gdal2tiles.py --zoom=${zoomrange} --processes=4 --tmscompatible --webviewer=openlayers ${translatedfile} ${tiledir}`;
+        executeCommand(cmd);
     });
     stepsCompleted += 6;
 }
 
 function mergeTiles() {
-    let chartfolders = fs.readdirSync(dir_7_tiled);
-    chartfolders.forEach((chart) => {
-        let mergesource = `${dir_7_tiled}/${chart}`;
+    settings.areas.forEach((area) => {
+        let mergesource = `${dir_7_tiled}/${area}`;
         let cmd = `perl ./mergetiles.pl ${mergesource} ${dir_8_merged}`;
         console.log(`*** Merging ${chart} tiles`);
         executeCommand(cmd);
     });
     stepsCompleted++;
 }
-
+    
 function quantizePngImages() {
+    let count = 0;
+    let interimct = 0;
+    let cmds = buildCommandArray();
+
+    console.log(`*** Quantizing ${cmds.length} png images at ${tiledImageQuality}%`);
+    for (let i=0; i < cmds.length; i++) {
+        if (interimct === 500) {
+            console.log(`  * processed image count = ${i} of ${cmds.length}`);
+            interimct = 0;
+        }
+        interimct++;
+        executeCommand(cmds[i].command);
+        if (cleanMerge) {
+            fs.rmSync(cmds[i].srcpath);
+        }
+    }
+}
+
+function buildCommandArray() {
     let mergefolder = fs.readdirSync(dir_8_merged);
     let imgcount = 0;
+    let cmdarray = [];
+
     mergefolder.forEach((zoomlevel) => {
         let zoomfolder = `${dir_8_merged}/${zoomlevel}`;
         if (fs.statSync(zoomfolder).isDirectory()) {    
@@ -220,17 +234,13 @@ function quantizePngImages() {
                     imgcount ++;
                     let imgpath = `${yfolders}/${image}`;
                     let outpath = `${quantyfolders}/${image}`;
-                    console.log(`*** quantizing image # ${imgcount}: ${zoomlevel}/${xfolder}/${image}`);
                     cmd = `pngquant --quality ${tiledImageQuality} ${imgpath} --output ${outpath}`;
-                    executeCommand(cmd);
-                    if (cleanMerge) {
-                        fs.rmSync(imgpath);
-                    }
+                    cmdarray.push(new quantizedImage(cmd, imgpath));
                 });
             });
         }
     });
-    stepsCompleted++;
+    return cmdarray;
 }
 
 function makeMbTiles() {            
@@ -252,7 +262,8 @@ function makeMbTiles() {
         "type": "overlay",
         "format": "png",
         "minzoom": "${minzoom}", 
-        "maxzoom": "${maxzoom}" 
+        "maxzoom": "${maxzoom}", 
+        "pngquality": "${tiledImageQuality}"
     }`;
     let fpath = `${dir_8_quantized}/metadata.json`; 
     let fd = fs.openSync(fpath, 'w');
