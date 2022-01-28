@@ -41,12 +41,12 @@ let renameWorkFolder = true;
 processArguments(program.opts());
 
 makeWorkingFolders();
-//downloadCharts();
-//unzipAndNormalize();
+downloadCharts();
+unzipAndNormalize();
 processImages();
-//mergeTiles(); 
-//quantizePngImages();
-//makeMbTiles();
+mergeTiles(); 
+quantizePngImages();
+makeMbTiles();
 
 // if we got here, if all steps completed and the user settings
 // indicate, re-name the working folder as the chart date
