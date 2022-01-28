@@ -31,7 +31,6 @@ program.parse(process.argv);
 
 let settings; 
 let charturl; 
-let areas; 
 let tiledbname;
 let cleanMerge = false;
 let tiledImageQuality = 90;
@@ -81,7 +80,7 @@ function makeWorkingFolders() {
 }
 
 function downloadCharts() {
-    areas.forEach(area => {
+    settings.areas.forEach((area) => {
         let serverfile = charturl.replace("<chartname>", area);
         let localfile = area.replace("-", "_");
         localfile = localfile.replace(" ", "_");
@@ -96,22 +95,21 @@ function downloadCharts() {
 }
 
 function unzipAndNormalize() {
-    let files = fs.readdirSync(dir_0_download);
-
+    
     console.log("unzipping all of the chart zip files");
+    
+    let files = fs.readdirSync(dir_0_download);
     files.forEach((file) => {
         cmd = `unzip -u -o ${dir_0_download}/${file} -d ${dir_1_unzipped}`;
         executeCommand(cmd);
     });
     
     files = fs.readdirSync(dir_1_unzipped);
-    
     files.forEach((file) => {
         let escapedname = replaceAll(file, " ", "\\ ");
         let newname = replaceAll(file, " ", "_");
         newname = replaceAll(newname, "-", "_");
         newname = newname.replace("_SEC", "");
-        
         cmd = `mv ${dir_1_unzipped}/${escapedname} ${dir_1_unzipped}/${newname}`;
         executeCommand(cmd);
     });
@@ -123,7 +121,6 @@ function unzipAndNormalize() {
         if (file.endsWith(".tif")) {
             let chartfile = `${dir_1_unzipped}/${file}`;
             let normfile = `${dir_2_normalized}/${file}`;
-            
             // Does this file have georeference info?
             if (getGdalInfo(chartfile, "PROJCRS")) {
                 cmd = `mv --update --verbose ${chartfile} ${normfile}`;
@@ -208,6 +205,7 @@ function quantizePngImages() {
             fs.rmSync(cmds[i].srcpath);
         }
     }
+    console.log(`  * processed image count = ${i} of ${cmds.length}`);
 }
 
 function buildCommandArray() {
@@ -296,7 +294,6 @@ function processArguments(options) {
     let rawdata = fs.readFileSync(`${__dirname}/settings.json`);
     
     settings = JSON.parse(rawdata);
-    areas = settings.areas;
     tiledbname = settings.tiledbname;
     cleanMerge = settings.cleanMergeFolderAtQuantize;
     tiledImageQuality = settings.tiledImageQuality;
