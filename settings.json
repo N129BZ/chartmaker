@@ -4,7 +4,7 @@
     "tiledImageQuality": 70,
     "cleanMergeFolderAtQuantize": false,
     "renameWorkFolderOnCompletion": false,
-    "zoomRange": "7-11",
+    "zoomRange": "5-11",
     "areas":
         [
             "Albuquerque",

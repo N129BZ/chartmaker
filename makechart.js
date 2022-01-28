@@ -280,8 +280,6 @@ function executeCommand(command) {
 }
 
 function processArguments(options) {
-    console.log(options);
-
     let error = false;
     let rawdata = fs.readFileSync(`${__dirname}/settings.json`);
     
