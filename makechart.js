@@ -285,7 +285,7 @@ function processArguments(options) {
     let rawdata = fs.readFileSync(`${__dirname}/settings.json`);
     
     settings = JSON.parse(rawdata);
-    charturl = settings.charturl.replace("<chartdate>", chartdate);
+    charturl = settings.charturltemplate.replace("<chartdate>", chartdate);
     areas = settings.areas;
     tiledbname = settings.tiledbname;
     cleanMerge = settings.cleanMergeFolderAtQuantize;
