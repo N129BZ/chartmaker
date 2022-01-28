@@ -36,7 +36,7 @@ let tiledbname;
 let cleanMerge = false;
 let tiledImageQuality = 90;
 let stepsCompleted = 0;
-let renameWorkFolder = true;
+let renameWorkArea = true;
 
 processArguments(program.opts());
 
@@ -50,7 +50,7 @@ makeMbTiles();
 
 // if we got here, if all steps completed and the user settings
 // indicate, re-name the working folder as the chart date
-if (stepsCompleted === 9 && renameWorkFolder) {
+if (stepsCompleted === 9 && renameWorkArea) {
     fs.renameSync(workarea, `${__dirname}/chart_process_${chartdate}`);
 }
 
@@ -290,7 +290,7 @@ function processArguments(options) {
     tiledbname = settings.tiledbname;
     cleanMerge = settings.cleanMergeFolderAtQuantize;
     tiledImageQuality = settings.tiledImageQuality;
-    renameWorkFolder = settings.renameWorkFolderOnCompletion;
+    renameWorkArea = settings.renameWorkAreaOnCompletion;
 
     let zrange = settings.zoomRange;
 
