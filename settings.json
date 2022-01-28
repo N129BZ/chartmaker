@@ -1,7 +1,7 @@
 {
     "charturltemplate": "https://aeronav.faa.gov/visual/<chartdate>/sectional-files/<chartname>.zip",
     "tiledbname": "usavfr",
-    "tiledImageQuality": 70,
+    "tiledImageQuality": 80,
     "cleanMergeFolderAtQuantize": false,
     "renameWorkAreaOnCompletion": false,
     "zoomRange": "5-11",
