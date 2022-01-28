@@ -10,16 +10,16 @@
 7.) go do something else, the process will take several hours to complete.
      
 ### Settings.json  
-The application has several user editable settings. By default, the appropriate chart date will be automatically selected          
-from the list of official FAA chart dates in the settings file.  Alternatively, you can pass a valid chart date argument                         
-when launching the application, in the format ***-d MM-dd-YYYY***.  Valid chart dates are contained in settings.json.                   
+Since the FAA publishes charts 20 days *before* the official chart date, this application will "automatically" select                 
+the appropriate chart date from the list of official FAA chart dates in the settings file.  Alternatively, you can pass              
+a valid chart date argument when launching the application, in the format ***-d MM-dd-YYYY***.                     
                    
-*  For example, the zoom range value can be in the format ***-z n-n***, or you can use a single zoom level ***n***                
-*  You can also change the ***tiledImageQuality*** setting for an even smaller mbtiles file.  
-*  To save disk space, you can set ***cleanMergeFolderAtQuantize*** to true.
+*  For example, the zoom range value can either be in the format **n-n**, or you can use a single zoom level **n**                
+*  You can also change the **tiledImageQuality** setting for an even smaller mbtiles file.  
+*  To save disk space, you can set **cleanMergeFolderAtQuantize** to true.
    *  The merge folder can end up being as fat as 13 gigabytes for the entire chart set
    *  Quantized images are preserved in their own folder, these will be less than 1/3 the size of the merge folder
-*  To preserve all of the processing folders, you can set ***renameWorkFolderOnCompletion*** to true.
+*  To preserve all of the processing folders, you can set **renameWorkAreaOnCompletion** to true.
    *  This setting will rename the **workarea** folder to include the processed chart date. 
                    
 ***(See details below in additional information for the all application settings.)***                                    
@@ -74,7 +74,7 @@ As of January 1, 2022, the official chart release is for **01-27-2022. You can v
     "tiledbname": "usavfr",
     "tiledImageQuality": 90,
     "cleanMergeFolderAtQuantize": false,
-    "renameWorkFolderOnCompletion": true,
+    "renameWorkAreaOnCompletion": true,
     "zoomRange": "5-11",
     "areas":
         [
