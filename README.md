@@ -4,7 +4,7 @@
 1.) this application requires several supporting applications to be installed on your system - see ***Debian*** example below.              
 2.) clone this repository - ***git clone https://github.com/N129BZ/VfrSecChartMaker.git***            
 3.) from a terminal prompt in the VfrSecChartMaker directory, enter ***npm install***     
-4.) run the app via command **node makechart.js**         
+4.) run the app via command **node index.js**         
 5.) go do something else, the process will take several hours to complete.
      
 ### Settings.json  

@@ -9,6 +9,7 @@ let cmd = "";
 let chartdate = "";
 let charturl = ""; 
 let stepsCompleted = 0;
+let chartareas = [];
 let workarea = `${__dirname}/workarea`;
 let rawdata = fs.readFileSync(`${__dirname}/settings.json`);
 let settings = JSON.parse(rawdata);
@@ -103,9 +104,8 @@ function unzipAndNormalize() {
     files = fs.readdirSync(dir_1_unzipped);
     files.forEach((file) => {
         let escapedname = replaceAll(file, " ", "\\ ");
-        let newname = replaceAll(file, " ", "_");
-        newname = replaceAll(newname, "-", "_");
-        newname = newname.replace("_SEC", "");
+        let newname = normalizeFileName(file);
+        chartareas.push(newname);
         cmd = `mv ${dir_1_unzipped}/${escapedname} ${dir_1_unzipped}/${newname}`;
         executeCommand(cmd);
     });
@@ -135,7 +135,7 @@ function processImages(){
     --------------------------------------------------------------*/
     let clippedShapesDir = `${__dirname}/clipshapes`;
 
-    settings.areas.forEach((area) => {
+    chartareas.forEach((area) => {
         
         console.log(`\r\n\r\n************** Processing chart: ${area} **************`);
         
@@ -175,7 +175,7 @@ function processImages(){
 }
 
 function mergeTiles() {
-    settings.areas.forEach((area) => {
+    chartareas.forEach((area) => {
         let mergesource = `${dir_7_tiled}/${area}`;
         let cmd = `perl ./mergetiles.pl ${mergesource} ${dir_8_merged}`;
         console.log(`\r\n*** Merging ${area} tiles`);
@@ -277,6 +277,15 @@ function executeCommand(command) {
     catch(err) {
         console.log(err);
     }
+}
+
+function normalizeFileName(file) {
+    let newname = "";
+    newname = replaceAll(file, " ", "_");
+    newname = replaceAll(newname, "-", "_");
+    newname = newname.replace("_SEC", "");
+    newname = newname.replace("_TAC", "");
+    return newname;
 }
 
 function processArguments(options) {
