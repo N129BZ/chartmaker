@@ -182,7 +182,7 @@ function mergeTiles() {
     settings.areas.forEach((area) => {
         let mergesource = `${dir_7_tiled}/${area}`;
         let cmd = `perl ./mergetiles.pl ${mergesource} ${dir_8_merged}`;
-        console.log(`*** Merging ${chart} tiles`);
+        console.log(`*** Merging ${area} tiles`);
         executeCommand(cmd);
     });
     stepsCompleted++;
