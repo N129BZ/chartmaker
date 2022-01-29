@@ -1,10 +1,10 @@
 {
     "charturltemplate": "https://aeronav.faa.gov/visual/<chartdate>/sectional-files/<chartname>.zip",
     "tiledbname": "usavfr",
-    "tiledImageQuality": 75,
-    "cleanMergeFolder": true,
-    "renameWorkAreaOnCompletion": false,
-    "zoomRange": "5-11",
+    "tiledimagequality": 75,
+    "cleanmergefolder": true,
+    "renameworkarea": false,
+    "zoomrange": "5-11",
     "areas":
         [
             "Albuquerque",

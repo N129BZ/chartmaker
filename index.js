@@ -6,9 +6,12 @@ const { program } = require('commander');
 
 // global editable variables
 let cmd = "";
-let zoomrange; 
 let chartdate = "";
+let charturl = ""; 
+let stepsCompleted = 0;
 let workarea = `${__dirname}/workarea`;
+let rawdata = fs.readFileSync(`${__dirname}/settings.json`);
+let settings = JSON.parse(rawdata);
 
 // working directory constants
 const dir_0_download      = `${workarea}/0_download`;
@@ -29,29 +32,25 @@ program
 program.showSuggestionAfterError();
 program.parse(process.argv);
 
-let settings; 
-let charturl; 
-let tiledbname;
-let tiledImageQuality = 90;
-let stepsCompleted = 0;
+
 
 processArguments(program.opts());
 makeWorkingFolders();
-downloadCharts();
-unzipAndNormalize();
+//downloadCharts();
+//unzipAndNormalize();
 processImages();
 mergeTiles(); 
 quantizePngImages();
 makeMbTiles();
 
-if (settings.cleanMergeFolder) {
+if (settings.cleanmergefolder) {
     console.log("  \r\n* Removing merge folder")
     fs.rmdirSync(true, true);
 }
 
 // if we got here, if all steps completed and the user settings
 // indicate, re-name the working folder as the chart date
-if (stepsCompleted === 9 && settings.renameWorkAreaOnCompletion) {
+if (stepsCompleted === 9 && settings.renameworkarea) {
     
     fs.renameSync(workarea, `${__dirname}/chart_process_${chartdate}`);
 }
@@ -169,7 +168,7 @@ function processImages(){
         executeCommand(cmd); 
         
         console.log(`\r\n*** Tile images in TMS format ***`);
-        cmd = `gdal2tiles.py --zoom=${zoomrange} --processes=4 --tmscompatible --webviewer=openlayers ${translatedfile} ${tiledir}`;
+        cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=4 --tmscompatible --webviewer=openlayers ${translatedfile} ${tiledir}`;
         executeCommand(cmd);
     });
     stepsCompleted += 6;
@@ -189,7 +188,7 @@ function quantizePngImages() {
     let interimct = 0;
     let cmds = buildCommandArray();
     let i = 0;
-    console.log(`\r\n*** Quantizing ${cmds.length} png images at ${tiledImageQuality}%`);
+    console.log(`\r\n*** Quantizing ${cmds.length} png images at ${settings.tiledimagequality}%`);
     for (i=0; i < cmds.length; i++) {
         if (interimct === 500) {
             console.log(`  * processed image count = ${i} of ${cmds.length}`);
@@ -223,7 +222,7 @@ function buildCommandArray() {
                 images.forEach((image) => {
                     let imgpath = `${yfolders}/${image}`;
                     let outpath = `${quantyfolders}/${image}`;
-                    cmd = `pngquant --quality ${tiledImageQuality} ${imgpath} --output ${outpath}`;
+                    cmd = `pngquant --quality ${settings.tiledimagequality} ${imgpath} --output ${outpath}`;
                     cmdarray.push(cmd);
                 });
             });
@@ -234,7 +233,7 @@ function buildCommandArray() {
 
 function makeMbTiles() {            
     console.log(`\r\n  * Making MBTILES database`);
-    let zooms = zoomrange.split("-");
+    let zooms = settings.zoomrange.split("-");
     let minzoom = zooms[0];
     let maxzoom = zooms[0];
     
@@ -245,21 +244,21 @@ function makeMbTiles() {
     // create a metadata.json file in the root of the tiles directory,
     // mbutil will use this to generate a metadata table in the database.  
     let metajson = `{ 
-        "name": "${tiledbname}",
+        "name": "${settings.tiledbname}",
         "description": "VFR Sectional Charts",
         "version": "1.1",
         "type": "overlay",
         "format": "png",
         "minzoom": "${minzoom}", 
         "maxzoom": "${maxzoom}", 
-        "pngquality": "${tiledImageQuality}"
+        "pngquality": "${settings.tiledimagequality}"
     }`;
     let fpath = `${dir_8_quantized}/metadata.json`; 
     let fd = fs.openSync(fpath, 'w');
     fs.writeSync(fd, metajson);
     fs.closeSync(fd);
 
-    let mbtiles = `${dir_9_dbtiles}/${tiledbname}.mbtiles`;   
+    let mbtiles = `${dir_9_dbtiles}/${settings.tiledbname}.mbtiles`;   
     let cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_8_quantized} ${mbtiles}`;
     executeCommand(cmd);
 
@@ -282,15 +281,7 @@ function executeCommand(command) {
 
 function processArguments(options) {
     let error = false;
-    let rawdata = fs.readFileSync(`${__dirname}/settings.json`);
-    
-    settings = JSON.parse(rawdata);
-    tiledbname = settings.tiledbname;
-    cleanMerge = settings.cleanMergeFolderAtQuantize;
-    tiledImageQuality = settings.tiledImageQuality;
-    renameWorkArea = settings.renameWorkAreaOnCompletion;
-
-    let zrange = settings.zoomRange;
+    let zrange = settings.zoomrange;
 
     if (zrange.search("-") > -1) {
         let ranges = zrange.split("-");
@@ -303,7 +294,11 @@ function processArguments(options) {
             error = true;
         }
     }
-    zoomrange = zrange;
+    
+    if (error) {
+        console.log(`Error parsing zoom range: ${zrange}, exiting!`);
+        process.exit(1);
+    }
 
     if (options.dateofchart === undefined) {
         loadBestChartDate();
@@ -322,13 +317,12 @@ function processArguments(options) {
         chartdate = `${mdy[0]}-${mdy[1]}-${mdy[2]}`;
         
         if (Date.parse(chartdate) === NaN) {
-            console.log("INVALID DATE FORMAT! Use mm-dd-yyyy or mm/dd/yyyy");
+            console.log("Error, invalid date format! Use mm-dd-yyyy or mm/dd/yyyy");
             process.exit(1);
         }
     }
 
     charturl = settings.charturltemplate.replace("<chartdate>", chartdate);
-    console.log(`Arguments processed: ${chartdate}, ${zoomrange}`);
 }
 
 function loadBestChartDate() {

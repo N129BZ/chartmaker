@@ -13,11 +13,11 @@ the appropriate chart date from the list of official FAA chart dates in the sett
 a valid chart date argument when launching the application, in the format ***-d MM-dd-YYYY***.                     
                    
 *  For example, the zoom range value can either be in the format **n-n**, or you can use a single zoom level **n**                
-*  You can also change the **tiledImageQuality** setting for an even smaller mbtiles file.  
-*  To save disk space, you can set **cleanMergeFolderAtQuantize** to true.
+*  You can also change the **tiledimagequality** setting for an even smaller mbtiles file.  
+*  To save disk space, you can set **cleanmergefolderAtQuantize** to true.
    *  The merge folder can end up being as fat as 13 gigabytes for the entire chart set
    *  Quantized images are preserved in their own folder, these will be less than 1/3 the size of the merge folder
-*  To preserve all of the processing folders, you can set **renameWorkAreaOnCompletion** to true.
+*  To preserve all of the processing folders, you can set **renameworkarea** to true.
    *  This setting will rename the **workarea** folder to include the processed chart date. 
                    
 ***(See details below in additional information for the all application settings.)***                                    
@@ -70,10 +70,10 @@ As of January 1, 2022, the official chart release is for **01-27-2022. You can v
 {
     "charturl": "https://aeronav.faa.gov/visual/<chartdate>/sectional-files/<chartname>.zip",
     "tiledbname": "usavfr",
-    "tiledImageQuality": 90,
-    "cleanMergeFolderAtQuantize": false,
-    "renameWorkAreaOnCompletion": true,
-    "zoomRange": "5-11",
+    "tiledimagequality": 90,
+    "cleanmergefolderAtQuantize": false,
+    "renameworkarea": true,
+    "zoomrange": "5-11",
     "areas":
         [
             "Albuquerque",
