@@ -1,0 +1,14 @@
+### v0.3.0
+* Preliminary Python 3 support
+
+### v0.2.0
+* ? See closed PRs
+
+### v0.1.0
+
+* Switch tests to nosetest
+* Switch default output to XYZ
+
+### v0.0.1, March 14, 2011
+
+* Initial release
