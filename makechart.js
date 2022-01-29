@@ -151,8 +151,8 @@ function processImages(){
         let translatedfile = `${dir_6_translated}/${area}.tif`;
         let tiledir = `${dir_7_tiled}/${area}`;
         
-        console.log(`*** Expand color table to RGBA GTiff ***`);
-        cmd = `gdal_translate -strict -of vrt -expand rgba ${normalizedfile} ${expandedfile}\r\n`;
+        console.log(`*** Expand color table to RGBA GTiff ***\r\n`);
+        cmd = `gdal_translate -strict -of vrt -expand rgba ${normalizedfile} ${expandedfile}`;
         executeCommand(cmd);
         
         console.log(`*** Clip border off of virtual image ***\r\n`);
