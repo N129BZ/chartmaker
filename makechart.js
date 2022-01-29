@@ -191,9 +191,9 @@ function mergeTiles() {
 function quantizePngImages() {
     let interimct = 0;
     let cmds = buildCommandArray();
-
+    let i = 0;
     console.log(`\r\n*** Quantizing ${cmds.length} png images at ${tiledImageQuality}%`);
-    for (let i=0; i < cmds.length; i++) {
+    for (i=0; i < cmds.length; i++) {
         if (interimct === 500) {
             console.log(`  * processed image count = ${i} of ${cmds.length}`);
             interimct = 0;
