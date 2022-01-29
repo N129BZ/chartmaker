@@ -7,7 +7,6 @@
     "zoomRange": "5-11",
     "areas":
         [
-            "San_Antonio",
             "Albuquerque",
             "Atlanta",
             "Bethel",
@@ -51,6 +50,7 @@
             "Phoenix",
             "Point_Barrow",
             "Salt_Lake_City",
+            "San_Antonio",
             "San_Francisco",
             "Seattle",
             "Seward",
