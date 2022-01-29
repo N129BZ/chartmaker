@@ -7,7 +7,7 @@
     "zoomrange": "5-11",
     "charttype": "Sectional",
     "debug": true,
-    "debugsteps": "2,3,4,5,6",
+    "debugsteps": "123456",
     "charttypes":
         [
             "Sectional",

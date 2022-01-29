@@ -40,6 +40,7 @@ if (settings.debug) {
 }
 else {    
     downloadCharts();
+    unzipDownloadedCharts();
     normalizeChartNames();
     processImages();
     mergeTiles(); 
@@ -82,7 +83,8 @@ function downloadCharts() {
     let chartzip = `${dir_0_download}/${settings.charttype}.zip`;
     cmd = `wget ${charturl} --output-document=${chartzip}`;
     executeCommand(cmd);
-
+}
+function unzipDownloadedCharts() {
     console.log("\r\n* Unzipping chart zip files\r\n");
     cmd = `unzip -o ${chartzip} -x '*.htm' -d ${dir_1_unzipped}`;
     executeCommand(cmd);
@@ -249,8 +251,11 @@ function executeCommand(command) {
 }
 
 function doDebugProcessing() {
-    if (settings.debugsteps.search("1")) {
+    if (settings.debugsteps.search("0")) {
         downloadCharts();
+    }
+    if (settings.debugsteps.search("1")) {
+        unzipDownloadedCharts(); 
     }
     if (settings.debugsteps.search("2")) {
         normalizeChartNames();
