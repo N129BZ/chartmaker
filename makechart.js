@@ -141,7 +141,7 @@ function processImages(){
 
     settings.areas.forEach((area) => {
         
-        console.log(`\r\n\r\n\r\n\r\n************** Processing chart: ${area} **************`);
+        console.log(`\r\n\r\n\************** Processing chart: ${area} **************`);
         
         let shapefile = `${clippedShapesDir}/${area}.shp`;
         let normalizedfile = `${dir_2_normalized}/${area}.tif`;
