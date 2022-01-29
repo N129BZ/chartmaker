@@ -26,10 +26,10 @@ def mbtiles_setup(cur):
             """)
     cur.execute("""create table metadata
         (name text, value text);""")
-    cur.execute("""CREATE TABLE grids (zoom_level integer, tile_column integer,
-    tile_row integer, grid blob);""")
-    cur.execute("""CREATE TABLE grid_data (zoom_level integer, tile_column
-    integer, tile_row integer, key_name text, key_json text);""")
+    #cur.execute("""CREATE TABLE grids (zoom_level integer, tile_column integer,
+    #tile_row integer, grid blob);""")
+    #cur.execute("""CREATE TABLE grid_data (zoom_level integer, tile_column
+    #integer, tile_row integer, key_name text, key_json text);""")
     cur.execute("""create unique index name on metadata (name);""")
     cur.execute("""create unique index tile_index on tiles
         (zoom_level, tile_column, tile_row);""")
