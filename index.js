@@ -36,8 +36,8 @@ program.parse(process.argv);
 
 processArguments(program.opts());
 makeWorkingFolders();
-//downloadCharts();
-//unzipAndNormalize();
+downloadCharts();
+unzipAndNormalize();
 processImages();
 mergeTiles(); 
 quantizePngImages();
