@@ -35,25 +35,25 @@ processArguments(program.opts());
 makeWorkingFolders();
 
 // processing steps as found in settings
-if (settings.processingsteps.search("0")) {
+if (settings.processingsteps.search("0") > -1) {
     downloadCharts();
 }
-if (settings.processingsteps.search("1")) {
+if (settings.processingsteps.search("1") > -1) {
     unzipDownloadedCharts(); 
 }
-if (settings.processingsteps.search("2")) {
+if (settings.processingsteps.search("2") > -1) {
     normalizeChartNames();
 }
-if (settings.processingsteps.search("3")) {
+if (settings.processingsteps.search("3") > -1) {
     processImages();
 }
-if (settings.processingsteps.search("4")) {
+if (settings.processingsteps.search("4") > -1) {
     mergeTiles();
 }
-if (settings.processingsteps.search("5")) {
+if (settings.processingsteps.search("5") > -1) {
     quantizePngImages();
 }
-if (settings.processingsteps.search("6")) {
+if (settings.processingsteps.search("6") > -1) {
     makeMbTiles();
 }
 
