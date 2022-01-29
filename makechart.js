@@ -32,17 +32,8 @@ program.parse(process.argv);
 let settings; 
 let charturl; 
 let tiledbname;
-let cleanMerge = false;
 let tiledImageQuality = 90;
 let stepsCompleted = 0;
-let renameWorkArea = true;
-
-class quantizedImage {
-    constructor(cmd, srcpath) {
-        this.command = cmd;
-        this.srcpath = srcpath;
-    }
-};
 
 processArguments(program.opts());
 makeWorkingFolders();
@@ -53,9 +44,15 @@ mergeTiles();
 quantizePngImages();
 makeMbTiles();
 
+if (settings.cleanMergeFolder) {
+    console.log("  \r\n* Removing merge folder")
+    fs.rmdirSync(true, true);
+}
+
 // if we got here, if all steps completed and the user settings
 // indicate, re-name the working folder as the chart date
-if (stepsCompleted === 9 && renameWorkArea) {
+if (stepsCompleted === 9 && settings.renameWorkAreaOnCompletion) {
+    
     fs.renameSync(workarea, `${__dirname}/chart_process_${chartdate}`);
 }
 
@@ -199,17 +196,13 @@ function quantizePngImages() {
             interimct = 0;
         }
         interimct++;
-        executeCommand(cmds[i].command);
-        if (cleanMerge) {
-            fs.rmSync(cmds[i].srcpath);
-        }
+        executeCommand(cmds[i]);
     }
     console.log(`  * processed image count = ${i} of ${cmds.length}`);
 }
 
 function buildCommandArray() {
     let mergefolder = fs.readdirSync(dir_8_merged);
-    let imgcount = 0;
     let cmdarray = [];
 
     mergefolder.forEach((zoomlevel) => {
@@ -228,11 +221,10 @@ function buildCommandArray() {
                 }
                 let images = fs.readdirSync(yfolders);
                 images.forEach((image) => {
-                    imgcount ++;
                     let imgpath = `${yfolders}/${image}`;
                     let outpath = `${quantyfolders}/${image}`;
                     cmd = `pngquant --quality ${tiledImageQuality} ${imgpath} --output ${outpath}`;
-                    cmdarray.push(new quantizedImage(cmd, imgpath));
+                    cmdarray.push(cmd);
                 });
             });
         }
