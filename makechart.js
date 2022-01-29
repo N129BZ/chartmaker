@@ -156,11 +156,11 @@ function processImages(){
         executeCommand(cmd);
         
         console.log(`*** Clip border off of virtual image ***\r\n`);
-        cmd = `gdalwarp -of vrt -r lanczos -multi -cutline "${shapefile}" -crop_to_cutline -cblend 10 -dstalpha -co ALPHA=YES -wo NUM_THREADS=ALL_CPUS -wm 1024 --config GDAL_CACHEMAX 1024 ${expandedfile} ${clippedfile}`; 
+        cmd = `gdalwarp -of vrt -multi -cutline "${shapefile}" -crop_to_cutline -cblend 10 -dstalpha -co ALPHA=YES ${expandedfile} ${clippedfile}`; 
         executeCommand(cmd);
         
         console.log(`*** Warp virtual image to EPSG:3857 ***\r\n`);
-        cmd = `gdalwarp -of vrt -t_srs EPSG:3857 -r lanczos -multi -wo NUM_THREADS=ALL_CPUS -wm 1024 --config GDAL_CACHEMAX 1024 ${clippedfile} ${warpedfile}`;
+        cmd = `gdalwarp -of vrt -t_srs EPSG:3857 -r lanczos -multi  ${clippedfile} ${warpedfile}`;
         executeCommand(cmd);
         
         console.log(`*** Translate virtual image back to GTiff ***\r\n`);
