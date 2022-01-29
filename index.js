@@ -34,28 +34,37 @@ program.parse(process.argv);
 processArguments(program.opts());
 makeWorkingFolders();
 
-// processing begins here
-if (settings.debug) {
-    doDebugProcessing();
-}
-else {    
+// processing steps as found in settings
+if (settings.processingsteps.search("0")) {
     downloadCharts();
-    unzipDownloadedCharts();
+}
+if (settings.processingsteps.search("1")) {
+    unzipDownloadedCharts(); 
+}
+if (settings.processingsteps.search("2")) {
     normalizeChartNames();
+}
+if (settings.processingsteps.search("3")) {
     processImages();
-    mergeTiles(); 
+}
+if (settings.processingsteps.search("4")) {
+    mergeTiles();
+}
+if (settings.processingsteps.search("5")) {
     quantizePngImages();
+}
+if (settings.processingsteps.search("6")) {
     makeMbTiles();
 }
 
-if (!settings.debug && settings.cleanmergefolder) {
+if (settings.cleanmergefolder) {
     console.log("  \r\n* Removing merge folder")
     fs.rmdirSync(true, true);
 }
 
 // if we got here, if all steps completed and the user settings
 // indicate, re-name the working folder as the chart date
-if (!settings.debug && settings.renameworkarea) {
+if (settings.renameworkarea) {
     fs.renameSync(workarea, `${__dirname}/chart_process_${chartdate}`);
 }
 
@@ -247,30 +256,6 @@ function executeCommand(command) {
     }
     catch(err) {
         console.log(err);
-    }
-}
-
-function doDebugProcessing() {
-    if (settings.debugsteps.search("0")) {
-        downloadCharts();
-    }
-    if (settings.debugsteps.search("1")) {
-        unzipDownloadedCharts(); 
-    }
-    if (settings.debugsteps.search("2")) {
-        normalizeChartNames();
-    }
-    if (settings.debugsteps.search("3")) {
-        processImages();
-    }
-    if (settings.debugsteps.search("4")) {
-        mergeTiles();
-    }
-    if (settings.debugsteps.search("5")) {
-        quantizePngImages();
-    }
-    if (settings.debugsteps.search("6")) {
-        makeMbTiles();
     }
 }
 
