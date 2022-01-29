@@ -3,11 +3,9 @@
 ### Instructions:   
 1.) this application requires several supporting applications to be installed on your system - see ***Debian*** example below.              
 2.) clone this repository - ***git clone https://github.com/N129BZ/VfrSecChartMaker.git***            
-3.) clone the Mapbox mbtile application (see below) into the base VfrSecChartMaker directory.       
-4.) unzip ***clipshapes.zip*** to the base VfrSecChartMaker directory.   
-5.) from a terminal prompt in the VfrSecChartMaker directory, enter ***npm install***     
-6.) run the app via command **node makechart.js**         
-7.) go do something else, the process will take several hours to complete.
+3.) from a terminal prompt in the VfrSecChartMaker directory, enter ***npm install***     
+4.) run the app via command **node makechart.js**         
+5.) go do something else, the process will take several hours to complete.
      
 ### Settings.json  
 Since the FAA publishes charts 20 days *before* the official chart date, this application will "automatically" select                 
@@ -27,7 +25,7 @@ a valid chart date argument when launching the application, in the format ***-d 
 ### Full Installation example on a Debian distro (your system may be different)
 * Note that on some versions of Ubuntu, ```python-imaging``` has been replaced by ```python-pil```
 ```
-# install required dependencies using apt as sudo
+# install required dependencies using apt as sudo, this assumes you already have Python installed
 sudo apt install        \    
         git             \       
         perl            \
