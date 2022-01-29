@@ -96,7 +96,7 @@ function downloadCharts() {
 
 function unzipAndNormalize() {
     
-    console.log("unzipping all of the chart zip files");
+    console.log("\r\n* Un-zipping all of the chart zip files");
     
     let files = fs.readdirSync(dir_0_download);
     files.forEach((file) => {
@@ -114,7 +114,7 @@ function unzipAndNormalize() {
         executeCommand(cmd);
     });
 
-    console.log("normalizing and copying");
+    console.log("\r\n* Normalizing and copying");
     
     files = fs.readdirSync(dir_1_unzipped); 
     files.forEach((file) => {
@@ -141,7 +141,7 @@ function processImages(){
 
     settings.areas.forEach((area) => {
         
-        console.log(`\r\n\r\n\************** Processing chart: ${area} **************`);
+        console.log(`\r\n\r\n************** Processing chart: ${area} **************`);
         
         let shapefile = `${clippedShapesDir}/${area}.shp`;
         let normalizedfile = `${dir_2_normalized}/${area}.tif`;
@@ -151,27 +151,27 @@ function processImages(){
         let translatedfile = `${dir_6_translated}/${area}.tif`;
         let tiledir = `${dir_7_tiled}/${area}`;
         
-        console.log(`*** Expand color table to RGBA GTiff ***\r\n`);
+        console.log(`\r\n*** Expand color table to RGBA GTiff ***`);
         cmd = `gdal_translate -strict -of vrt -expand rgba ${normalizedfile} ${expandedfile}`;
         executeCommand(cmd);
         
-        console.log(`*** Clip border off of virtual image ***\r\n`);
+        console.log(`\r\n*** Clip border off of virtual image ***`);
         cmd = `gdalwarp -of vrt -multi -cutline "${shapefile}" -crop_to_cutline -cblend 10 -dstalpha -co ALPHA=YES ${expandedfile} ${clippedfile}`; 
         executeCommand(cmd);
         
-        console.log(`*** Warp virtual image to EPSG:3857 ***\r\n`);
+        console.log(`\r\n*** Warp virtual image to EPSG:3857 ***`);
         cmd = `gdalwarp -of vrt -t_srs EPSG:3857 -r lanczos -multi  ${clippedfile} ${warpedfile}`;
         executeCommand(cmd);
         
-        console.log(`*** Translate virtual image back to GTiff ***\r\n`);
+        console.log(`\r\n*** Translate virtual image back to GTiff ***`);
         cmd = `gdal_translate -co TILED=YES -co NUM_THREADS=ALL_CPUS ${warpedfile} ${translatedfile}`;
         executeCommand(cmd);
         
-        console.log(`*** Add gdaladdo overviews ***\r\n`);
+        console.log(`\r\n*** Add gdaladdo overviews ***`);
         cmd = `gdaladdo -r average --config GDAL_NUM_THREADS ALL_CPUS ${translatedfile}`;
         executeCommand(cmd); 
         
-        console.log(`*** Tile images in TMS format ***\r\n`);
+        console.log(`\r\n*** Tile images in TMS format ***`);
         cmd = `gdal2tiles.py --zoom=${zoomrange} --processes=4 --tmscompatible --webviewer=openlayers ${translatedfile} ${tiledir}`;
         executeCommand(cmd);
     });
@@ -182,7 +182,7 @@ function mergeTiles() {
     settings.areas.forEach((area) => {
         let mergesource = `${dir_7_tiled}/${area}`;
         let cmd = `perl ./mergetiles.pl ${mergesource} ${dir_8_merged}`;
-        console.log(`*** Merging ${area} tiles`);
+        console.log(`\r\n*** Merging ${area} tiles`);
         executeCommand(cmd);
     });
     stepsCompleted++;
@@ -192,7 +192,7 @@ function quantizePngImages() {
     let interimct = 0;
     let cmds = buildCommandArray();
 
-    console.log(`*** Quantizing ${cmds.length} png images at ${tiledImageQuality}%\r\n`);
+    console.log(`\r\n*** Quantizing ${cmds.length} png images at ${tiledImageQuality}%`);
     for (let i=0; i < cmds.length; i++) {
         if (interimct === 500) {
             console.log(`  * processed image count = ${i} of ${cmds.length}`);
@@ -241,7 +241,7 @@ function buildCommandArray() {
 }
 
 function makeMbTiles() {            
-    console.log(`  * Making MBTILES database`);
+    console.log(`\r\n  * Making MBTILES database`);
     let zooms = zoomrange.split("-");
     let minzoom = zooms[0];
     let maxzoom = zooms[0];
