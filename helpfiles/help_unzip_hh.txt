@@ -1,0 +1,221 @@
+
+Extended Help for UnZip
+
+See the UnZip Manual for more detailed help
+
+
+UnZip lists and extracts files in zip archives.  The default action is to
+extract zipfile entries to the current directory, creating directories as
+needed.  With appropriate options, UnZip lists the contents of archives
+instead.
+
+Basic unzip command line:
+  unzip [-Z] options archive[.zip] [file ...] [-x xfile ...] [-d exdir]
+
+Some examples:
+  unzip -l foo.zip        - list files in short format in archive foo.zip
+
+  unzip -t foo            - test the files in archive foo
+
+  unzip -Z foo            - list files using more detailed zipinfo format
+
+  unzip foo               - unzip the contents of foo in current dir
+
+  unzip -a foo            - unzip foo and convert text files to local OS
+
+If unzip is run in zipinfo mode, a more detailed list of archive contents
+is provided.  The -Z option sets zipinfo mode and changes the available
+options.
+
+Basic zipinfo command line:
+  zipinfo options archive[.zip] [file ...] [-x xfile ...]
+  unzip -Z options archive[.zip] [file ...] [-x xfile ...]
+
+Below, Mac OS refers to Mac OS before Mac OS X.  Mac OS X is a Unix based
+port and is referred to as Unix Apple.
+
+
+unzip options:
+  -Z   Switch to zipinfo mode.  Must be first option.
+  -hh  Display extended help.
+  -A   [OS/2, Unix DLL] Print extended help for DLL.
+  -c   Extract files to stdout/screen.  As -p but include names.  Also,
+         -a allowed and EBCDIC conversions done if needed.
+  -f   Freshen by extracting only if older file on disk.
+  -l   List files using short form.
+  -p   Extract files to pipe (stdout).  Only file data is output and all
+         files extracted in binary mode (as stored).
+  -t   Test archive files.
+  -T   Set timestamp on archive(s) to that of newest file.  Similar to
+       zip -o but faster.
+  -u   Update existing older files on disk as -f and extract new files.
+  -v   Use verbose list format.  If given alone as unzip -v show version
+         information.  Also can be added to other list commands for more
+         verbose output.
+  -z   Display only archive comment.
+
+unzip modifiers:
+  -a   Convert text files to local OS format.  Convert line ends, EOF
+         marker, and from or to EBCDIC character set as needed.
+  -b   Treat all files as binary.  [Tandem] Force filecode 180 ('C').
+         [VMS] Autoconvert binary files.  -bb forces convert of all files.
+  -B   [UNIXBACKUP compile option enabled] Save a backup copy of each
+         overwritten file in foo~ or foo~99999 format.
+  -C   Use case-insensitive matching.
+  -D   Skip restoration of timestamps for extracted directories.  On VMS this
+         is on by default and -D essentially becames -DD.
+  -DD  Skip restoration of timestamps for all entries.
+  -E   [MacOS (not Unix Apple)]  Display contents of MacOS extra field during
+         restore.
+  -F   [Acorn] Suppress removal of NFS filetype extension.  [Non-Acorn if
+         ACORN_FTYPE_NFS] Translate filetype and append to name.
+  -i   [MacOS] Ignore filenames in MacOS extra field.  Instead, use name in
+         standard header.
+  -j   Junk paths and deposit all files in extraction directory.
+  -J   [BeOS] Junk file attributes.  [MacOS] Ignore MacOS specific info.
+  -K   [AtheOS, BeOS, Unix] Restore SUID/SGID/Tacky file attributes.
+  -L   Convert to lowercase any names from uppercase only file system.
+  -LL  Convert all files to lowercase.
+  -M   Pipe all output through internal pager similar to Unix more(1).
+  -n   Never overwrite existing files.  Skip extracting that file, no prompt.
+  -N   [Amiga] Extract file comments as Amiga filenotes.
+  -o   Overwrite existing files without prompting.  Useful with -f.  Use with
+         care.
+  -P p Use password p to decrypt files.  THIS IS INSECURE!  Some OS show
+         command line to other users.
+  -q   Perform operations quietly.  The more q (as in -qq) the quieter.
+  -s   [OS/2, NT, MS-DOS] Convert spaces in filenames to underscores.
+  -S   [VMS] Convert text files (-a, -aa) into Stream_LF format.
+  -U   [UNICODE enabled] Show non-local characters as #Uxxxx or #Lxxxxxx ASCII
+         text escapes where x is hex digit.  [Old] -U used to leave names
+         uppercase if created on MS-DOS, VMS, etc.  See -L.
+  -UU  [UNICODE enabled] Disable use of stored UTF-8 paths.  Note that UTF-8
+         paths stored as native local paths are still processed as Unicode.
+  -V   Retain VMS file version numbers.
+  -W   [Only if WILD_STOP_AT_DIR] Modify pattern matching so ? and * do not
+         match directory separator /, but ** does.  Allows matching at specific
+         directory levels.
+  -X   [VMS, Unix, OS/2, NT, Tandem] Restore UICs and ACL entries under VMS,
+         or UIDs/GIDs under Unix, or ACLs under certain network-enabled
+         versions of OS/2, or security ACLs under Windows NT.  Can require
+         user privileges.
+  -XX  [NT] Extract NT security ACLs after trying to enable additional
+         system privileges.
+  -Y   [VMS] Treat archived name endings of .nnn as VMS version numbers.
+  -$   [MS-DOS, OS/2, NT] Restore volume label if extraction medium is
+         removable.  -$$ allows fixed media (hard drives) to be labeled.
+  -/ e [Acorn] Use e as extension list.
+  -:   [All but Acorn, VM/CMS, MVS, Tandem] Allow extract archive members into
+         locations outside of current extraction root folder.  This allows
+         paths such as ../foo to be extracted above the current extraction
+         directory, which can be a security problem.
+  -^   [Unix] Allow control characters in names of extracted entries.  Usually
+         this is not a good thing and should be avoided.
+  -2   [VMS] Force unconditional conversion of names to ODS-compatible names.
+         Default is to exploit destination file system, preserving cases and
+         extended name characters on ODS5 and applying ODS2 filtering on ODS2.
+
+
+Wildcards:
+  Internally unzip supports the following wildcards:
+    ?       (or %% or #, depending on OS) matches any single character
+    *       matches any number of characters, including zero
+    [list]  matches char in list (regex), can do range [ac-f], all but [!bf]
+  If port supports [], must escape [ as [[]
+  For shells that expand wildcards, escape (\* or "*") so unzip can recurse.
+
+Include and Exclude:
+  -i pattern pattern ...   include files that match a pattern
+  -x pattern pattern ...   exclude files that match a pattern
+  Patterns are paths with optional wildcards and match paths as stored in
+  archive.  Exclude and include lists end at next option or end of line.
+    unzip archive -x pattern pattern ...
+
+Multi-part (split) archives (archives created as a set of split files):
+  Currently split archives are not readable by unzip.  A workaround is
+  to use zip to convert the split archive to a single-file archive and
+  use unzip on that.  See the manual page for Zip 3.0 or later.
+
+Streaming (piping into unzip):
+  Currently unzip does not support streaming.  The funzip utility can be
+  used to process the first entry in a stream.
+    cat archive | funzip
+
+Testing archives:
+  -t        test contents of archive
+  This can be modified using -q for quieter operation, and -qq for even
+  quieter operation.
+
+Unicode:
+  If compiled with Unicode support, unzip automatically handles archives
+  with Unicode entries.  Currently Unicode on Win32 systems is limited.
+  Characters not in the current character set are shown as ASCII escapes
+  in the form #Uxxxx where the Unicode character number fits in 16 bits,
+  or #Lxxxxxx where it doesn't, where x is the ASCII character for a hex
+  digit.
+
+
+zipinfo options (these are used in zipinfo mode (unzip -Z ...)):
+  -1  List names only, one per line.  No headers/trailers.  Good for scripts.
+  -2  List names only as -1, but include headers, trailers, and comments.
+  -s  List archive entries in short Unix ls -l format.  Default list format.
+  -m  List in long Unix ls -l format.  As -s, but includes compression %.
+  -l  List in long Unix ls -l format.  As -m, but compression in bytes.
+  -v  List zipfile information in verbose, multi-page format.
+  -h  List header line.  Includes archive name, actual size, total files.
+  -M  Pipe all output through internal pager similar to Unix more(1) command.
+  -t  List totals for files listed or for all files.  Includes uncompressed
+        and compressed sizes, and compression factors.
+  -T  Print file dates and times in a sortable decimal format (yymmdd.hhmmss)
+        Default date and time format is a more human-readable version.
+  -U  [UNICODE] If entry has a UTF-8 Unicode path, display any characters
+        not in current character set as text #Uxxxx and #Lxxxxxx escapes
+        representing the Unicode character number of the character in hex.
+  -UU [UNICODE]  Disable use of any UTF-8 path information.
+  -z  Include archive comment if any in listing.
+
+
+funzip stream extractor:
+  funzip extracts the first member in an archive to stdout.  Typically
+  used to unzip the first member of a stream or pipe.  If a file argument
+  is given, read from that file instead of stdin.
+
+funzip command line:
+  funzip [-password] [input[.zip|.gz]]
+
+
+unzipsfx self extractor:
+  Self-extracting archives made with unzipsfx are no more (or less)
+  portable across different operating systems than unzip executables.
+  In general, a self-extracting archive made on a particular Unix system,
+  for example, will only self-extract under the same flavor of Unix.
+  Regular unzip may still be used to extract embedded archive however.
+
+unzipsfx command line:
+  <unzipsfx+archive_filename>  [-options] [file(s) ... [-x xfile(s) ...]]
+
+unzipsfx options:
+  -c, -p - Output to pipe.  (See above for unzip.)
+  -f, -u - Freshen and Update, as for unzip.
+  -t     - Test embedded archive.  (Can be used to list contents.)
+  -z     - Print archive comment.  (See unzip above.)
+
+unzipsfx modifiers:
+  Most unzip modifiers are supported.  These include
+  -a     - Convert text files.
+  -n     - Never overwrite.
+  -o     - Overwrite without prompting.
+  -q     - Quiet operation.
+  -C     - Match names case-insensitively.
+  -j     - Junk paths.
+  -V     - Keep version numbers.
+  -s     - Convert spaces to underscores.
+  -$     - Restore volume label.
+
+If unzipsfx compiled with SFX_EXDIR defined, -d option also available:
+  -d exd - Extract to directory exd.
+By default, all files extracted to current directory.  This option
+forces extraction to specified directory.
+
+See unzipsfx manual page for more information.
+

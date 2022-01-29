@@ -8,7 +8,6 @@ const { program } = require('commander');
 let cmd = "";
 let chartdate = "";
 let charturl = ""; 
-let stepsCompleted = 0;
 let chartareas = [];
 let workarea = `${__dirname}/workarea`;
 let rawdata = fs.readFileSync(`${__dirname}/settings.json`);
@@ -32,27 +31,30 @@ program
     .option('-d, --dateofchart <mm-dd-YYYY>', 'enter a valid date in the format mm-dd-YYYY');
 program.showSuggestionAfterError();
 program.parse(process.argv);
-
-
-
 processArguments(program.opts());
 makeWorkingFolders();
-downloadCharts();
-unzipAndNormalize();
-processImages();
-mergeTiles(); 
-quantizePngImages();
-makeMbTiles();
 
-if (settings.cleanmergefolder) {
+// processing begins here
+if (settings.debug) {
+    doDebugProcessing();
+}
+else {    
+    downloadCharts();
+    normalizeChartNames();
+    processImages();
+    mergeTiles(); 
+    quantizePngImages();
+    makeMbTiles();
+}
+
+if (!settings.debug && settings.cleanmergefolder) {
     console.log("  \r\n* Removing merge folder")
     fs.rmdirSync(true, true);
 }
 
 // if we got here, if all steps completed and the user settings
 // indicate, re-name the working folder as the chart date
-if (stepsCompleted === 9 && settings.renameworkarea) {
-    
+if (!settings.debug && settings.renameworkarea) {
     fs.renameSync(workarea, `${__dirname}/chart_process_${chartdate}`);
 }
 
@@ -77,53 +79,24 @@ function makeWorkingFolders() {
 }
 
 function downloadCharts() {
-    settings.areas.forEach((area) => {
-        let serverfile = charturl.replace("<chartname>", area);
-        let localfile = area.replace("-", "_");
-        localfile = localfile.replace(" ", "_");
-        let filename = `${dir_0_download}/${localfile}.zip`;
-        cmd = `wget ${serverfile} --output-document=${filename}`;
+    let chartzip = `${dir_0_download}/${settings.charttype}.zip`;
+    cmd = `wget ${charturl} --output-document=${chartzip}`;
+    executeCommand(cmd);
 
-        if (executeCommand(cmd) != 0) {
-            console.log("NO CHARTS FOUND, make sure you enter a valid FAA sectional chart release date.");
-            process.exit(1);
-        }
-    });
+    console.log("\r\n* Unzipping chart zip files\r\n");
+    cmd = `unzip -o ${chartzip} -x '*.htm' -d ${dir_1_unzipped}`;
+    executeCommand(cmd);
 }
 
-function unzipAndNormalize() {
-    
-    console.log("\r\n* Un-zipping all of the chart zip files");
-    
-    let files = fs.readdirSync(dir_0_download);
+function normalizeChartNames() {
+    let files = fs.readdirSync(dir_1_unzipped);
     files.forEach((file) => {
-        cmd = `unzip -u -o ${dir_0_download}/${file} -d ${dir_1_unzipped}`;
-        executeCommand(cmd);
-    });
-    
-    files = fs.readdirSync(dir_1_unzipped);
-    files.forEach((file) => {
-        let escapedname = replaceAll(file, " ", "\\ ");
         let newname = normalizeFileName(file);
-        chartareas.push(newname);
-        cmd = `mv ${dir_1_unzipped}/${escapedname} ${dir_1_unzipped}/${newname}`;
-        executeCommand(cmd);
-    });
-
-    console.log("\r\n* Normalizing and copying");
-    
-    files = fs.readdirSync(dir_1_unzipped); 
-    files.forEach((file) => {
-        if (file.endsWith(".tif")) {
-            let chartfile = `${dir_1_unzipped}/${file}`;
-            let normfile = `${dir_2_normalized}/${file}`;
-            // Does this file have georeference info?
-            if (getGdalInfo(chartfile, "PROJCRS")) {
-                cmd = `mv --update --verbose ${chartfile} ${normfile}`;
-                executeCommand(cmd);
-            }
+        if (newname.endsWith(".tif")) {
+            chartareas.push(newname.replace(".tif", ""));
         }
-    }); 
+        fs.renameSync(`${dir_1_unzipped}/${file}`, `${dir_2_normalized}/${newname}`);
+    });
 }
 
 function processImages(){
@@ -171,7 +144,6 @@ function processImages(){
         cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=4 --tmscompatible --webviewer=openlayers ${translatedfile} ${tiledir}`;
         executeCommand(cmd);
     });
-    stepsCompleted += 6;
 }
 
 function mergeTiles() {
@@ -181,7 +153,6 @@ function mergeTiles() {
         console.log(`\r\n*** Merging ${area} tiles`);
         executeCommand(cmd);
     });
-    stepsCompleted++;
 }
     
 function quantizePngImages() {
@@ -261,8 +232,6 @@ function makeMbTiles() {
     let mbtiles = `${dir_9_dbtiles}/${settings.tiledbname}.mbtiles`;   
     let cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_8_quantized} ${mbtiles}`;
     executeCommand(cmd);
-
-    stepsCompleted++;
 }
 
 function executeCommand(command) {
@@ -279,10 +248,30 @@ function executeCommand(command) {
     }
 }
 
+function doDebugProcessing() {
+    if (settings.debugsteps.search("1")) {
+        downloadCharts();
+    }
+    if (settings.debugsteps.search("2")) {
+        normalizeChartNames();
+    }
+    if (settings.debugsteps.search("3")) {
+        processImages();
+    }
+    if (settings.debugsteps.search("4")) {
+        mergeTiles();
+    }
+    if (settings.debugsteps.search("5")) {
+        quantizePngImages();
+    }
+    if (settings.debugsteps.search("6")) {
+        makeMbTiles();
+    }
+}
+
 function normalizeFileName(file) {
     let newname = "";
     newname = replaceAll(file, " ", "_");
-    newname = replaceAll(newname, "-", "_");
     newname = newname.replace("_SEC", "");
     newname = newname.replace("_TAC", "");
     return newname;
@@ -332,6 +321,7 @@ function processArguments(options) {
     }
 
     charturl = settings.charturltemplate.replace("<chartdate>", chartdate);
+    charturl = charturl.replace("<charttype>", settings.charttype);
 }
 
 function loadBestChartDate() {

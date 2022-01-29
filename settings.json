@@ -1,10 +1,22 @@
 {
-    "charturltemplate": "https://aeronav.faa.gov/visual/<chartdate>/sectional-files/<chartname>.zip",
+    "charturltemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
     "tiledbname": "usavfr",
     "tiledimagequality": 75,
     "cleanmergefolder": true,
     "renameworkarea": false,
     "zoomrange": "5-11",
+    "charttype": "Sectional",
+    "debug": true,
+    "debugsteps": "2,3,4,5,6",
+    "charttypes":
+        [
+            "Sectional",
+            "Terminal",
+            "Caribbean",
+            "Grand_Canyon",
+            "Helicopter",
+            "Planning"
+        ],
     "areas":
         [
             "Albuquerque",
@@ -242,6 +254,6 @@
             "San_Francisco",
             "Seattle",
             "St_Louis",
-            "Tampa-Orlando",
-        [    
+            "Tampa-Orlando"
+        ]    
 }
