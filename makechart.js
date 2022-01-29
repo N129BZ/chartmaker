@@ -152,26 +152,26 @@ function processImages(){
         let tiledir = `${dir_7_tiled}/${area}`;
         
         console.log(`*** Expand color table to RGBA GTiff ***`);
-        cmd = `gdal_translate -strict -of vrt -expand rgba ${normalizedfile} ${expandedfile}`;
+        cmd = `gdal_translate -strict -of vrt -expand rgba ${normalizedfile} ${expandedfile}\r\n`;
         executeCommand(cmd);
         
-        console.log(`*** Clip border off of virtual image ***`);
+        console.log(`*** Clip border off of virtual image ***\r\n`);
         cmd = `gdalwarp -of vrt -r lanczos -multi -cutline "${shapefile}" -crop_to_cutline -cblend 10 -dstalpha -co ALPHA=YES -wo NUM_THREADS=ALL_CPUS -wm 1024 --config GDAL_CACHEMAX 1024 ${expandedfile} ${clippedfile}`; 
         executeCommand(cmd);
         
-        console.log(`*** Warp virtual image to EPSG:3857 ***`);
+        console.log(`*** Warp virtual image to EPSG:3857 ***\r\n`);
         cmd = `gdalwarp -of vrt -t_srs EPSG:3857 -r lanczos -multi -wo NUM_THREADS=ALL_CPUS -wm 1024 --config GDAL_CACHEMAX 1024 ${clippedfile} ${warpedfile}`;
         executeCommand(cmd);
         
-        console.log(`*** Translate virtual image back to GTiff ***`);
+        console.log(`*** Translate virtual image back to GTiff ***\r\n`);
         cmd = `gdal_translate -co TILED=YES -co NUM_THREADS=ALL_CPUS ${warpedfile} ${translatedfile}`;
         executeCommand(cmd);
         
-        console.log(`*** Add gdaladdo overviews ***`);
+        console.log(`*** Add gdaladdo overviews ***\r\n`);
         cmd = `gdaladdo -r average --config GDAL_NUM_THREADS ALL_CPUS ${translatedfile}`;
         executeCommand(cmd); 
         
-        console.log(`*** Tile images in TMS format ***`);
+        console.log(`*** Tile images in TMS format ***\r\n`);
         cmd = `gdal2tiles.py --zoom=${zoomrange} --processes=4 --tmscompatible --webviewer=openlayers ${translatedfile} ${tiledir}`;
         executeCommand(cmd);
     });
@@ -182,18 +182,21 @@ function mergeTiles() {
     settings.areas.forEach((area) => {
         let mergesource = `${dir_7_tiled}/${area}`;
         let cmd = `perl ./mergetiles.pl ${mergesource} ${dir_8_merged}`;
+<<<<<<< HEAD
         console.log(`*** Merging ${area} tiles`);
+=======
+        console.log(`*** Merging ${chart} tiles\r\n`);
+>>>>>>> 1cfc4828858e774b73b71f88f2753a3e12a4e2ce
         executeCommand(cmd);
     });
     stepsCompleted++;
 }
     
 function quantizePngImages() {
-    let count = 0;
     let interimct = 0;
     let cmds = buildCommandArray();
 
-    console.log(`*** Quantizing ${cmds.length} png images at ${tiledImageQuality}%`);
+    console.log(`*** Quantizing ${cmds.length} png images at ${tiledImageQuality}%\r\n`);
     for (let i=0; i < cmds.length; i++) {
         if (interimct === 500) {
             console.log(`  * processed image count = ${i} of ${cmds.length}`);
