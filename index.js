@@ -47,9 +47,11 @@ if (settings.processingsteps.search("2") > -1) {
     normalizeChartNames();
 }
 if (settings.processingsteps.search("3") > -1) {
+    checkChartAreas();
     processImages();
 }
 if (settings.processingsteps.search("4") > -1) {
+    checkChartAreas();
     mergeTiles();
 }
 if (settings.processingsteps.search("5") > -1) {
@@ -90,6 +92,12 @@ function makeWorkingFolders() {
     if (!fs.existsSync(dir_9_dbtiles)) fs.mkdirSync(dir_9_dbtiles);
 }
 
+function checkChartAreas() {
+    if (chartareas.length === 0) {
+        chartareas = settings.vfrareas;   
+    }
+}
+
 function downloadCharts() {
     let chartzip = `${dir_0_download}/${settings.charttype}.zip`;
     cmd = `wget ${charturl} --output-document=${chartzip}`;
@@ -109,7 +117,7 @@ function normalizeChartNames() {
         if (newname.endsWith(".tif")) {
             chartareas.push(newname.replace(".tif", ""));
         }
-        fs.renameSync(`${dir_1_unzipped}/${file}`, `${dir_2_normalized}/${newname}`);
+        fs.copyFileSync(`${dir_1_unzipped}/${file}`, `${dir_2_normalized}/${newname}`);
     });
 }
 
