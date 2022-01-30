@@ -1,5 +1,7 @@
 'use strict';
 
+// TODO: Fix Houston shapefiles
+
 const fs = require("fs");
 const shell = require('shelljs')
 const { program } = require('commander');
