@@ -94,6 +94,7 @@ function downloadCharts() {
     executeCommand(cmd);
 }
 function unzipDownloadedCharts() {
+    let chartzip = `${dir_0_download}/${settings.charttype}.zip`;
     console.log("\r\n* Unzipping chart zip files\r\n");
     cmd = `unzip -o ${chartzip} -x '*.htm' -d ${dir_1_unzipped}`;
     executeCommand(cmd);
