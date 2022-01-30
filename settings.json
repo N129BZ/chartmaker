@@ -6,8 +6,8 @@
     "renameworkarea": false,
     "zoomrange": "5-11",
     "charttype": "Sectional",
-    "processingsteps": "123456",
-    "processing_information_only": 
+    "processingsteps": "0123456",
+    "processing_step_definitions": 
         [
             "0 = downloadCharts()",
             "1 = unzipDownloadedCharts()",
