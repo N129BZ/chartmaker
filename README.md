@@ -3,9 +3,10 @@
 ### Instructions:   
 1.) this application requires several supporting applications to be installed on your system - see ***Debian*** example below.              
 2.) clone this repository - ***git clone https://github.com/N129BZ/VfrSecChartMaker.git***            
-3.) from a terminal prompt in the VfrSecChartMaker directory, enter ***npm install***     
-4.) run the app via command **node index.js**         
-5.) go do something else, the process will take several hours to complete.
+3.) from a terminal prompt in the VfrSecChartMaker directory, enter ***npm install***                        
+4.) edit **settings.json** wuth a text editor and change the **ChartType** value to one of the types in the ChartTypes list                      
+5.) run the app via command **node index.js**         
+6.) go do something else, the process will take several hours to complete.
      
 ### Settings.json  
 Since the FAA publishes charts 20 days *before* the official chart date, this application will "automatically" select                 
@@ -42,7 +43,7 @@ cd /myinstalldirectory
 
 # clone VfrSecChartMaker
 git clone https:github.com/N129BZ/VfrSecChartMaker.git
-
+settings.jso
 # change directory to VfrSecChartMaker
 cd /myinstalldirectory/VfrSecChartMaker
 
@@ -63,72 +64,31 @@ node makechart.js -d 01-27-2022
 
 ```
 ### Additional information       
-The charts are downloaded from the FAA VFR digital raster chart repository by processing the list of chartnames in **settings.json.** You can edit this file to include as many or as few area charts as you want. The default list includes all 51 area chart names, covering the continental USA, Alaska, and Hawaii, as well as inset charts for several areas. **The chartnames on the list do not include the ".zip" extension and they must exactly match the FAA's spelling, including any spaces, dashes or underscores.** The unzipping process will normalize the resultant graphic filenames with underscores in place of dashes or spaces.     
+The chart zip file is downloaded from the FAA VFR digital raster chart repository and unzipped. The unzipping process will normalize the resultant GEOtiff imsge and partnering tfw world files to filenames with underscores in place of spaces.     
        
-As of January 1, 2022, the official chart release is for **01-27-2022. You can view those release dates below in the chartdates list in settings.json** or view the list at: https://aeronav.faa.gov/visual/10-07-2021/sectional-files. **Also note that the FAA publishes these chart files *20 days before* an official release date.**    
+As of January 1, 2022, the official chart release is for **01-27-2022. You can view those release dates below in the chartdates list in settings.json** or view the list at: https://aeronav.faa.gov/visual/10-07-2021/sectional-files. **Also note that the FAA publishes these chart files *20 days before* an official release date.**        
+                       
+                        
+**settings.json:**                                                                                                              
 ```
 {
-    "charturl": "https://aeronav.faa.gov/visual/<chartdate>/sectional-files/<chartname>.zip",
-    "tiledbname": "usavfr",
-    "tiledimagequality": 90,
-    "cleanmergefolderAtQuantize": false,
-    "renameworkarea": true,
-    "zoomrange": "5-11",
-    "areas":
+    "ChartUrlTemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
+    "TileDbName": "usavfr",
+    "TiledImageQuality": 75,
+    "CleanMergeFolder": true,
+    "RenameWorkArea": false,
+    "ZoomRange": "5-11",
+    "ChartType": "Terminal",
+    "ChartTypes":
         [
-            "Albuquerque",
-            "Atlanta",
-            "Bethel",
-            "Billings",
-            "Brownsville",
-            "Cape_Lisburne",
-            "Charlotte",
-            "Cheyenne",
-            "Chicago",
-            "Cincinnati",
-            "Cold_Bay",
-            "Dallas-Ft_Worth",
-            "Dawson",
-            "Denver",
-            "Detroit",
-            "Dutch_Harbor",
-            "El_Paso",
-            "Fairbanks",
-            "Great_Falls",
-            "Green_Bay",
-            "Halifax",a
-            "Hawaiian_Islands",
-            "Houston",
-            "Jacksonville",
-            "Juneau",
-            "Kansas_City",
-            "Ketchikan",
-            "Klamath_Falls",
-            "Kodiak",
-            "Lake_Huron",
-            "Las_Vegas",a
-            "Los_Angeles",
-            "McGrath",
-            "Memphis",
-            "Montreal",
-            "Miami",
-            "New_Orleans",
-            "New_York",
-            "Nome",
-            "Omaha", 
-            "Phoenix",
-            "Point_Barrow",
-            "Salt_Lake_City",
-            "San_Antonio",
-            "San_Francisco",
-            "Seattle",
-            "Seward",
-            "St_Louis",
-            "Twin_Cities",
-            "Washington",
-            "Wichita"            
+            "Sectional",
+            "Terminal",
+            "Caribbean",
+            "Grand_Canyon",
+            "Helicopter",
+            "Planning"
         ],
-        "chartdates":
+    "ChartDates":
         [
             "12-02-2021",
             "01-27-2022",
@@ -279,7 +239,94 @@ As of January 1, 2022, the official chart release is for **01-27-2022. You can v
             "08-11-2044",
             "10-06-2044",
             "12-29-2044"
-        ]
+        ],
+    "SectionalAreas": 
+        [
+            "San_Antonio",
+            "Albuquerque",
+            "Atlanta",
+            "Bethel",
+            "Billings",
+            "Brownsville",
+            "Cape_Lisburne",
+            "Charlotte",
+            "Cheyenne",
+            "Chicago",
+            "Cincinnati",
+            "Cold_Bay",
+            "Dallas-Ft_Worth",
+            "Dawson",
+            "Denver",
+            "Detroit",
+            "Dutch_Harbor",
+            "El_Paso",
+            "Fairbanks",
+            "Great_Falls",
+            "Green_Bay",
+            "Halifax",
+            "Hawaiian_Islands",
+            "Houston",
+            "Jacksonville",
+            "Juneau",
+            "Kansas_City",
+            "Ketchikan",
+            "Klamath_Falls",
+            "Kodiak",
+            "Lake_Huron",
+            "Las_Vegas",
+            "Los_Angeles",
+            "McGrath",
+            "Memphis",
+            "Montreal",
+            "Miami",
+            "New_Orleans",
+            "New_York",
+            "Nome",
+            "Omaha", 
+            "Phoenix",
+            "Point_Barrow",
+            "Salt_Lake_City",
+            "San_Francisco",
+            "Seattle",
+            "Seward",
+            "St_Louis",
+            "Twin_Cities",
+            "Washington",
+            "Wichita"            
+        ],
+    "TerminalAreas": 
+        [
+            "Anchorage-Fairbanks",
+            "Atlanta",
+            "Baltimore-Washington",
+            "Boston",
+            "Charlotte",
+            "Chicago",
+            "Cincinnati",
+            "Cleveland",
+            "Dallas-Ft_Worth",
+            "Denver",
+            "Detroit",
+            "Houston",
+            "Kansas_City",
+            "Las_Vegas",
+            "Los_Angeles",
+            "Memphis",
+            "Miami",
+            "Minneapolis-St_Paul",
+            "New_Orleans",
+            "New_York",
+            "Philadelphia",
+            "Phoenix",
+            "Pittsburgh",
+            "Puerto_Rico-VI",
+            "Salt_Lake_City",
+            "San_Diego",
+            "San_Francisco",
+            "Seattle",
+            "St_Louis",
+            "Tampa-Orlando"
+        ]    
 }
 ```
 
