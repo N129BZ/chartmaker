@@ -85,7 +85,8 @@ function unzipDownloadedCharts() {
     let chartzip = `${dir_0_download}/${settings.ChartType}.zip`;
     console.log("\r\n* Unzipping chart zip files\r\n");
     cmd = `unzip -o ${chartzip} -x '*.htm' -d ${dir_1_unzipped}`;
-    executeCommand(cmd);
+    executeCommand(cmd);"TileDbName": "usavfr",
+    
 }
 
 function normalizeChartNames() {
@@ -234,9 +235,10 @@ function makeMbTiles() {
 
     // create a metadata.json file in the root of the tiles directory,
     // mbutil will use this to generate a metadata table in the database.  
+    let tiledbname = settings.ChartType;
     let metajson = `{ 
-        "name": "${settings.TileDbName}",
-        "description": "VFR Sectional Charts",
+        "name": "${tiledbname}",
+        "description": "${tildbname} Charts",
         "version": "1.1",
         "type": "overlay",
         "format": "png",
@@ -249,7 +251,7 @@ function makeMbTiles() {
     fs.writeSync(fd, metajson);
     fs.closeSync(fd);
 
-    let mbtiles = `${dir_9_dbtiles}/${settings.TileDbName}.mbtiles`;   
+    let mbtiles = `${dir_9_dbtiles}/${tiledbname}.mbtiles`;   
     let cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_8_quantized} ${mbtiles}`;
     executeCommand(cmd);
 }
