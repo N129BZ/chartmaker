@@ -7,13 +7,13 @@ const shell = require('shelljs')
 const { program } = require('commander');
 
 // global editable variables
+let rawdata = fs.readFileSync(`${__dirname}/settings.json`);
+let settings = JSON.parse(rawdata);
 let cmd = "";
 let chartdate = "";
 let charturl = ""; 
 let chartareas = [];
-let workarea = `${__dirname}/workarea`;
-let rawdata = fs.readFileSync(`${__dirname}/settings.json`);
-let settings = JSON.parse(rawdata);
+let workarea = `${__dirname}/workarea/${settings.ChartType}`;
 
 // working directory constants
 const dir_0_download      = `${workarea}/0_download`;
@@ -36,40 +36,24 @@ program.parse(process.argv);
 processArguments(program.opts());
 makeWorkingFolders();
 
-// processing steps as found in settings
-if (settings.processingsteps.search("0") > -1) {
-    downloadCharts();
-}
-if (settings.processingsteps.search("1") > -1) {
-    unzipDownloadedCharts(); 
-}
-if (settings.processingsteps.search("2") > -1) {
-    normalizeChartNames();
-}
-if (settings.processingsteps.search("3") > -1) {
-    checkChartAreas();
-    processImages();
-}
-if (settings.processingsteps.search("4") > -1) {
-    checkChartAreas();
-    mergeTiles();
-}
-if (settings.processingsteps.search("5") > -1) {
-    quantizePngImages();
-}
-if (settings.processingsteps.search("6") > -1) {
-    makeMbTiles();
-}
 
-if (settings.cleanmergefolder) {
+downloadCharts();
+unzipDownloadedCharts(); 
+normalizeChartNames();
+processImages();
+mergeTiles();
+quantizePngImages();
+makeMbTiles();
+
+if (settings.CleanMergeFolder) {
     console.log("  \r\n* Removing merge folder")
-    fs.rmdirSync(true, true);
+    fs.rmdirSync(dir_8_merged, true);
 }
 
 // if we got here, if all steps completed and the user settings
 // indicate, re-name the working folder as the chart date
-if (settings.renameworkarea) {
-    fs.renameSync(workarea, `${__dirname}/chart_process_${chartdate}`);
+if (settings.RenameWorkArea) {
+    //fs.renameSync(workarea, `${__dirname}/chart_process_${chartdate}`);
 }
 
 console.log("Chart processing completed!");
@@ -92,19 +76,13 @@ function makeWorkingFolders() {
     if (!fs.existsSync(dir_9_dbtiles)) fs.mkdirSync(dir_9_dbtiles);
 }
 
-function checkChartAreas() {
-    if (chartareas.length === 0) {
-        chartareas = settings.vfrareas;   
-    }
-}
-
 function downloadCharts() {
-    let chartzip = `${dir_0_download}/${settings.charttype}.zip`;
+    let chartzip = `${dir_0_download}/${settings.ChartType}.zip`;
     cmd = `wget ${charturl} --output-document=${chartzip}`;
     executeCommand(cmd);
 }
 function unzipDownloadedCharts() {
-    let chartzip = `${dir_0_download}/${settings.charttype}.zip`;
+    let chartzip = `${dir_0_download}/${settings.ChartType}.zip`;
     console.log("\r\n* Unzipping chart zip files\r\n");
     cmd = `unzip -o ${chartzip} -x '*.htm' -d ${dir_1_unzipped}`;
     executeCommand(cmd);
@@ -112,12 +90,18 @@ function unzipDownloadedCharts() {
 
 function normalizeChartNames() {
     let files = fs.readdirSync(dir_1_unzipped);
+    let tifname = "";
+    let tfwname = "";
     files.forEach((file) => {
-        let newname = normalizeFileName(file);
-        if (newname.endsWith(".tif")) {
-            chartareas.push(newname.replace(".tif", ""));
-        }
-        fs.copyFileSync(`${dir_1_unzipped}/${file}`, `${dir_2_normalized}/${newname}`);
+        if (file.endsWith(".tif") && file.search(" TAC") != -1) {
+            let testname = normalizeFileName(file);
+            let basename = testname.replace(".tif", "");
+            tifname = `${dir_2_normalized}/${basename}.tif`;
+            tfwname = `${dir_2_normalized}/${basename}.tfw`;
+            fs.copyFileSync(`${dir_1_unzipped}/${file}`, tifname);
+            fs.copyFileSync(`${dir_1_unzipped}/${file.replace(".tfw", ".tif")}`, tfwname);
+        }buildChartAreaArray();
+        
     });
 }
 
@@ -128,7 +112,9 @@ function processImages(){
      3) tramslate the VRT back into a GTIFF file
      4) add zoom overlays to the GTIFF 
     --------------------------------------------------------------*/
-    let clippedShapesDir = `${__dirname}/clipshapes`;
+    let clippedShapesDir = `${__dirname}/clipshapes/${settings.ChartType}`;
+
+    buildChartNameArray();
 
     chartareas.forEach((area) => {
         
@@ -163,12 +149,13 @@ function processImages(){
         executeCommand(cmd); 
         
         console.log(`\r\n*** Tile images in TMS format ***`);
-        cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=4 --tmscompatible --webviewer=openlayers ${translatedfile} ${tiledir}`;
+        cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --processes=4 --tmscompatible --webviewer=openlayers ${translatedfile} ${tiledir}`;
         executeCommand(cmd);
     });
 }
 
 function mergeTiles() {
+    buildChartNameArray();
     chartareas.forEach((area) => {
         let mergesource = `${dir_7_tiled}/${area}`;
         let cmd = `perl ./mergetiles.pl ${mergesource} ${dir_8_merged}`;
@@ -181,7 +168,7 @@ function quantizePngImages() {
     let interimct = 0;
     let cmds = buildCommandArray();
     let i = 0;
-    console.log(`\r\n*** Quantizing ${cmds.length} png images at ${settings.tiledimagequality}%`);
+    console.log(`\r\n*** Quantizing ${cmds.length} png images at ${settings.TiledImageQuality}%`);
     for (i=0; i < cmds.length; i++) {
         if (interimct === 500) {
             console.log(`  * processed image count = ${i} of ${cmds.length}`);
@@ -191,6 +178,16 @@ function quantizePngImages() {
         executeCommand(cmds[i]);
     }
     console.log(`  * processed image count = ${i} of ${cmds.length}`);
+}
+
+function buildChartNameArray() {
+    let normfiles = fs.readdirSync(dir_2_normalized);
+    normfiles.forEach((file) => {
+        if (file.endsWith(".tif")) {
+            chartareas.push(file.replace(".tif", ""));// build an array of chart names
+    
+        }
+    });
 }
 
 function buildCommandArray() {
@@ -212,10 +209,11 @@ function buildCommandArray() {
                     fs.mkdirSync(quantyfolders);
                 }
                 let images = fs.readdirSync(yfolders);
-                images.forEach((image) => {
+                images.forEach((image) => {// build an array of chart names
+    
                     let imgpath = `${yfolders}/${image}`;
                     let outpath = `${quantyfolders}/${image}`;
-                    cmd = `pngquant --quality ${settings.tiledimagequality} ${imgpath} --output ${outpath}`;
+                    cmd = `pngquant --quality ${settings.TiledImageQuality} ${imgpath} --output ${outpath}`;
                     cmdarray.push(cmd);
                 });
             });
@@ -226,7 +224,7 @@ function buildCommandArray() {
 
 function makeMbTiles() {            
     console.log(`\r\n  * Making MBTILES database`);
-    let zooms = settings.zoomrange.split("-");
+    let zooms = settings.ZoomRange.split("-");
     let minzoom = zooms[0];
     let maxzoom = zooms[0];
     
@@ -237,21 +235,21 @@ function makeMbTiles() {
     // create a metadata.json file in the root of the tiles directory,
     // mbutil will use this to generate a metadata table in the database.  
     let metajson = `{ 
-        "name": "${settings.tiledbname}",
+        "name": "${settings.TileDbName}",
         "description": "VFR Sectional Charts",
         "version": "1.1",
         "type": "overlay",
         "format": "png",
         "minzoom": "${minzoom}", 
         "maxzoom": "${maxzoom}", 
-        "pngquality": "${settings.tiledimagequality}"
+        "pngquality": "${settings.TiledImageQuality}"
     }`;
     let fpath = `${dir_8_quantized}/metadata.json`; 
     let fd = fs.openSync(fpath, 'w');
     fs.writeSync(fd, metajson);
     fs.closeSync(fd);
 
-    let mbtiles = `${dir_9_dbtiles}/${settings.tiledbname}.mbtiles`;   
+    let mbtiles = `${dir_9_dbtiles}/${settings.TileDbName}.mbtiles`;   
     let cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_8_quantized} ${mbtiles}`;
     executeCommand(cmd);
 }
@@ -280,7 +278,7 @@ function normalizeFileName(file) {
 
 function processArguments(options) {
     let error = false;
-    let zrange = settings.zoomrange;
+    let zrange = settings.ZoomRange;
 
     if (zrange.search("-") > -1) {
         let ranges = zrange.split("-");
@@ -321,8 +319,8 @@ function processArguments(options) {
         }
     }
 
-    charturl = settings.charturltemplate.replace("<chartdate>", chartdate);
-    charturl = charturl.replace("<charttype>", settings.charttype);
+    charturl = settings.ChartUrlTemplate.replace("<chartdate>", chartdate);
+    charturl = charturl.replace("<charttype>", settings.ChartType);
 }
 
 function loadBestChartDate() {
@@ -330,7 +328,7 @@ function loadBestChartDate() {
     let thistime = thisdate.getTime();
     let cdates = [];
     let found = false;
-    settings.chartdates.forEach((cdate) => {
+    settings.ChartDates.forEach((cdate) => {
         cdates.push(new Date(cdate))
     });
     

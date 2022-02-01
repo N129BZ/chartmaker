@@ -1,23 +1,12 @@
 {
-    "charturltemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
-    "tiledbname": "usavfr",
-    "tiledimagequality": 75,
-    "cleanmergefolder": true,
-    "renameworkarea": false,
-    "zoomrange": "5-11",
-    "charttype": "Sectional",
-    "processingsteps": "0123456",
-    "processing_step_definitions": 
-        [
-            "0 = downloadCharts()",
-            "1 = unzipDownloadedCharts()",
-            "2 = normalizeChartNames()",
-            "3 = processImages()",
-            "4 = mergeTiles()",
-            "5 = quantizePngImages()",
-            "6 = makeMbTiles()"
-        ],
-    "charttypes":
+    "ChartUrlTemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
+    "TileDbName": "usavfr",
+    "TiledImageQuality": 75,
+    "CleanMergeFolder": true,
+    "RenameWorkArea": false,
+    "ZoomRange": "5-11",
+    "ChartType": "Terminal",
+    "ChartTypes":
         [
             "Sectional",
             "Terminal",
@@ -26,7 +15,7 @@
             "Helicopter",
             "Planning"
         ],
-    "chartdates":
+    "ChartDates":
         [
             "12-02-2021",
             "01-27-2022",
@@ -178,7 +167,7 @@
             "10-06-2044",
             "12-29-2044"
         ],
-    "vfrareas": 
+    "SectionalAreas": 
         [
             "San_Antonio",
             "Albuquerque",
@@ -232,7 +221,7 @@
             "Washington",
             "Wichita"            
         ],
-    "tacareas": 
+    "TerminalAreas": 
         [
             "Anchorage-Fairbanks",
             "Atlanta",
@@ -266,4 +255,3 @@
             "Tampa-Orlando"
         ]    
 }
-checkChartAreas();
