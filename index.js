@@ -37,9 +37,9 @@ processArguments(program.opts());
 
 
 makeWorkingFolders();
-downloadCharts();
-unzipDownloadedCharts(); 
-normalizeChartNames();
+//downloadCharts();
+//unzipDownloadedCharts(); 
+//normalizeChartNames();
 processImages();
 mergeTiles();
 quantizePngImages();
@@ -81,6 +81,7 @@ function downloadCharts() {
     cmd = `wget ${charturl} --output-document=${chartzip}`;
     executeCommand(cmd);
 }
+
 function unzipDownloadedCharts() {
     let chartzip = `${dir_0_download}/${settings.ChartType}.zip`;
     console.log("\r\n* Unzipping chart zip files\r\n");
@@ -90,19 +91,19 @@ function unzipDownloadedCharts() {
 }
 
 function normalizeChartNames() {
-    let files = fs.readdirSync(dir_1_unzipped);
     let tifname = "";
     let tfwname = "";
+    let files = fs.readdirSync(dir_1_unzipped);
+    
     files.forEach((file) => {
-        if (file.endsWith(".tif") && file.search(" TAC") != -1) {
+        if (file.endsWith(".tif")) {
             let testname = normalizeFileName(file);
             let basename = testname.replace(".tif", "");
             tifname = `${dir_2_normalized}/${basename}.tif`;
             tfwname = `${dir_2_normalized}/${basename}.tfw`;
             fs.copyFileSync(`${dir_1_unzipped}/${file}`, tifname);
             fs.copyFileSync(`${dir_1_unzipped}/${file.replace(".tfw", ".tif")}`, tfwname);
-        }buildChartAreaArray();
-        
+        }
     });
 }
 
@@ -138,7 +139,7 @@ function processImages(){
         executeCommand(cmd);
         
         console.log(`\r\n*** Warp virtual image to EPSG:3857 ***`);
-        cmd = `gdalwarp -of vrt -t_srs EPSG:3857 -r lanczos -multi  ${clippedfile} ${warpedfile}settings.T`;
+        cmd = `gdalwarp -of vrt -t_srs EPSG:3857 -r lanczos -multi  ${clippedfile} ${warpedfile}`;
         executeCommand(cmd);
         
         console.log(`\r\n*** Translate virtual image back to GTiff ***`);
@@ -225,20 +226,20 @@ function buildCommandArray() {
 
 function makeMbTiles() {            
     console.log(`\r\n  * Making MBTILES database`);
-    let zooms = settings.ZoomRange.split("-");settings.T
+    let zooms = settings.ZoomRange.split("-");
     let minzoom = zooms[0];
     let maxzoom = zooms[0];
     
     if (zooms.length === 2) {
         maxzoom = zooms[1];
-    }settings.T
+    }
 
     // create a metadata.json file in the root of the tiles directory,
     // mbutil will use this to generate a metadata table in the database.  
     let tiledbname = settings.ChartType;
     let metajson = `{ 
         "name": "${tiledbname}",
-        "description": "${tildbname} Charts",
+        "description": "${tiledbname} Charts",
         "version": "1.1",
         "type": "overlay",
         "format": "png",
