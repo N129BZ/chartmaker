@@ -1,4 +1,4 @@
-# VfrSecChartMaker - Download US VFR digital raster charts and translate them all into a single mbtiles database  
+# ChartMaker - Download US digital raster charts and translate them into a mbtiles database  
 
 ### Instructions:   
 1.) this application requires several supporting applications to be installed on your system - see ***Debian*** example below.              
