@@ -1,10 +1,10 @@
 {
     "ChartUrlTemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
     "TiledImageQuality": 75,
-    "CleanMergeFolder": true,
+    "CleanMergeFolder": false,
     "RenameWorkArea": false,
     "ZoomRange": "5-11",
-    "ChartType": "Terminal",
+    "ChartType": "Caribbean",
     "ChartTypes":
         [
             "Sectional",

@@ -34,9 +34,9 @@ program
 program.showSuggestionAfterError();
 program.parse(process.argv);
 processArguments(program.opts());
+
+
 makeWorkingFolders();
-
-
 downloadCharts();
 unzipDownloadedCharts(); 
 normalizeChartNames();
@@ -53,7 +53,7 @@ if (settings.CleanMergeFolder) {
 // if we got here, if all steps completed and the user settings
 // indicate, re-name the working folder as the chart date
 if (settings.RenameWorkArea) {
-    //fs.renameSync(workarea, `${__dirname}/chart_process_${chartdate}`);
+    fs.renameSync(workarea, `${__dirname}/chart_process_${chartdate}`);
 }
 
 console.log("Chart processing completed!");
@@ -330,12 +330,15 @@ function loadBestChartDate() {
     let thistime = thisdate.getTime();
     let cdates = [];
     let found = false;
-    settings.ChartDates.forEach((cdate) => {
+
+    let datedata = fs.readFileSync(`${__dirname}/chartdates.json`);
+    let datelist = JSON.parse(datedata);
+    datelist.ChartDates.forEach((cdate) => {
         cdates.push(new Date(cdate))
     });
     
     let sortedDates = cdates.sort((a, b) => b.date - a.date).reverse();
-    cdates.forEach((obj) => {
+    sortedDates.forEach((obj) => {
         if (!found) {
             let dtime = obj.getTime();
             let tdiff = dtime - thistime;
