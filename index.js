@@ -85,7 +85,7 @@ function unzipDownloadedCharts() {
     let chartzip = `${dir_0_download}/${settings.ChartType}.zip`;
     console.log("\r\n* Unzipping chart zip files\r\n");
     cmd = `unzip -o ${chartzip} -x '*.htm' -d ${dir_1_unzipped}`;
-    executeCommand(cmd);"TileDbName": "usavfr",
+    executeCommand(cmd);
     
 }
 
@@ -138,7 +138,7 @@ function processImages(){
         executeCommand(cmd);
         
         console.log(`\r\n*** Warp virtual image to EPSG:3857 ***`);
-        cmd = `gdalwarp -of vrt -t_srs EPSG:3857 -r lanczos -multi  ${clippedfile} ${warpedfile}`;
+        cmd = `gdalwarp -of vrt -t_srs EPSG:3857 -r lanczos -multi  ${clippedfile} ${warpedfile}settings.T`;
         executeCommand(cmd);
         
         console.log(`\r\n*** Translate virtual image back to GTiff ***`);
@@ -225,13 +225,13 @@ function buildCommandArray() {
 
 function makeMbTiles() {            
     console.log(`\r\n  * Making MBTILES database`);
-    let zooms = settings.ZoomRange.split("-");
+    let zooms = settings.ZoomRange.split("-");settings.T
     let minzoom = zooms[0];
     let maxzoom = zooms[0];
     
     if (zooms.length === 2) {
         maxzoom = zooms[1];
-    }
+    }settings.T
 
     // create a metadata.json file in the root of the tiles directory,
     // mbutil will use this to generate a metadata table in the database.  
