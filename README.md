@@ -1,4 +1,4 @@
-# ChartMaker - Download FAA digital raster charts and translate them into mbtiles databasees  
+# ChartMaker - Download FAA digital raster charts and translate into mbtiles database  
 
 ### Instructions:   
 1.) this application requires several supporting applications to be installed on your system - see ***Debian*** example below.              
