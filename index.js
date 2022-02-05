@@ -17,20 +17,20 @@ let cmd = "";
 let chartdate = "";
 let charturl = ""; 
 let chartareas = [];
-let workarea = `${__dirname}/workarea/${settings.ChartType}`;
+let workarea = `${__dirname}/workarea/`; 
 
 // working directory constants
-const dir_0_download      = `${workarea}/0_download`;
-const dir_1_unzipped      = `${workarea}/1_unzipped`;
-const dir_2_normalized    = `${workarea}/2_normalized`;
-const dir_3_expanded      = `${workarea}/3_expanded`;
-const dir_4_clipped       = `${workarea}/4_clipped`;
-const dir_5_warped        = `${workarea}/5_warped`;
-const dir_6_translated    = `${workarea}/6_translated`;
-const dir_7_tiled         = `${workarea}/7_tiled`;
-const dir_8_merged        = `${workarea}/8_merged`;
-const dir_8_quantized     = `${workarea}/8_quantized`;
-const dir_9_dbtiles       = `${workarea}/9_dbtiles`;
+let dir_0_download; 
+let dir_1_unzipped; 
+let dir_2_normalized;
+let dir_3_expanded; 
+let dir_4_clipped; 
+let dir_5_warped; 
+let dir_6_translated; 
+let dir_7_tiled; 
+let dir_8_merged; 
+let dir_8_quantized; 
+let dir_9_dbtiles; 
 
 // get the commandline arguments
 program
@@ -47,7 +47,7 @@ try {
     app.use('/img', express.static(`${__dirname}/web/img`));
 
     app.listen(8080, () => {
-        sendInfoToBrowser(`Webserver listening at port ${8080}`);
+        console.log(`Webserver listening at port ${8080}`);
     }); 
 
     var options = {
@@ -73,19 +73,55 @@ try {
 
     app.post("/runprocess", (req, res) => {
         let jobj = req.body;
-        sendInfoToBrowser(jobj);
-        settings.ChartType = jobj.charttype;
-        settings.TiledImageQuality = jobj.pngquality;
-        settings.ZoomRange = jobj.zoomrange;
-        settings.CleanMergeFolder = jobj.cleanmerge;
-        settings.RenameWorkArea = jobj.renamework;
-        setTimeout(runProcesses, 1000);
+        updateSettings(jobj);
+        setTimeout(runProcesses, 500);
         res.writeHead(200);
         res.end();
     });
 }
 catch {
 
+}
+
+function updateSettings(newsettings) {
+    sendToBrowser("Updating settings.json");
+    let chart = normalizeFileName(newsettings.charttype);
+    settings.ChartType = chart;
+    settings.TiledImageQuality = newsettings.pngquality;
+    settings.ZoomRange = newsettings.zoomrange;
+    settings.CleanMergeFolder = newsettings.cleanmerge;
+    settings.RenameWorkArea = newsettings.renamework;
+
+    let data = { "ChartUrlTemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
+                 "TiledImageQuality": newsettings.pngquality,
+                 "CleanMergeFolder": newsettings.cleanmerge,
+                 "RenameWorkArea": newsettings.renamework,
+                 "ZoomRange": newsettings.zoomrange,
+                 "ChartType": chart,
+                 "ChartTypes":
+                    [
+                        "Sectional",
+                        "Terminal",
+                        "Caribbean",
+                        "Grand_Canyon",
+                        "Helicopter",
+                        "Planning"
+                    ]
+                };
+    let stringToWrite = JSON.stringify(data, null, '  ').replace(/: "(?:[^"]+|\\")*",?$/gm, ' $&');
+    fs.writeFileSync(`${__dirname}/settings.json`, stringToWrite,{flag: 'w+'});
+    workarea += chart;
+    dir_0_download       = `${workarea}/0_download`;
+    dir_1_unzipped       = `${workarea}/1_unzipped`;
+    dir_2_normalized     = `${workarea}/2_normalized`;
+    dir_3_expanded       = `${workarea}/3_expanded`;
+    dir_4_clipped        = `${workarea}/4_clipped`;
+    dir_5_warped         = `${workarea}/5_warped`;
+    dir_6_translated     = `${workarea}/6_translated`;
+    dir_7_tiled          = `${workarea}/7_tiled`;
+    dir_8_merged         = `${workarea}/8_merged`;
+    dir_8_quantized      = `${workarea}/8_quantized`;
+    dir_9_dbtiles        = `${workarea}/9_dbtiles`;
 }
 
 // http websocket server to forward serial data to browser client
@@ -131,7 +167,7 @@ function runProcesses() {
     makeMbTiles();
 
     if (settings.CleanMergeFolder) {
-        sendInfoToBrowser("  * Removing merge folder")
+        sendToBrowser("  * Removing merge folder")
         fs.rmdirSync(dir_8_merged, true);
     }
 
@@ -141,11 +177,11 @@ function runProcesses() {
         fs.renameSync(workarea, `${__dirname}/chart_process_${chartdate}`);
     }
     
-    sendInfoToBrowser("Chart processing completed!");
-    //process.exit(0);
+    sendToBrowser("Chart processing completed!");
 }
 
 function makeWorkingFolders() {
+    sendToBrowser("Creating working area folders");
     // make the processing directories if they don't exist.
     if (!fs.existsSync(workarea)) fs.mkdirSync(workarea);
     if (!fs.existsSync(dir_0_download)) fs.mkdirSync(dir_0_download);
@@ -162,7 +198,7 @@ function makeWorkingFolders() {
 }
 
 function downloadCharts() {
-    sendInfoToBrowser(`Downloading ${settings.ChartType}.zip`);
+    sendToBrowser(`Downloading ${settings.ChartType}.zip`);
     let chartzip = `${dir_0_download}/${settings.ChartType}.zip`;
     cmd = `wget ${charturl} --output-document=${chartzip}`;
     executeCommand(cmd);
@@ -170,7 +206,7 @@ function downloadCharts() {
 
 function unzipDownloadedCharts() {
     let chartzip = `${dir_0_download}/${settings.ChartType}.zip`;
-    sendInfoToBrowser("* Unzipping chart zip files");
+    sendToBrowser("* Unzipping chart zip files");
     cmd = `unzip -o ${chartzip} -x '*.htm' -d ${dir_1_unzipped}`;
     executeCommand(cmd);
     
@@ -206,7 +242,7 @@ function processImages(){
 
     chartareas.forEach((area) => {
         
-        sendInfoToBrowser(`************** Processing chart: ${area} **************`);
+        sendToBrowser(`************** Processing chart: ${area} **************`);
         
         let shapefile = `${clippedShapesDir}/${area}.shp`;
         let normalizedfile = `${dir_2_normalized}/${area}.tif`;
@@ -216,27 +252,27 @@ function processImages(){
         let translatedfile = `${dir_6_translated}/${area}.tif`;
         let tiledir = `${dir_7_tiled}/${area}`;
         
-        sendInfoToBrowser(`*** Expand color table to RGBA GTiff ***`);
+        sendToBrowser(`*** Expand color table to RGBA GTiff ***`);
         cmd = `gdal_translate -strict -of vrt -expand rgba ${normalizedfile} ${expandedfile}`;
         executeCommand(cmd);
         
-        sendInfoToBrowser(`*** Clip border off of virtual image ***`);
+        sendToBrowser(`*** Clip border off of virtual image ***`);
         cmd = `gdalwarp -of vrt -multi -cutline "${shapefile}" -crop_to_cutline -cblend 10 -dstalpha -co ALPHA=YES ${expandedfile} ${clippedfile}`; 
         executeCommand(cmd);
-        
-        sendInfoToBrowser(`*** Warp virtual image to EPSG:3857 ***`);
+    
+        sendToBrowser(`*** Warp virtual image to EPSG:3857 ***`);
         cmd = `gdalwarp -of vrt -t_srs EPSG:3857 -r lanczos -multi  ${clippedfile} ${warpedfile}`;
         executeCommand(cmd);
         
-        sendInfoToBrowser(`*** Translate virtual image back to GTiff ***`);
+        sendToBrowser(`*** Translate virtual image back to GTiff ***`);
         cmd = `gdal_translate -co TILED=YES -co NUM_THREADS=ALL_CPUS ${warpedfile} ${translatedfile}`;
         executeCommand(cmd);
         
-        sendInfoToBrowser(`*** Add gdaladdo overviews ***`);
+        sendToBrowser(`*** Add gdaladdo overviews ***`);
         cmd = `gdaladdo -r average --config GDAL_NUM_THREADS ALL_CPUS ${translatedfile}`;
         executeCommand(cmd); 
         
-        sendInfoToBrowser(`*** Tile images in TMS format ***`);
+        sendToBrowser(`*** Tile ${area} images in TMS format ***`);
         cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --processes=4 --tmscompatible --webviewer=openlayers ${translatedfile} ${tiledir}`;
         executeCommand(cmd);
     });
@@ -247,7 +283,7 @@ function mergeTiles() {
     chartareas.forEach((area) => {
         let mergesource = `${dir_7_tiled}/${area}`;
         let cmd = `perl ./mergetiles.pl ${mergesource} ${dir_8_merged}`;
-        sendInfoToBrowser(`*** Merging ${area} tiles`);
+        sendToBrowser(`*** Merging ${area} tiles`);
         executeCommand(cmd);
     });
 }
@@ -256,24 +292,23 @@ function quantizePngImages() {
     let interimct = 0;
     let cmds = buildCommandArray();
     let i = 0;
-    sendInfoToBrowser(`*** Quantizing ${cmds.length} png images at ${settings.TiledImageQuality}%`);
+    sendToBrowser(`*** Quantizing ${cmds.length} png images at ${settings.TiledImageQuality}%`);
     for (i=0; i < cmds.length; i++) {
         if (interimct === 500) {
-            sendInfoToBrowser(`  * processed image count = ${i} of ${cmds.length}`);
+            console.log(`  * processed image count = ${i} of ${cmds.length}`);
             interimct = 0;
         }
         interimct++;
         executeCommand(cmds[i]);
     }
-    sendInfoToBrowser(`  * processed image count = ${i} of ${cmds.length}`);
+    sendToBrowser(`  * Processed image count = ${i} of ${cmds.length}`);
 }
 
 function buildChartNameArray() {
     let normfiles = fs.readdirSync(dir_2_normalized);
     normfiles.forEach((file) => {
         if (file.endsWith(".tif")) {
-            chartareas.push(file.replace(".tif", ""));// build an array of chart names
-    
+            chartareas.push(file.replace(".tif", ""));
         }
     });
 }
@@ -311,7 +346,7 @@ function buildCommandArray() {
 }
 
 function makeMbTiles() {            
-    sendInfoToBrowser(`  * Making MBTILES database`);
+    sendToBrowser(`  * Making MBTILES database`);
     let zooms = settings.ZoomRange.split("-");
     let minzoom = zooms[0];
     let maxzoom = zooms[0];
@@ -347,13 +382,14 @@ function executeCommand(command) {
     try {
         const { stdout, stderr, code } = shell.exec(command, { silent: false });
         if(code != 0) {
-            sendInfoToBrowser(`stdout: ${stdout}, stderr: ${stderr}`);
+            let logline = replaceAll(stdout, `\n`, ``);
+            console.log(logline);
             return code;
         }
         return 0;
     }
     catch(err) {
-        sendInfoToBrowser(err);
+        console.log(err);
     }
 }
 
@@ -382,7 +418,7 @@ function processArguments(options) {
     }
     
     if (error) {
-        sendInfoToBrowser(`Error parsing zoom range: ${zrange}, exiting!`);
+        console.log(`Error parsing zoom range: ${zrange}, exiting!`);
         process.exit(1);
     }
 
@@ -403,7 +439,7 @@ function processArguments(options) {
         chartdate = `${mdy[0]}-${mdy[1]}-${mdy[2]}`;
         
         if (Date.parse(chartdate) === NaN) {
-            sendInfoToBrowser("Error, invalid date format! Use mm-dd-yyyy or mm/dd/yyyy");
+            console.log("Error, invalid date format! Use mm-dd-yyyy or mm/dd/yyyy");
             process.exit(1);
         }
     }
@@ -412,8 +448,7 @@ function processArguments(options) {
     charturl = charturl.replace("<charttype>", settings.ChartType);
 }
 
-function sendInfoToBrowser(info) {
-    console.log(info);
+function sendToBrowser(info) {
     if (connection !== undefined) {
         connection.send(info);
     } 
@@ -461,7 +496,7 @@ function getGdalInfo(file, searchtext) {
     
     let { stderr } = shell.exec(cmd, { silent: true })
     if (stderr) {
-        sendInfoToBrowser(stderr);
+        console.log(stderr);
     }
     
     let gdaldata = fs.readFileSync(gdalresults, {encoding:'utf8', flag:'r'});         

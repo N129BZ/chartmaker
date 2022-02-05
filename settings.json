@@ -1,17 +1,16 @@
 {
-    "ChartUrlTemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
-    "TiledImageQuality": 75,
-    "CleanMergeFolder": false,
-    "RenameWorkArea": false,
-    "ZoomRange": "5-11",
-    "ChartType": "Caribbean",
-    "ChartTypes":
-        [
-            "Sectional",
-            "Terminal",
-            "Caribbean",
-            "Grand_Canyon",
-            "Helicopter",
-            "Planning"
-        ]
+  "ChartUrlTemplate" : "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
+  "TiledImageQuality" : "90",
+  "CleanMergeFolder": false,
+  "RenameWorkArea": false,
+  "ZoomRange" : "9-15",
+  "ChartType" : "Helicopter",
+  "ChartTypes": [
+    "Sectional",
+    "Terminal",
+    "Caribbean",
+    "Grand_Canyon",
+    "Helicopter",
+    "Planning"
+  ]
 }

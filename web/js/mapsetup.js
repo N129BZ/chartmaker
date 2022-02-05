@@ -71,9 +71,7 @@ function processChart() {
     // Create a state change callback
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
-
-            alert("Chart Process Started!");
-
+            console.log("Chart Process Started!");
         }
     };
 
