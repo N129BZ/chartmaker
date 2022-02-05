@@ -172,9 +172,9 @@ function runProcesses() {
     }
 
     // if we got here, if all steps completed and the user settings
-    // indicate, re-name the working folder as the chart date
+    // indicate, re-name the workarea subfolder folder as chart_chart date
     if (settings.RenameWorkArea) {
-        fs.renameSync(workarea, `${__dirname}/chart_process_${chartdate}`);
+        fs.renameSync(workarea, `${workarea}_${chartdate}`);
     }
     
     sendToBrowser("Chart processing completed!");
@@ -382,11 +382,12 @@ function executeCommand(command) {
     try {
         const { stdout, stderr, code } = shell.exec(command, { silent: false });
         if(code != 0) {
-            let logline = replaceAll(stdout, `\n`, ``);
-            console.log(logline);
-            return code;
+            console.log(stderr);
         }
-        return 0;
+        else {
+            console.log(stdout);
+        }
+        return code;
     }
     catch(err) {
         console.log(err);
