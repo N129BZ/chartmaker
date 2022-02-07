@@ -47,8 +47,8 @@ try {
     app.use(express.json({}));
     app.use('/img', express.static(`${__dirname}/web/img`));
 
-    app.listen(8080, () => {
-        console.log(`Webserver listening at port ${8080}`);
+    app.listen(settings.HttpPort, () => {
+        console.log(`Webserver listening at port ${settings.HttpPort}`);
     }); 
 
     var options = {
@@ -93,6 +93,8 @@ function updateSettings(newsettings) {
     settings.RenameWorkArea = newsettings.renamework;
 
     let data = { "ChartUrlTemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
+                 "HttpPort": settings.HttpPort,
+                 "WsPort": settings.WsPort,
                  "TiledImageQuality": settings.TiledImageQuality,
                  "CleanMergeFolder": settings.CleanMergeFolder,
                  "RenameWorkArea": settings.RenameWorkArea,
@@ -116,10 +118,10 @@ function updateSettings(newsettings) {
 // http websocket server to forward serial data to browser client
 var server = http.createServer(function (request, response) { });
 try {
-    server.listen(9090, function () { });
+    server.listen(settings.WsPort, function () { });
     // create the server
     wss = new WebSocketServer({ httpServer: server });
-    console.log("Websocket server enabled at port 9090"); 
+    console.log(`Websocket server enabled at port ${settings.WsPort}`); 
 }
 catch (error) {
     console.log(error);
@@ -160,7 +162,7 @@ function setupWorkAreaFolderNames() {
     dir_9_dbtiles        = `${workarea}/${chart}/9_dbtiles`;
 }
 
-function runProcesses() {
+function runProcesses() {console.log
     setupWorkAreaFolderNames();
     makeWorkingFolders();
     downloadCharts();

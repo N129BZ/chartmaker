@@ -3,7 +3,7 @@ let URL_HOST_PROTOCOL       = window.location.protocol + "//";
 let URL_SERVER              = `${URL_HOST_PROTOCOL}${URL_HOST_BASE}`;
 let URL_GET_SETTINGS        = `${URL_SERVER}/getsettings`;
 let URL_RUN_PROCESS         = `${URL_SERVER}/runprocess`;
-var URL_WSRUN_INFO          = `ws://localhost:9090`;
+let URL_WSRUN_INFO          = `ws://localhost:<wsport>`;
 
 let settings;
 let chartval;
@@ -43,6 +43,7 @@ function onRunInfo(e) {
 }
 
 function updateControls() {
+    URL_WSRUN_INFO = URL_WSRUN_INFO.replace("<wsport>", settings.WsPort);
     sl_selectlist.value = settings.ChartType;
     tb_pngquality.value = settings.TiledImageQuality;
     tb_zoomrange.value = settings.ZoomRange;
