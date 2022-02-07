@@ -1,10 +1,10 @@
 {
   "ChartUrlTemplate" : "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
-  "TiledImageQuality" : "90",
+  "TiledImageQuality" : "80",
   "CleanMergeFolder": false,
-  "RenameWorkArea": false,
-  "ZoomRange" : "9-15",
-  "ChartType" : "Helicopter",
+  "RenameWorkArea": true,
+  "ZoomRange" : "8-13",
+  "ChartType" : "Sectional",
   "ChartTypes": [
     "Sectional",
     "Terminal",

@@ -39,6 +39,7 @@ program.showSuggestionAfterError();
 program.parse(process.argv);
 processArguments(program.opts());
 
+
 // express web server  
 let app = express();
 try {
@@ -85,19 +86,18 @@ catch {
 
 function updateSettings(newsettings) {
     sendToBrowser("Updating settings.json");
-    let chart = normalizeFileName(newsettings.charttype);
-    settings.ChartType = chart;
+    settings.ChartType = normalizeFileName(newsettings.charttype);
     settings.TiledImageQuality = newsettings.pngquality;
     settings.ZoomRange = newsettings.zoomrange;
     settings.CleanMergeFolder = newsettings.cleanmerge;
     settings.RenameWorkArea = newsettings.renamework;
 
     let data = { "ChartUrlTemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
-                 "TiledImageQuality": newsettings.pngquality,
-                 "CleanMergeFolder": newsettings.cleanmerge,
-                 "RenameWorkArea": newsettings.renamework,
-                 "ZoomRange": newsettings.zoomrange,
-                 "ChartType": chart,
+                 "TiledImageQuality": settings.TiledImageQuality,
+                 "CleanMergeFolder": settings.CleanMergeFolder,
+                 "RenameWorkArea": settings.RenameWorkArea,
+                 "ZoomRange": settings.ZoomRange,
+                 "ChartType": settings.ChartType,
                  "ChartTypes":
                     [
                         "Sectional",
@@ -110,19 +110,8 @@ function updateSettings(newsettings) {
                 };
     let stringToWrite = JSON.stringify(data, null, '  ').replace(/: "(?:[^"]+|\\")*",?$/gm, ' $&');
     fs.writeFileSync(`${__dirname}/settings.json`, stringToWrite,{flag: 'w+'});
-    workarea += chart;
-    dir_0_download       = `${workarea}/0_download`;
-    dir_1_unzipped       = `${workarea}/1_unzipped`;
-    dir_2_normalized     = `${workarea}/2_normalized`;
-    dir_3_expanded       = `${workarea}/3_expanded`;
-    dir_4_clipped        = `${workarea}/4_clipped`;
-    dir_5_warped         = `${workarea}/5_warped`;
-    dir_6_translated     = `${workarea}/6_translated`;
-    dir_7_tiled          = `${workarea}/7_tiled`;
-    dir_8_merged         = `${workarea}/8_merged`;
-    dir_8_quantized      = `${workarea}/8_quantized`;
-    dir_9_dbtiles        = `${workarea}/9_dbtiles`;
 }
+
 
 // http websocket server to forward serial data to browser client
 var server = http.createServer(function (request, response) { });
@@ -156,7 +145,23 @@ function getSettings(response) {
     response.end();
 }
 
+function setupWorkAreaFolderNames() {
+    let chart = settings.ChartType;
+    dir_0_download       = `${workarea}/${chart}/0_download`;
+    dir_1_unzipped       = `${workarea}/${chart}/1_unzipped`;
+    dir_2_normalized     = `${workarea}/${chart}/2_normalized`;
+    dir_3_expanded       = `${workarea}/${chart}/3_expanded`;
+    dir_4_clipped        = `${workarea}/${chart}/4_clipped`;
+    dir_5_warped         = `${workarea}/${chart}/5_warped`;
+    dir_6_translated     = `${workarea}/${chart}/6_translated`;
+    dir_7_tiled          = `${workarea}/${chart}/7_tiled`;
+    dir_8_merged         = `${workarea}/${chart}/8_merged`;
+    dir_8_quantized      = `${workarea}/${chart}/8_quantized`;
+    dir_9_dbtiles        = `${workarea}/${chart}/9_dbtiles`;
+}
+
 function runProcesses() {
+    setupWorkAreaFolderNames();
     makeWorkingFolders();
     downloadCharts();
     unzipDownloadedCharts(); 
@@ -184,6 +189,9 @@ function makeWorkingFolders() {
     sendToBrowser("Creating working area folders");
     // make the processing directories if they don't exist.
     if (!fs.existsSync(workarea)) fs.mkdirSync(workarea);
+    if (!fs.existsSync(`${workarea}/${settings.ChartType}`)) {
+        fs.mkdirSync(`${workarea}/${settings.ChartArea}`);
+    }
     if (!fs.existsSync(dir_0_download)) fs.mkdirSync(dir_0_download);
     if (!fs.existsSync(dir_1_unzipped)) fs.mkdirSync(dir_1_unzipped);
     if (!fs.existsSync(dir_2_normalized)) fs.mkdirSync(dir_2_normalized);
@@ -299,6 +307,7 @@ function quantizePngImages() {
             interimct = 0;
         }
         interimct++;
+        sendToBrowser(cmds[i]);
         executeCommand(cmds[i]);
     }
     sendToBrowser(`  * Processed image count = ${i} of ${cmds.length}`);
