@@ -2,37 +2,34 @@
 
 // TODO: Fix Houston shapefiles
 
-const express = require('express');
 const fs = require("fs");
 const shell = require('shelljs')
 const { program } = require('commander');
-const http = require("http");
-const WebSocketServer = require('websocket').server;
 
 // global editable variables
-let rawdata = fs.readFileSync(`${__dirname}/settings.json`);
-let settings = JSON.parse(rawdata);
-let wss;
+let settings;
 let cmd = "";
 let chartdate = "";
 let charturl = ""; 
 let chartareas = [];
 let workarea = `${__dirname}/workarea/`; 
 
-// working directory constants
-let dir_0_download; 
-let dir_1_unzipped; 
-let dir_2_normalized;
-let dir_3_expanded; 
-let dir_4_clipped; 
-let dir_5_warped; 
-let dir_6_translated; 
-let dir_7_tiled; 
-let dir_8_merged; 
-let dir_8_quantized; 
-let dir_9_dbtiles; 
+loadSettings();
 
-// get the commandline arguments
+// working directory constants
+let dir_0_download       = `${workarea}/${settings.ChartType}/0_download`;
+let dir_1_unzipped       = `${workarea}/${settings.ChartType}/1_unzipped`;
+let dir_2_normalized     = `${workarea}/${settings.ChartType}/2_normalized`;
+let dir_3_expanded       = `${workarea}/${settings.ChartType}/3_expanded`;
+let dir_4_clipped        = `${workarea}/${settings.ChartType}/4_clipped`;
+let dir_5_warped         = `${workarea}/${settings.ChartType}/5_warped`;
+let dir_6_translated     = `${workarea}/${settings.ChartType}/6_translated`;
+let dir_7_tiled          = `${workarea}/${settings.ChartType}/7_tiled`;
+let dir_8_merged         = `${workarea}/${settings.ChartType}/8_merged`;
+let dir_8_quantized      = `${workarea}/${settings.ChartType}/8_quantized`;
+let dir_9_dbtiles        = `${workarea}/${settings.ChartType}/9_dbtiles`;
+
+// get any commandline arguments
 program
     .option('-d, --dateofchart <mm-dd-YYYY>', 'enter a valid date in the format mm-dd-YYYY');
 program.showSuggestionAfterError();
@@ -40,155 +37,30 @@ program.parse(process.argv);
 processArguments(program.opts());
 
 
-// express web server  
-let app = express();
-try {
-    app.use(express.urlencoded({ extended: true }));
-    app.use(express.json({}));
-    app.use('/img', express.static(`${__dirname}/web/img`));
+makeWorkingFolders();
+//downloadCharts();
+//unzipAndNormalizeCharts(); 
+//processImages();
+//mergeTiles();
+quantizePngImages();
+makeMbTiles();
 
-    app.listen(settings.HttpPort, () => {
-        console.log(`Webserver listening at port ${settings.HttpPort}`);
-    }); 
-
-    var options = {
-        dotfiles: 'ignore',
-        etag: false,
-        extensions: ['html'],
-        index: false,
-        redirect: false,
-        setHeaders: function (res, path, stat) {
-            res.set('x-timestamp', Date.now());
-        }
-    };
-
-    app.use(express.static(`${__dirname}/web`, options));
-    
-    app.get('/',(req, res) => {
-        res.sendFile(`${__dirname}/web/index.html`);
-    });
-
-    app.get("/getsettings", (req, res) => {
-        getSettings(res);
-    });
-
-    app.post("/runprocess", (req, res) => {
-        let jobj = req.body;
-        updateSettings(jobj);
-        setTimeout(runProcesses, 500);
-        res.writeHead(200);
-        res.end();
-    });
-}
-catch {
-
+if (settings.CleanMergeFolder) {
+    console.log("  * Removing merge folder")
+    fs.rmdirSync(dir_8_merged, true);
 }
 
-function updateSettings(newsettings) {
-    sendToBrowser("Updating settings.json");
-    settings.ChartType = normalizeFileName(newsettings.charttype);
-    settings.TiledImageQuality = newsettings.pngquality;
-    settings.ZoomRange = newsettings.zoomrange;
-    settings.CleanMergeFolder = newsettings.cleanmerge;
-    settings.RenameWorkArea = newsettings.renamework;
-
-    let data = { "ChartUrlTemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
-                 "HttpPort": settings.HttpPort,
-                 "WsPort": settings.WsPort,
-                 "TiledImageQuality": settings.TiledImageQuality,
-                 "CleanMergeFolder": settings.CleanMergeFolder,
-                 "RenameWorkArea": settings.RenameWorkArea,
-                 "ZoomRange": settings.ZoomRange,
-                 "ChartType": settings.ChartType,
-                 "ChartTypes":
-                    [
-                        "Sectional",
-                        "Terminal",
-                        "Caribbean",
-                        "Grand_Canyon",
-                        "Helicopter",
-                        "Planning"
-                    ]
-                };
-    let stringToWrite = JSON.stringify(data, null, '  ').replace(/: "(?:[^"]+|\\")*",?$/gm, ' $&');
-    fs.writeFileSync(`${__dirname}/settings.json`, stringToWrite,{flag: 'w+'});
+// if we got here, if all steps completed and the user settings
+// indicate, re-name the workarea subfolder folder as chart_chart date
+if (settings.RenameWorkArea) {
+    fs.renameSync(workarea, `${workarea}_${chartdate}`);
 }
 
+console.log("Chart processing completed!");
 
-// http websocket server to forward serial data to browser client
-var server = http.createServer(function (request, response) { });
-try {
-    server.listen(settings.WsPort, function () { });
-    // create the server
-    wss = new WebSocketServer({ httpServer: server });
-    console.log(`Websocket server enabled at port ${settings.WsPort}`); 
-}
-catch (error) {
-    console.log(error);
-}
-
-var connection;
-try {
-    wss.on('request', function (request) {
-        connection = request.accept(null, request.origin);
-        console.log("new connection");
-        connection.on('close', function () {
-            console.log("connection closed");
-        });
-    });
-}
-catch (error) {
-    console.log(error);
-}
-
-function getSettings(response) {
-    response.writeHead(200);
-    response.write(JSON.stringify(settings));
-    response.end();
-}
-
-function setupWorkAreaFolderNames() {
-    let chart = settings.ChartType;
-    dir_0_download       = `${workarea}/${chart}/0_download`;
-    dir_1_unzipped       = `${workarea}/${chart}/1_unzipped`;
-    dir_2_normalized     = `${workarea}/${chart}/2_normalized`;
-    dir_3_expanded       = `${workarea}/${chart}/3_expanded`;
-    dir_4_clipped        = `${workarea}/${chart}/4_clipped`;
-    dir_5_warped         = `${workarea}/${chart}/5_warped`;
-    dir_6_translated     = `${workarea}/${chart}/6_translated`;
-    dir_7_tiled          = `${workarea}/${chart}/7_tiled`;
-    dir_8_merged         = `${workarea}/${chart}/8_merged`;
-    dir_8_quantized      = `${workarea}/${chart}/8_quantized`;
-    dir_9_dbtiles        = `${workarea}/${chart}/9_dbtiles`;
-}
-
-function runProcesses() {console.log
-    setupWorkAreaFolderNames();
-    makeWorkingFolders();
-    downloadCharts();
-    unzipDownloadedCharts(); 
-    normalizeChartNames();
-    processImages();
-    mergeTiles();
-    quantizePngImages();
-    makeMbTiles();
-
-    if (settings.CleanMergeFolder) {
-        sendToBrowser("  * Removing merge folder")
-        fs.rmdirSync(dir_8_merged, true);
-    }
-
-    // if we got here, if all steps completed and the user settings
-    // indicate, re-name the workarea subfolder folder as chart_chart date
-    if (settings.RenameWorkArea) {
-        fs.renameSync(workarea, `${workarea}_${chartdate}`);
-    }
-    
-    sendToBrowser("Chart processing completed!");
-}
 
 function makeWorkingFolders() {
-    sendToBrowser("Creating working area folders");
+    console.log("Creating working area folders");
     // make the processing directories if they don't exist.
     if (!fs.existsSync(workarea)) fs.mkdirSync(workarea);
     if (!fs.existsSync(`${workarea}/${settings.ChartType}`)) {
@@ -208,21 +80,18 @@ function makeWorkingFolders() {
 }
 
 function downloadCharts() {
-    sendToBrowser(`Downloading ${settings.ChartType}.zip`);
+    console.log(`Downloading ${settings.ChartType}.zip`);unzipAndNormalizeCharts
     let chartzip = `${dir_0_download}/${settings.ChartType}.zip`;
     cmd = `wget ${charturl} --output-document=${chartzip}`;
     executeCommand(cmd);
 }
 
-function unzipDownloadedCharts() {
+function unzipAndNormalizeCharts() {
     let chartzip = `${dir_0_download}/${settings.ChartType}.zip`;
-    sendToBrowser("* Unzipping chart zip files");
+    console.log("* Unzipping chart zip files");
     cmd = `unzip -o ${chartzip} -x '*.htm' -d ${dir_1_unzipped}`;
     executeCommand(cmd);
-    
-}
 
-function normalizeChartNames() {
     let tifname = "";
     let tfwname = "";
     let files = fs.readdirSync(dir_1_unzipped);
@@ -247,12 +116,11 @@ function processImages(){
      4) add zoom overlays to the GTIFF 
     --------------------------------------------------------------*/
     let clippedShapesDir = `${__dirname}/clipshapes/${settings.ChartType}`;
-
     buildChartNameArray();
 
     chartareas.forEach((area) => {
         
-        sendToBrowser(`************** Processing chart: ${area} **************`);
+        console.log(`************** Processing chart: ${area} **************`);
         
         let shapefile = `${clippedShapesDir}/${area}.shp`;
         let normalizedfile = `${dir_2_normalized}/${area}.tif`;
@@ -262,27 +130,27 @@ function processImages(){
         let translatedfile = `${dir_6_translated}/${area}.tif`;
         let tiledir = `${dir_7_tiled}/${area}`;
         
-        sendToBrowser(`*** Expand color table to RGBA GTiff ***`);
+        console.log(`*** Expand color table to RGBA GTiff ***`);
         cmd = `gdal_translate -strict -of vrt -expand rgba ${normalizedfile} ${expandedfile}`;
         executeCommand(cmd);
         
-        sendToBrowser(`*** Clip border off of virtual image ***`);
+        console.log(`*** Clip border off of virtual image ***`);
         cmd = `gdalwarp -of vrt -multi -cutline "${shapefile}" -crop_to_cutline -cblend 10 -dstalpha -co ALPHA=YES ${expandedfile} ${clippedfile}`; 
         executeCommand(cmd);
     
-        sendToBrowser(`*** Warp virtual image to EPSG:3857 ***`);
+        console.log(`*** Warp virtual image to EPSG:3857 ***`);
         cmd = `gdalwarp -of vrt -t_srs EPSG:3857 -r lanczos -multi  ${clippedfile} ${warpedfile}`;
         executeCommand(cmd);
         
-        sendToBrowser(`*** Translate virtual image back to GTiff ***`);
+        console.log(`*** Translate virtual image back to GTiff ***`);
         cmd = `gdal_translate -co TILED=YES -co NUM_THREADS=ALL_CPUS ${warpedfile} ${translatedfile}`;
         executeCommand(cmd);
         
-        sendToBrowser(`*** Add gdaladdo overviews ***`);
+        console.log(`*** Add gdaladdo overviews ***`);
         cmd = `gdaladdo -r average --config GDAL_NUM_THREADS ALL_CPUS ${translatedfile}`;
         executeCommand(cmd); 
         
-        sendToBrowser(`*** Tile ${area} images in TMS format ***`);
+        console.log(`*** Tile ${area} images in TMS format ***`);
         cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --processes=4 --tmscompatible --webviewer=openlayers ${translatedfile} ${tiledir}`;
         executeCommand(cmd);
     });
@@ -293,7 +161,7 @@ function mergeTiles() {
     chartareas.forEach((area) => {
         let mergesource = `${dir_7_tiled}/${area}`;
         let cmd = `perl ./mergetiles.pl ${mergesource} ${dir_8_merged}`;
-        sendToBrowser(`*** Merging ${area} tiles`);
+        console.log(`*** Merging ${area} tiles`);
         executeCommand(cmd);
     });
 }
@@ -302,17 +170,17 @@ function quantizePngImages() {
     let interimct = 0;
     let cmds = buildCommandArray();
     let i = 0;
-    sendToBrowser(`*** Quantizing ${cmds.length} png images at ${settings.TiledImageQuality}%`);
+    console.log(`*** Quantizing ${cmds.length} png images at ${settings.TiledImageQuality}%`);
     for (i=0; i < cmds.length; i++) {
         if (interimct === 500) {
             console.log(`  * processed image count = ${i} of ${cmds.length}`);
             interimct = 0;
         }
         interimct++;
-        sendToBrowser(cmds[i]);
+        console.log(cmds[i]);
         executeCommand(cmds[i]);
     }
-    sendToBrowser(`  * Processed image count = ${i} of ${cmds.length}`);
+    console.log(`  * Processed image count = ${i} of ${cmds.length}`);
 }
 
 function buildChartNameArray() {
@@ -357,7 +225,7 @@ function buildCommandArray() {
 }
 
 function makeMbTiles() {            
-    sendToBrowser(`  * Making MBTILES database`);
+    console.log(`  * Making MBTILES database`);
     let zooms = settings.ZoomRange.split("-");
     let minzoom = zooms[0];
     let maxzoom = zooms[0];
@@ -387,6 +255,41 @@ function makeMbTiles() {
     let mbtiles = `${dir_9_dbtiles}/${tiledbname}.mbtiles`;   
     let cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_8_quantized} ${mbtiles}`;
     executeCommand(cmd);
+}
+
+function loadSettings() {
+    let rawdata = fs.readFileSync(`${__dirname}/settings.json`);
+    settings = JSON.parse(rawdata);
+}
+
+function updateSettings(newsettings) {
+    console.log("Updating settings.json");
+    settings.ChartType = normalizeFileName(newsettings.charttype);
+    settings.TiledImageQuality = newsettings.pngquality;
+    settings.ZoomRange = newsettings.zoomrange;
+    settings.CleanMergeFolder = newsettings.cleanmerge;
+    settings.RenameWorkArea = newsettings.renamework;
+
+    let data = { "ChartUrlTemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
+                 "HttpPort": settings.HttpPort,
+                 "WsPort": settings.WsPort,
+                 "TiledImageQuality": settings.TiledImageQuality,
+                 "CleanMergeFolder": settings.CleanMergeFolder,
+                 "RenameWorkArea": settings.RenameWorkArea,
+                 "ZoomRange": settings.ZoomRange,
+                 "ChartType": settings.ChartType,
+                 "ChartTypes":
+                    [
+                        "Sectional",
+                        "Terminal",
+                        "Caribbean",
+                        "Grand_Canyon",
+                        "Helicopter",
+                        "Planning"
+                    ]
+                };
+    let stringToWrite = JSON.stringify(data, null, '  ').replace(/: "(?:[^"]+|\\")*",?$/gm, ' $&');
+    fs.writeFileSync(`${__dirname}/settings.json`, stringToWrite,{flag: 'w+'});
 }
 
 function executeCommand(command) {
@@ -459,13 +362,6 @@ function processArguments(options) {
     charturl = settings.ChartUrlTemplate.replace("<chartdate>", chartdate);
     charturl = charturl.replace("<charttype>", settings.ChartType);
 }
-
-function sendToBrowser(info) {
-    if (connection !== undefined) {
-        connection.send(info);
-    } 
-}
-
 
 function loadBestChartDate() {
     let thisdate = new  Date();

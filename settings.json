@@ -1,7 +1,5 @@
 {
   "ChartUrlTemplate" : "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
-  "HttpPort": 8080,
-  "WsPort": 9090,
   "TiledImageQuality" : "80",
   "CleanMergeFolder": false,
   "RenameWorkArea": false,
