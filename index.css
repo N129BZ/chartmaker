@@ -1,0 +1,90 @@
+h1 {
+    color:darkblue;
+    /*background-color: yellow;*/
+}
+.label {
+    background-color:white;
+    color: black;
+    font-family: Helvetica;
+    font-weight: bold;
+    font-size: 15px;
+}
+.infolabel {
+    background-color:white;
+    color: blue;
+    font-family: Helvetica;
+    font-weight: bold;
+    font-size: 15px;
+    visibility: hidden;
+}
+.textlabel {
+    background-color:white;
+    color: black;
+    font-family: Helvetica;
+    font-weight: bold;
+    font-size: 15px;
+    padding-left: 30px;
+    padding-right: 10px;
+}
+.textarea {
+    background-color:black;
+    color: white;
+    width: 100%;
+    padding-left: 20px,;
+    font-family: Helvetica;
+    font-size: 15px;
+    /*visibility: hidden;*/
+}
+.textbox {
+    background-color:white;
+    color: black;
+    width: 70px;
+    padding-left: 20px,;
+    font-family: Helvetica;
+    font-weight: bold;
+    font-size: 15px;
+}
+.selectlist {
+    background-color: white;
+    font-family: Helvetica;
+    font-size: 15px;
+    font-weight: bold;
+    height: 28px;
+    width: 282px;
+}
+.cancel {
+    background-color:darkgray;
+    border: outset;
+    color: black;
+    padding: 4px 4px;
+    text-decoration: none;
+    font-family: Helvetica;
+    font-size: 15px;
+    font-weight: bold;
+    margin: 4px 10px;
+    cursor: pointer;
+    width: 120px;
+    height: 50px;
+    text-align: center;
+    vertical-align: middle;
+    left: 60%;
+    position: relative;
+}
+.run {
+    background-color:darkgray;
+    border: outset;
+    color: black;
+    padding: 4px 4px;
+    text-decoration: none;
+    font-family: Helvetica;
+    font-size: 15px;
+    font-weight: bold;
+    margin: 4px 10px;
+    cursor: pointer;
+    width: 120px;
+    height: 50px;
+    text-align: center;
+    vertical-align: middle;
+    left: 60%;
+    position: relative;
+}

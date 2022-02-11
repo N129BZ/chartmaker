@@ -3,14 +3,6 @@
   "TiledImageQuality" : "80",
   "CleanMergeFolder": false,
   "RenameWorkArea": false,
-  "ZoomRange" : "8-13",
-  "ChartType" : "Helicopter",
-  "ChartTypes": [
-    "Sectional",
-    "Terminal",
-    "Caribbean",
-    "Grand_Canyon",
-    "Helicopter",
-    "Planning"
-  ]
+  "ZoomRange" : "8-12",
+  "ChartType" : "Terminal"
 }

@@ -1,11 +1,16 @@
 {
-  "name": "vfrsecchartmaker",
+  "name": "chartmaker",
   "version": "1.0.0",
-  "description": "Process FAA sectional chart TIF images into a single mbtiles database for xyz mapping",
-  "main": "index.js",
+  "description": "Generate FAA Charts from digital images",
+  "main": "main.js",
   "dependencies": {
-    "commander": "^8.2.0",
-    "fs": "^0.0.1-security",
-    "shelljs": "^0.8.4"
-  }
+    "electron": "^17.0.0",
+    "fs": "0.0.1-security",
+    "shelljs.exec": "^1.1.8"
+  },
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "Brian A. Manlove",
+  "license": "BSD-3-Clause"
 }
