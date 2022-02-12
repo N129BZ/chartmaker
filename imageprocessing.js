@@ -188,6 +188,70 @@ function quantizePngImages() {
     console.log(`  * Processed image count = ${i} of ${cmds.length}`);
 }
 
+function makeMbTiles() {            
+    console.log(`  * Making MBTILES database`);
+    let zooms = settings.ZoomRange.split("-");
+    let minzoom = zooms[0];
+    let maxzoom = zooms[0];
+    
+    if (zooms.length === 2) {
+        maxzoom = zooms[1];
+    }function makeMbTiles() {            
+        console.log(`  * Making MBTILES database`);
+        let zooms = settings.ZoomRange.split("-");
+        let minzoom = zooms[0];
+        let maxzoom = zooms[0];
+        
+        if (zooms.length === 2) {
+            maxzoom = zooms[1];
+        }
+    
+        // create a metadata.json file in the root of the tiles directory,
+        // mbutil will use this to generate a metadata table in the database.  
+        let chtype = charttype;
+        let metajson = `{ 
+            "name": "${charttype}",
+            "description": "${charttype} Charts",
+            "version": "1.1",
+            "type": "overlay",
+            "format": "png",
+            "minzoom": "${minzoom}", 
+            "maxzoom": "${maxzoom}", 
+            "pngquality": "${settings.TiledImageQuality}"
+        }`;
+        let fpath = `${dir_8_quantized}/metadata.json`; 
+        let fd = fs.openSync(fpath, 'w');
+        fs.writeSync(fd, metajson);
+        fs.closeSync(fd);
+    
+        let mbtiles = `${dir_9_dbtiles}/${chtype}.mbtiles`;   
+        let cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_8_quantized} ${mbtiles}`;
+        executeCommand(cmd);
+    }
+
+    // create a metadata.json file in the root of the tiles directory,
+    // mbutil will use this to generate a metadata table in the database.  
+    let chtype = charttype;
+    let metajson = `{ 
+        "name": "${charttype}",
+        "description": "${charttype} Charts",
+        "version": "1.1",
+        "type": "overlay",
+        "format": "png",
+        "minzoom": "${minzoom}", 
+        "maxzoom": "${maxzoom}", 
+        "pngquality": "${settings.TiledImageQuality}"
+    }`;
+    let fpath = `${dir_8_quantized}/metadata.json`; 
+    let fd = fs.openSync(fpath, 'w');
+    fs.writeSync(fd, metajson);
+    fs.closeSync(fd);
+
+    let mbtiles = `${dir_9_dbtiles}/${chtype}.mbtiles`;   
+    let cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_8_quantized} ${mbtiles}`;
+    executeCommand(cmd);
+}
+
 function buildChartNameArray() {
     let normfiles = fs.readdirSync(dir_2_normalized);
     normfiles.forEach((file) => {
@@ -227,39 +291,6 @@ function buildCommandArray() {
         }
     });
     return cmdarray;
-}
-
-function makeMbTiles() {            
-    console.log(`  * Making MBTILES database`);
-    let zooms = settings.ZoomRange.split("-");
-    let minzoom = zooms[0];
-    let maxzoom = zooms[0];
-    
-    if (zooms.length === 2) {
-        maxzoom = zooms[1];
-    }
-
-    // create a metadata.json file in the root of the tiles directory,
-    // mbutil will use this to generate a metadata table in the database.  
-    let chtype = charttype;
-    let metajson = `{ 
-        "name": "${charttype}",
-        "description": "${charttype} Charts",
-        "version": "1.1",
-        "type": "overlay",
-        "format": "png",
-        "minzoom": "${minzoom}", 
-        "maxzoom": "${maxzoom}", 
-        "pngquality": "${settings.TiledImageQuality}"
-    }`;
-    let fpath = `${dir_8_quantized}/metadata.json`; 
-    let fd = fs.openSync(fpath, 'w');
-    fs.writeSync(fd, metajson);
-    fs.closeSync(fd);
-
-    let mbtiles = `${dir_9_dbtiles}/${chtype}.mbtiles`;   
-    let cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_8_quantized} ${mbtiles}`;
-    executeCommand(cmd);
 }
 
 function normalizeFileName(file) {
@@ -304,7 +335,7 @@ function getBestChartDate() {
 function executeCommand(command) {
     let retcode = 0;
     try {
-        execSync(command, {stdio: 'inherit'});
+        execSync(command, { stdio: 'inherit' }); 
     }
     catch(error) {
         console.error(error)
