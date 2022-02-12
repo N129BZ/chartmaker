@@ -1,12 +1,12 @@
 {
   "name": "chartmaker",
   "version": "1.0.0",
-  "description": "Generate FAA Charts from digital images",
+  "description": "Generate FAA Chart Maps From Digital Images",
   "main": "main.js",
   "dependencies": {
+    "child_process": "^1.0.2",
     "electron": "^17.0.0",
-    "fs": "0.0.1-security",
-    "shelljs.exec": "^1.1.8"
+    "fs": "0.0.1-security"
   },
   "scripts": {
     "start": "electron ."

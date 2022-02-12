@@ -11,7 +11,7 @@ document.querySelector('form').addEventListener('click', function (event) {
     let btnRun = document.getElementById("run");
     let btnCancel = document.getElementById("cancel");
     if (event.target == btnRun) {
-        settings.ChartType = cl.value;
+        settings.ChartIndex = cl.selectedIndex;
         settings.ZoomRange = zr.value;
         settings.TiledImageQuality = pq.value;
         settings.CleanMergeFolder = cm.checked;
@@ -26,19 +26,19 @@ ipcRenderer.send('variable-request');
 
 ipcRenderer.on('variable-reply', function (event, data) {
     settings = data[0]; 
-    let charttypes = data[1];
+    let charts = data[1];
     zr.value = settings.ZoomRange;
     pq.value = settings.TiledImageQuality;
     cm.checked = settings.CleanMergeFolder;
     rw.checked = settings.RenameWorkArea;
 
-    charttypes.ChartTypes.forEach((chart) => {
+    charts.ChartTypes.forEach((chart) => {
         let option = document.createElement("option");
         option.value = replaceAll(chart, " ", "_");
         option.text = replaceAll(chart, "_", " ");
         cl.appendChild(option);
     });
-    cl.value = settings.ChartType;
+    cl.selectedIndex = settings.ChartIndex;
     console.log(settings);
 });
 

@@ -1,10 +1,11 @@
-const exec = require('shelljs.exec');
 const fs = require('fs');
+const { execSync } = require('child_process');
 
 let settings;
 let cmd = "";
 let chartdate = "";
 let charturl = ""; 
+let charttype = "";
 let chartareas = [];
 let workarea; 
 let chartfolder;
@@ -21,8 +22,16 @@ let dir_9_dbtiles;
 
 const runChartProcessing = function(runsettings) {
     settings = runsettings;
+    let tmp = fs.readFileSync(`${__dirname}/charttypes.json`);
+    let obj = JSON.parse(tmp.toString());
+    charttype = obj.ChartTypes[settings.ChartIndex];
+    if (charttype.search("Grand_Canyon") !== -1) {
+        charttype = "Grand_Canyon"
+    }
+    tmp = null;
+    obj = null;
     workarea             = `${__dirname}/workarea`;
-    chartfolder          = `${workarea}/${settings.ChartType}`;
+    chartfolder          = `${workarea}/${charttype}`;
     dir_0_download       = `${chartfolder}/0_download`;
     dir_1_unzipped       = `${chartfolder}/1_unzipped`;
     dir_2_normalized     = `${chartfolder}/2_normalized`;
@@ -35,26 +44,21 @@ const runChartProcessing = function(runsettings) {
     dir_8_quantized      = `${chartfolder}/8_quantized`;
     dir_9_dbtiles        = `${chartfolder}/9_dbtiles`;
     
-    let chtype = settings.ChartType;
-    if (chtype.search("Grand_Canyon") > -1) {
-        chtype = "Grand_Canyon"
-    }
-    
     chartdate = getBestChartDate();
     charturl = settings.ChartUrlTemplate.replace("<chartdate>", chartdate);
-    charturl = charturl.replace("<charttype>", chtype);
+    charturl = charturl.replace("<charttype>", charttype);
     runProcessingSteps();
 }
 module.exports = runChartProcessing;
 
 function runProcessingSteps() {
     makeWorkingFolders();
-    //downloadCharts();
-    //unzipCharts();
-    //normalizeChartNames();
-    //processImages();
-    //mergeTiles();
-    //quantizePngImages();
+    downloadCharts();
+    unzipCharts();
+    normalizeChartNames();
+    processImages();
+    mergeTiles();
+    quantizePngImages();
     makeMbTiles();
 }
 
@@ -76,34 +80,16 @@ function makeWorkingFolders() {
 }
 
 function downloadCharts() {
-    let chtype = settings.ChartType;
-    if (chtype.search("Grand_Canyon") > -1) {
-        chtype = "Grand_Canyon"
-    }
-    console.log(`Downloading ${chtype}.zip`);
-    let chartzip = `${dir_0_download}/${chtype}.zip`;
+    console.log(`Downloading ${charttype}.zip`);
+    let chartzip = `${dir_0_download}/${charttype}.zip`;
     cmd = `wget ${charturl} --output-document=${chartzip}`;
     executeCommand(cmd);
 }
 
 function unzipCharts() {
-    let chtype = settings.ChartType;
-    if (chtype.search("Grand_Canyon") > -1) {
-        chtype = "Grand_Canyon"
-    }
-    let chartzip = `${dir_0_download}/${chtype}.zip`;
-    console.log("* Unzipping chart zip files");
+    let chartzip = `${dir_0_download}/${charttype}.zip`;
     cmd = `unzip -o ${chartzip} -x '*.htm' -d ${dir_1_unzipped}`;
     executeCommand(cmd);
-
-    let files = fs.readdirSync(dir_1_unzipped);
-    files.forEach((file) => {
-        let basename = file.substring(0, file.length -4);
-        basename = basename.replaceAll(" ", "_");
-        if (settings.ChartType.search(basename) == -1) {
-            fs.rmSync(`${dir_1_unzipped}/${file}`);
-        }
-    });
 }
 
 function normalizeChartNames() {
@@ -130,11 +116,9 @@ function processImages(){
      3) tramslate the VRT back into a GTIFF file
      4) add zoom overlays to the GTIFF 
     --------------------------------------------------------------*/
-    let chtype = settings.ChartType;
-    if (settings.ChartType.search("Grand_Canyon") > -1) {
-        chtype = "Grand_Canyon";
-    }
-    let clippedShapesDir = `${__dirname}/clipshapes/${chtype}`;
+    
+    let clippedShapesDir = `${__dirname}/clipshapes/${charttype}`;
+
     buildChartNameArray();
 
     chartareas.forEach((area) => {
@@ -257,10 +241,10 @@ function makeMbTiles() {
 
     // create a metadata.json file in the root of the tiles directory,
     // mbutil will use this to generate a metadata table in the database.  
-    let chtype = settings.ChartType;
+    let chtype = charttype;
     let metajson = `{ 
-        "name": "${chtype}",
-        "description": "${chtype} Charts",
+        "name": "${charttype}",
+        "description": "${charttype} Charts",
         "version": "1.1",
         "type": "overlay",
         "format": "png",
@@ -318,12 +302,15 @@ function getBestChartDate() {
 }
 
 function executeCommand(command) {
-    let cmd = exec(command);
-    console.log(cmd.stdout);
-    if (cmd.code !== 0) {
-        console.log(cmd.stderr);
+    let retcode = 0;
+    try {
+        execSync(command, {stdio: 'inherit'});
     }
-    return cmd.code;
+    catch(error) {
+        console.error(error)
+        retcode = -1
+    }
+    return retcode;
 }
 
 // helper function(s)

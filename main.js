@@ -110,20 +110,19 @@ function loadChartTypes() {
 
 function updateSettings(newsettings) {
     console.log("Updating settings.json");
-    settings.ChartType = newsettings.ChartType;
+    settings.ChartIndex = newsettings.ChartIndex;
     settings.TiledImageQuality = newsettings.TiledImageQuality;
     settings.ZoomRange = newsettings.ZoomRange;
     settings.CleanMergeFolder = newsettings.CleanMergeFolder;
     settings.RenameWorkArea = newsettings.RenameWorkArea;
 
-    let data = { "ChartUrlTemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
-                 "HttpPort": settings.HttpPort,
-                 "WsPort": settings.WsPort,
+    let data = { 
+                 "ChartUrlTemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
                  "TiledImageQuality": settings.TiledImageQuality,
                  "CleanMergeFolder": settings.CleanMergeFolder,
                  "RenameWorkArea": settings.RenameWorkArea,
                  "ZoomRange": settings.ZoomRange,
-                 "ChartType": settings.ChartType
+                 "ChartIndex": settings.ChartIndex
                 };
     let stringToWrite = JSON.stringify(data, null, '  ').replace(/: "(?:[^"]+|\\")*",?$/gm, ' $&');
     fs.writeFileSync(`${__dirname}/settings.json`, stringToWrite,{flag: 'w+'});
