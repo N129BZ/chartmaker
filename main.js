@@ -9,7 +9,7 @@ let charttypes = loadChartTypes();
 const createWindow = () => {
     appwindow = new BrowserWindow({
         width: 750,
-        height: 376,
+        height: 380,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
