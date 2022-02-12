@@ -28,7 +28,9 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') app.quit()
+    if (process.platform !== 'darwin') {
+        app.quit()
+    }
 });
 
 const mainMenuTemplate = [
@@ -80,6 +82,7 @@ if (process.platform == 'darwin') {
     mainMenuTemplate.unshift({});
 }
 
+/*
 if (process.env.NODE_ENV !== 'production') {
     mainMenuTemplate.push({
         label: 'Developer Tools',
@@ -97,6 +100,7 @@ if (process.env.NODE_ENV !== 'production') {
         ]
     });
 }
+*/
 
 function loadSettings() {
     let rawdata = fs.readFileSync(`${__dirname}/settings.json`);
