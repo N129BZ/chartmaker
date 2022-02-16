@@ -1,8 +1,8 @@
 # ChartMaker - Download FAA digital raster charts and translate into mbtiles databases  
 
 ###
-**Generating one of the Grand Canyon .mbtiles databases**  
-![GUI](./images/ChartMakerScreenshot.png)  
+**Generating a Terminal.mbtiles chart database**  
+![TERMINALCHART](./images/TerminalChart.png)  
 
 ### Instructions:   
 1.) This ***electron*** based application requires several other applications to be installed. See ***Debian*** example below.              
