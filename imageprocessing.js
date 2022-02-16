@@ -1,3 +1,5 @@
+'use strict';
+
 const fs = require('fs');
 const { execSync } = require('child_process');
 
@@ -6,19 +8,22 @@ let cmd = "";
 let chartdate = "";
 let charturl = ""; 
 let charttype = "";
+let zipfile = "";
 let chartareas = [];
-let workarea; 
-let chartfolder;
-let dir_1_unzipped;       
-let dir_2_normalized;     
-let dir_3_expanded;       
-let dir_4_clipped;        
-let dir_5_warped;         
-let dir_6_translated;     
-let dir_7_tiled;          
-let dir_8_merged;         
-let dir_8_quantized;      
-let dir_9_dbtiles;
+let workarea = ""; 
+let chartfolder = "";
+let chartworkname = "";
+let dir_0_download = "";
+let dir_1_unzipped = "";       
+let dir_2_normalized = "";     
+let dir_3_expanded = "";       
+let dir_4_clipped = "";        
+let dir_5_warped = "";         
+let dir_6_translated = "";     
+let dir_7_tiled = "";          
+let dir_8_merged = "";         
+let dir_8_quantized = "";      
+let dir_9_dbtiles = "";
 
 const runChartProcessing = function(runsettings) {
     settings = runsettings;
@@ -26,12 +31,12 @@ const runChartProcessing = function(runsettings) {
     let obj = JSON.parse(tmp.toString());
     charttype = obj.ChartTypes[settings.ChartIndex];
     if (charttype.search("Grand_Canyon") !== -1) {
-        charttype = "Grand_Canyon"
+        chartworkname = "Grand_Canyon";
     }
     tmp = null;
     obj = null;
     workarea             = `${__dirname}/workarea`;
-    chartfolder          = `${workarea}/${charttype}`;
+    chartfolder          = `${workarea}/${chartworkname}`;
     dir_0_download       = `${chartfolder}/0_download`;
     dir_1_unzipped       = `${chartfolder}/1_unzipped`;
     dir_2_normalized     = `${chartfolder}/2_normalized`;
@@ -46,14 +51,14 @@ const runChartProcessing = function(runsettings) {
     
     chartdate = getBestChartDate();
     charturl = settings.ChartUrlTemplate.replace("<chartdate>", chartdate);
-    charturl = charturl.replace("<charttype>", charttype);
+    charturl = charturl.replace("<charttype>", chartworkname);
     runProcessingSteps();
 }
 module.exports = runChartProcessing;
 
 function runProcessingSteps() {
     makeWorkingFolders();
-    downloadCharts();
+    //downloadCharts();
     unzipCharts();
     normalizeChartNames();
     processImages();
@@ -80,14 +85,14 @@ function makeWorkingFolders() {
 }
 
 function downloadCharts() {
-    console.log(`Downloading ${charttype}.zip`);
-    let chartzip = `${dir_0_download}/${charttype}.zip`;
+    console.log(`Downloading ${chartworkname}.zip`);
+    let chartzip = `${dir_0_download}/${chartworkname}.zip`;
     cmd = `wget ${charturl} --output-document=${chartzip}`;
     executeCommand(cmd);
 }
 
 function unzipCharts() {
-    let chartzip = `${dir_0_download}/${charttype}.zip`;
+    let chartzip = `${dir_0_download}/${chartworkname}.zip`;
     cmd = `unzip -o ${chartzip} -x '*.htm' -d ${dir_1_unzipped}`;
     executeCommand(cmd);
 }
@@ -95,7 +100,7 @@ function unzipCharts() {
 function normalizeChartNames() {
     let tifname = "";
     let tfwname = "";
-    let files = fs.readdirSync(dir_1_unzipped);
+    let files = fs.readdirSync(dir_1_unzipped);zipfile
     
     files.forEach((file) => {
         if (file.endsWith(".tif")) {
@@ -105,6 +110,13 @@ function normalizeChartNames() {
             tfwname = `${dir_2_normalized}/${basename}.tfw`;
             fs.copyFileSync(`${dir_1_unzipped}/${file}`, tifname);
             fs.copyFileSync(`${dir_1_unzipped}/${file.replace(".tfw", ".tif")}`, tfwname);
+
+            if (basename.search("Grand_Canyon") > -1) {
+                if (basename !== charttype) {
+                    fs.rmSync(tifname);
+                    fs.rmSync(tfwname);
+                }
+            }
         }
     });
 }
@@ -117,7 +129,7 @@ function processImages(){
      4) add zoom overlays to the GTIFF 
     --------------------------------------------------------------*/
     
-    let clippedShapesDir = `${__dirname}/clipshapes/${charttype}`;
+    let clippedShapesDir = `${__dirname}/clipshapes/${chartworkname}`;
 
     buildChartNameArray();
 
@@ -231,13 +243,14 @@ function makeMbTiles() {
 
     // create a metadata.json file in the root of the tiles directory,
     // mbutil will use this to generate a metadata table in the database.  
-    let chtype = charttype;
+    let chtype = charttype.replaceAll("_", " ");
     let metajson = `{ 
-        "name": "${charttype}",
-        "description": "${charttype} Charts",
+        "name": "${chtype}",
+        "description": "${chtype} Charts",
         "version": "1.1",
         "type": "overlay",
         "format": "png",
+        "bounds": -171.791110603, 18.91619, -66.96466, 71.3577635769,
         "minzoom": "${minzoom}", 
         "maxzoom": "${maxzoom}", 
         "pngquality": "${settings.TiledImageQuality}"

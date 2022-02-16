@@ -6,11 +6,11 @@ let zr = document.getElementById("zoomrange");
 let pq = document.getElementById("pngquality");
 let cm = document.getElementById("cleanmerge");
 let rw = document.getElementById("renamework");
+let btnrun = document.getElementById("run");
+let btncancel = document.getElementById("cancel");
 
-document.querySelector('form').addEventListener('click', function (event) {
-    let btnRun = document.getElementById("run");
-    let btnCancel = document.getElementById("cancel");
-    if (event.target == btnRun) {
+document.querySelector('form').addEventListener('click', (event) => {
+    if (event.target == btnrun) {
         settings.ChartIndex = cl.selectedIndex;
         settings.ZoomRange = zr.value;
         settings.TiledImageQuality = pq.value;
@@ -18,13 +18,13 @@ document.querySelector('form').addEventListener('click', function (event) {
         settings.RenameWorkArea = rw.checked;
         ipcRenderer.send('form-submission', settings);
     }
-    else if (event.target == btnCancel) {
+    else if (event.target == btncancel) {
         ipcRenderer.send('form-submission', undefined);
     }
 });
-ipcRenderer.send('variable-request');
 
-ipcRenderer.on('variable-reply', function (event, data) {
+ipcRenderer.send('variable-request');
+ipcRenderer.on('variable-reply', (event, data) => {
     settings = data[0]; 
     let charts = data[1];
     zr.value = settings.ZoomRange;

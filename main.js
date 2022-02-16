@@ -5,6 +5,7 @@ const runProcessing = require('./imageprocessing.js');
 let appwindow;
 let settings = loadSettings();
 let charttypes = loadChartTypes();
+let finishEvent = null;
 
 const createWindow = () => {
     appwindow = new BrowserWindow({
@@ -55,20 +56,21 @@ const mainMenuTemplate = [
                 click() {
                     let settings = loadSettings();
                     runProcessing(settings);
+
                 }
             }
         ]
     }
 ];
 
-ipcMain.on('variable-request', function (event) {
+ipcMain.on('variable-request', (event) => {
     let data = [];
     data.push(settings);
     data.push(charttypes);
     event.sender.send('variable-reply', data);
 });
 
-ipcMain.on('form-submission', function (event, newsettings) {
+ipcMain.on('form-submission', (event, newsettings) => {
     if (newsettings == undefined) {
         app.quit();
     }
@@ -81,26 +83,6 @@ ipcMain.on('form-submission', function (event, newsettings) {
 if (process.platform == 'darwin') {
     mainMenuTemplate.unshift({});
 }
-
-/*
-if (process.env.NODE_ENV !== 'production') {
-    mainMenuTemplate.push({
-        label: 'Developer Tools',
-        submenu: [
-            {
-                label: 'Toggle DevTools',
-                accelerator: process.platform !== 'darwin' ? 'Ctrl+I' : 'Command+I',
-                click(item, focusedWindow) {
-                    focusedWindow.toggleDevTools();
-                }
-            },
-            {
-                role: 'reload'
-            }
-        ]
-    });
-}
-*/
 
 function loadSettings() {
     let rawdata = fs.readFileSync(`${__dirname}/settings.json`);

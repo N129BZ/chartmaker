@@ -3,3 +3,5 @@
 **/node_modules
 **/workarea
 **/mbutil/mbutil/__pycache__
+
+out/
