@@ -1,11 +1,11 @@
 # ChartMaker - Download FAA digital raster charts and translate into mbtiles databases  
 
 ### Instructions:   
-1.) this application requires several supporting applications to be installed on your system - see ***Debian*** example below.              
+1.) This ***electron*** based application requires several other applications to be installed. See ***Debian*** example below.              
 2.) clone this repository - ***git clone https://github.com/N129BZ/ChartMaker.git***            
 3.) from a terminal prompt in the ChartMaker directory, enter ***npm install***                        
 4.) edit **settings.json** with a text editor and change the **ChartType** value to one of the types in the ChartTypes list                      
-5.) run the app via command **node index.js**         
+5.) run the app via command **npm start**         
 6.) go do something else... depending on the desired charts, the process can take several hours to complete.
      
 ### Settings.json  
@@ -51,16 +51,7 @@ cd /myinstalldirectory/ChartMaker
 unzip clishapes.zip
                                     
 # install required node packages
-npm install      
-                                
-# open a terminal in the ChartMaker directory. 
-#   You can either let the application automatically select the best valid chart date 
-#   by not passing a date, or you can look at the chart release dates in chartdates.json 
-#   for the nearest valid date within 20 days of "today" and run the application, 
-#   for example, if you want to specify a date: 
-
-    node makechart.js -d 01-27-2022
-
+npm install                                      
 ```
 ### Additional information       
 The chart zip files are downloaded from the FAA digital raster chart repository and unzipped. The unzipping process will normalize the resultant GEOtiff images and their matching tfw world files to filenames with underscores in place of spaces.     
