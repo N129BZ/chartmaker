@@ -62,9 +62,9 @@ npm install
 
 ```
 ### Additional information       
-The chart zip file is downloaded from the FAA VFR digital raster chart repository and unzipped. The unzipping process will normalize the resultant GEOtiff images and their matching tfw world files to filenames with underscores in place of spaces.     
+The chart zip files are downloaded from the FAA digital raster chart repository and unzipped. The unzipping process will normalize the resultant GEOtiff images and their matching tfw world files to filenames with underscores in place of spaces.     
        
-As of January 1, 2022, the official chart release is for **01-27-2022. You can view those release dates below in the chartdates list in chartdates.json** or view the list at: https://aeronav.faa.gov/visual/10-07-2021/sectional-files. **Also note that the FAA publishes these chart files *20 days before* an official release date.**        
+As of January 1, 2022, the official chart release is for **01-27-2022. You can view those release dates in the chartdates.json file** or view the list at: https://aeronav.faa.gov/visual/10-07-2021/sectional-files. **Also note that the FAA publishes these chart files *20 days before* an official release date.**        
                        
                         
 **settings.json:**                                                                                                              
