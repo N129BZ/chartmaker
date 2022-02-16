@@ -54,11 +54,12 @@ unzip clishapes.zip
 npm install      
                                 
 # open a terminal in the ChartMaker directory. 
-#   You can either let the application automatically select the best valid chart date by not passing a date,  
-#   or you can look at the chart release dates in chartdates.json for the nearest valid date within 20 days 
-#   of "today" and run the application, for example, if you want to specify a date:
-                   
-      node makechart.js -d 01-27-2022**
+#   You can either let the application automatically select the best valid chart date 
+#   by not passing a date, or you can look at the chart release dates in chartdates.json 
+#   for the nearest valid date within 20 days of "today" and run the application, 
+#   for example, if you want to specify a date: 
+
+    node makechart.js -d 01-27-2022
 
 ```
 ### Additional information       
