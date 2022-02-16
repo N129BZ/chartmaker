@@ -1,20 +1,20 @@
-# ChartMaker - Download FAA digital raster charts and translate into mbtiles database  
+# ChartMaker - Download FAA digital raster charts and translate into mbtiles databases  
 
 ### Instructions:   
 1.) this application requires several supporting applications to be installed on your system - see ***Debian*** example below.              
 2.) clone this repository - ***git clone https://github.com/N129BZ/ChartMaker.git***            
 3.) from a terminal prompt in the ChartMaker directory, enter ***npm install***                        
-4.) edit **settings.json** wuth a text editor and change the **ChartType** value to one of the types in the ChartTypes list                      
+4.) edit **settings.json** with a text editor and change the **ChartType** value to one of the types in the ChartTypes list                      
 5.) run the app via command **node index.js**         
 6.) go do something else... depending on the desired charts, the process can take several hours to complete.
      
 ### Settings.json  
-Since the FAA publishes charts 20 days *before* the official chart date, this application will "automatically" select                 
-the appropriate chart date from the list of official FAA chart dates in the settings file.  Alternatively, you can pass              
+Since the FAA publishes charts 20 days *before* the official chart date, this application will automatically select                 
+the appropriate chart date from the list of official FAA chart dates in the chartdates.json file.  Alternatively, you can pass              
 a valid chart date argument when launching the application, in the format ***-d MM-dd-YYYY***.                     
                    
 *  For example, the zoom range value can either be in the format **n-n**, or you can use a single zoom level **n**                
-*  You can also change the **TiledImageQuality** setting for an even smaller mbtiles file.  
+*  You can also change the **TiledImageQuality** setting to reduce mbtiles file size.   
 *  To save disk space, you can set **CleanMergeFolder** to true.
    *  The merge folder can end up being as fat as 13 gigabytes for the entire chart set
    *  Quantized images are preserved in their own folder, these will be less than 1/3 the size of the merge folder
@@ -75,21 +75,24 @@ As of January 1, 2022, the official chart release is for **01-27-2022. You can v
     "CleanMergeFolder": true,
     "RenameWorkArea": false,
     "ZoomRange": "5-11",
-    "ChartType": "Terminal",
-    "ChartTypes":
-        [
-            "Sectional",
-            "Terminal",
-            "Caribbean",
-            "Grand_Canyon",
-            "Helicopter",
-            "Planning"
-        ]    
+    "ChartType": "Terminal"
 }
 ```
-
+**charttypes.json:**
+```
+{
+    "ChartTypes": [
+        "Sectional",
+        "Terminal",
+        "Caribbean",
+        "Helicopter",
+        "Grand_Canyon_Air_Tour_Operators",
+        "Grand_Canyon_General_Aviation"
+    ]
+}
+```
 ### ToDo:    
-Add other chart types including IFR charts, etc.    
+Add IFR charts, etc.    
      
       
 #### ***inspired by https://github.com/jlmcgraw/aviationCharts*** 
