@@ -33,6 +33,9 @@ const runChartProcessing = function(runsettings) {
     if (charttype.search("Grand_Canyon") !== -1) {
         chartworkname = "Grand_Canyon";
     }
+    else {
+        chartworkname = charttype;
+    }
     tmp = null;
     obj = null;
     workarea             = `${__dirname}/workarea`;
@@ -58,7 +61,7 @@ module.exports = runChartProcessing;
 
 function runProcessingSteps() {
     makeWorkingFolders();
-    //downloadCharts();
+    downloadCharts();
     unzipCharts();
     normalizeChartNames();
     processImages();
@@ -100,7 +103,7 @@ function unzipCharts() {
 function normalizeChartNames() {
     let tifname = "";
     let tfwname = "";
-    let files = fs.readdirSync(dir_1_unzipped);zipfile
+    let files = fs.readdirSync(dir_1_unzipped);
     
     files.forEach((file) => {
         if (file.endsWith(".tif")) {
@@ -208,39 +211,7 @@ function makeMbTiles() {
     
     if (zooms.length === 2) {
         maxzoom = zooms[1];
-    }function makeMbTiles() {            
-        console.log(`  * Making MBTILES database`);
-        let zooms = settings.ZoomRange.split("-");
-        let minzoom = zooms[0];
-        let maxzoom = zooms[0];
-        
-        if (zooms.length === 2) {
-            maxzoom = zooms[1];
-        }
-    
-        // create a metadata.json file in the root of the tiles directory,
-        // mbutil will use this to generate a metadata table in the database.  
-        let chtype = charttype;
-        let metajson = `{ 
-            "name": "${charttype}",
-            "description": "${charttype} Charts",
-            "version": "1.1",
-            "type": "overlay",
-            "format": "png",
-            "minzoom": "${minzoom}", 
-            "maxzoom": "${maxzoom}", 
-            "pngquality": "${settings.TiledImageQuality}"
-        }`;
-        let fpath = `${dir_8_quantized}/metadata.json`; 
-        let fd = fs.openSync(fpath, 'w');
-        fs.writeSync(fd, metajson);
-        fs.closeSync(fd);
-    
-        let mbtiles = `${dir_9_dbtiles}/${chtype}.mbtiles`;   
-        let cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_8_quantized} ${mbtiles}`;
-        executeCommand(cmd);
     }
-
     // create a metadata.json file in the root of the tiles directory,
     // mbutil will use this to generate a metadata table in the database.  
     let chtype = charttype.replaceAll("_", " ");
@@ -250,7 +221,6 @@ function makeMbTiles() {
         "version": "1.1",
         "type": "overlay",
         "format": "png",
-        "bounds": -171.791110603, 18.91619, -66.96466, 71.3577635769,
         "minzoom": "${minzoom}", 
         "maxzoom": "${maxzoom}", 
         "pngquality": "${settings.TiledImageQuality}"
