@@ -17,7 +17,16 @@ const createWindow = () => {
             enableRemoteModule: true,
         }
     });
-    
+    appwindow.on('close', (event) => {
+        if (app.quitting) {
+            appwindoww = null
+        } 
+        else {
+            event.preventDefault()
+            appwindow.hide()
+        }
+    })
+
     appwindow.loadFile('index.html')
 
     const mainMenu = Menu.buildFromTemplate(mainMenuTemplate);
@@ -27,6 +36,16 @@ const createWindow = () => {
 app.whenReady().then(() => {
     createWindow();
 });
+
+app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
+        app.quit()
+    }
+});
+
+app.on('activate', () => { win.show() })
+
+app.on('before-quit', () => app.quitting = true)
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
@@ -55,8 +74,7 @@ const mainMenuTemplate = [
                 accelerator: process.platform !== 'darwin' ? 'Ctrl+R' : 'Command+R',
                 click() {
                     let settings = loadSettings();
-                    runProcessing(settings);
-
+                    launchRunProcessing(settings);
                 }
             }
         ]
@@ -76,12 +94,17 @@ ipcMain.on('form-submission', (event, newsettings) => {
     }
     else {
         updateSettings(newsettings);
-        runProcessing(newsettings);
+        appwindow.hide();
+        launchRunProcessing(newsettings);
     }
 });
 
 if (process.platform == 'darwin') {
     mainMenuTemplate.unshift({});
+}
+
+function launchRunProcessing(settings) {
+    runProcessing(settings);
 }
 
 function loadSettings() {

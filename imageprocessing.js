@@ -106,7 +106,7 @@ function normalizeChartNames() {
     let files = fs.readdirSync(dir_1_unzipped);
     
     files.forEach((file) => {
-        if (file.endsWith(".tif")) {
+        if (file.endsWith(".tif") && file.search("FLY") === -1) {
             let testname = normalizeFileName(file);
             let basename = testname.replace(".tif", "");
             tifname = `${dir_2_normalized}/${basename}.tif`;
@@ -238,7 +238,7 @@ function makeMbTiles() {
 function buildChartNameArray() {
     let normfiles = fs.readdirSync(dir_2_normalized);
     normfiles.forEach((file) => {
-        if (file.endsWith(".tif")) {
+        if (file.endsWith(".tif") && file.search("_FLY") == -1) {
             chartareas.push(file.replace(".tif", ""));
         }
     });
@@ -296,23 +296,31 @@ function getBestChartDate() {
         cdates.push(new Date(cdate))
     });
     
-    let sortedDates = cdates.sort((a, b) => b.date - a.date).reverse();
-    sortedDates.forEach((obj) => {
+    let sortedDates = cdates.sort((a, b) => b.date - a.date);
+
+    sortedDates.forEach((dateobj) => {
         if (!found) {
-            let dtime = obj.getTime();
-            let tdiff = dtime - thistime;
+            let dtime = new Date(dateobj).getTime();
+            let tdiff = thistime - dtime;
             let tdays = tdiff / (1000 * 3600 * 24);
-            if (Math.abs(tdays) <= 20) {
-                let m = pad2(obj.getMonth()+1); // months (0-11)
-                let d = pad2(obj.getDate());    // day (1-31)
-                let y= obj.getFullYear();
+            let diffdays = parseInt(tdays.toFixed(0));
+            if (diffdays >= -20 && diffdays <= 36) {
+                console.log(diffdays);
+                let m = pad2(dateobj.getMonth()+1); // months (0-11)
+                let d = pad2(dateobj.getDate());    // day (1-31)
+                let y= dateobj.getFullYear();
                 selectedDate = `${m}-${d}-${y}`;
                 found = true;
             }
         }
-    })
+    });
 
-    return selectedDate;
+    if (!found) {
+        throw new Error("No suitable chart date was found!");
+    }
+    else {
+        return selectedDate;
+    }
 }
 
 function executeCommand(command) {
