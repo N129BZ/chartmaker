@@ -335,7 +335,7 @@ function executeCommand(command) {
     return retcode;
 }
 
-// helper function(s)
+// helper functions
 function replaceAll(string, search, replace) {
     return string.split(search).join(replace);
 }
