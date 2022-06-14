@@ -126,7 +126,7 @@ function normalizeChartNames() {
 
 function processImages(){
     /*--------------------------------------------------------------
-     1) clip the source image to VRT with the associat-co "COMPRESS=DEFLATE" -co "PREd shape file 
+     1) clip the source image to VRT with the associated shape file 
      2) warp to EPSG:3857 so that final output pixels are squareettings.ChartType
      3) tramslate the VRT back into a GTIFF file
      4) add zoom overlays to the GTIFF 
