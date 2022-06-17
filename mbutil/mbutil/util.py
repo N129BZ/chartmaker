@@ -48,6 +48,7 @@ def optimize_connection(cur):
     cur.execute("""PRAGMA synchronous=0""")
     cur.execute("""PRAGMA locking_mode=EXCLUSIVE""")
     cur.execute("""PRAGMA journal_mode=DELETE""")
+    cur.execute("""PRAGMA application_id=0x4d504258""")
 
 def compression_prepare(cur, silent):
     if not silent: 
