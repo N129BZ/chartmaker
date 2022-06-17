@@ -114,7 +114,7 @@ function loadSettings() {
 
 function loadChartTypes() {
     let rawdata = fs.readFileSync(`${__dirname}/charttypes.json`);
-    return JSON.parse(rawdata);    
+    return JSON.parse(rawdata.toString());
 }
 
 function updateSettings(newsettings) {

@@ -1,10 +1,10 @@
 {
     "ChartTypes": [
-        "Sectional",
-        "Terminal",
-        "Caribbean",
-        "Helicopter",
-        "Grand_Canyon_Air_Tour_Operators",
-        "Grand_Canyon_General_Aviation"
+        ["Sectional", "baselayer"],
+        ["Terminal", "overlay"],
+        ["Caribbean", "overlay"],
+        ["Helicopter", "overlay"],
+        ["Grand_Canyon_Air_Tour_Operators", "overlay"],
+        ["Grand_Canyon_General_Aviation", "overlay"]
     ]
 }

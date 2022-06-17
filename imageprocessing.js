@@ -8,6 +8,7 @@ let cmd = "";
 let chartdate = "";
 let charturl = ""; 
 let charttype = "";
+let chartlayertype = "";
 let zipfile = "";
 let chartareas = [];
 let workarea = ""; 
@@ -29,7 +30,8 @@ const runChartProcessing = function(runsettings) {
     settings = runsettings;
     let tmp = fs.readFileSync(`${__dirname}/charttypes.json`);
     let obj = JSON.parse(tmp.toString());
-    charttype = obj.ChartTypes[settings.ChartIndex];
+    charttype = obj.ChartTypes[settings.ChartIndex][0];
+    chartlayertype = obj.ChartTypes[settings.ChartIndex][1];
     if (charttype.search("Grand_Canyon") !== -1) {
         chartworkname = "Grand_Canyon";
     }
@@ -219,7 +221,7 @@ function makeMbTiles() {
         "name": "${chtype}",
         "description": "${chtype} Charts",
         "version": "1.1",
-        "type": "overlay",
+        "type": "${chartlayertype}",
         "format": "png",
         "minzoom": "${minzoom}", 
         "maxzoom": "${maxzoom}", 

@@ -34,8 +34,8 @@ ipcRenderer.on('variable-reply', (event, data) => {
 
     charts.ChartTypes.forEach((chart) => {
         let option = document.createElement("option");
-        option.value = replaceAll(chart, " ", "_");
-        option.text = replaceAll(chart, "_", " ");
+        option.value = replaceAll(chart[0], " ", "_");
+        option.text = replaceAll(chart[0], "_", " ");
         cl.appendChild(option);
     });
     cl.selectedIndex = settings.ChartIndex;
