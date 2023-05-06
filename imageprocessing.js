@@ -175,7 +175,7 @@ function processImages(){
         executeCommand(cmd);
     });
 }
-    
+        
 function mergeTiles() {
     buildChartNameArray();
     chartareas.forEach((area) => {
