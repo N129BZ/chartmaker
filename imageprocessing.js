@@ -129,8 +129,8 @@ function normalizeChartNames() {
 function processImages(){
     /*--------------------------------------------------------------
      1) clip the source image to VRT with the associated shape file 
-     2) warp to EPSG:3857 so that final output pixels are squareettings.ChartType
-     3) tramslate the VRT back into a GTIFF file
+     2) warp to EPSG:3857 so that final output pixels are square
+     3) translate the VRT back into a GTIFF file
      4) add zoom overlays to the GTIFF 
     --------------------------------------------------------------*/
     
@@ -147,7 +147,7 @@ function processImages(){
         let expandedfile = `${dir_3_expanded}/${area}.vrt`;
         let clippedfile = `${dir_4_clipped}/${area}.vrt`;
         let warpedfile = `${dir_5_warped}/${area}.vrt`;
-        let translatedfile = `${dir_6_translated}/${area}.tif`;
+        let translatedfile = `${dir_6_translated}/${area}.vrt`;
         let tiledir = `${dir_7_tiled}/${area}`;
         
         console.log(`*** Expand color table to RGBA GTiff ***`);
@@ -171,7 +171,7 @@ function processImages(){
         executeCommand(cmd); 
         
         console.log(`*** Tile ${area} images in TMS format ***`);
-        cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --processes=4 --tmscompatible --webviewer=openlayers ${translatedfile} ${tiledir}`;
+        cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --resume --processes=8 ${translatedfile} ${tiledir}`;
         executeCommand(cmd);
     });
 }

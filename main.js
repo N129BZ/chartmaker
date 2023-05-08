@@ -5,21 +5,26 @@ const runProcessing = require('./imageprocessing.js');
 let appwindow;
 let settings = loadSettings();
 let charttypes = loadChartTypes();
-let finishEvent = null;
 
 const createWindow = () => {
-    appwindow = new BrowserWindow({
+    appwindow = new BrowserWindow({ 
         width: 750,
         height: 380,
+        show: false,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
             enableRemoteModule: true,
-        }
+        },
     });
+
+    appwindow.on('ready-to-show', () => {
+        appwindow.show()
+    });
+
     appwindow.on('close', (event) => {
         if (app.quitting) {
-            appwindoww = null
+            appwindow = null
         } 
         else {
             event.preventDefault()
