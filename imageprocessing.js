@@ -159,7 +159,7 @@ function processImages(){
         executeCommand(cmd);
     
         console.log(`*** Warp virtual image to EPSG:3857 ***`);
-        cmd = `gdalwarp -of vrt -t_srs EPSG:3857 -r lanczos -multi  ${clippedfile} ${warpedfile}`;
+        cmd = `gdalwarp -of vrt -t_srs EPSG:4296 -r average -multi  ${clippedfile} ${warpedfile}`;
         executeCommand(cmd);
         
         console.log(`*** Translate virtual image back to GTiff ***`);
