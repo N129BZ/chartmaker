@@ -158,7 +158,7 @@ function processImages(){
         cmd = `gdalwarp -of vrt -multi -cutline "${shapefile}" -crop_to_cutline -cblend 10 -dstalpha -co ALPHA=YES ${expandedfile} ${clippedfile}`; 
         executeCommand(cmd);
     
-        console.log(`*** Warp virtual image to EPSG:3857 ***`);
+        console.log(`*** Warp virtual image to EPSG:4296 ***`);
         cmd = `gdalwarp -of vrt -t_srs EPSG:4296 -r average -multi  ${clippedfile} ${warpedfile}`;
         executeCommand(cmd);
         
