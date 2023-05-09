@@ -171,7 +171,7 @@ function processImages(){
         executeCommand(cmd); 
         
         console.log(`*** Tile ${area} images in TMS format ***`);
-        cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --resume --processes=8 --tmscompatible --webviewer=none ${translatedfile} ${tiledir}`;
+        cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --s_srs=EPSG:3857 --resume --processes=8 --tmscompatible --webviewer=none ${translatedfile} ${tiledir}`;
         executeCommand(cmd);
     });
 }
