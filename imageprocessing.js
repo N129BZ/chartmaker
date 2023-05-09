@@ -158,8 +158,8 @@ function processImages(){
         cmd = `gdalwarp -of vrt -multi -cutline "${shapefile}" -crop_to_cutline -cblend 10 -dstalpha -co ALPHA=YES ${expandedfile} ${clippedfile}`; 
         executeCommand(cmd);
     
-        console.log(`*** Warp virtual image to EPSG:4296 ***`);
-        cmd = `gdalwarp -of vrt -t_srs EPSG:4296 -r average -multi  ${clippedfile} ${warpedfile}`;
+        console.log(`*** Warp virtual image to EPSG:3857 ***`);
+        cmd = `gdalwarp -of vrt -t_srs EPSG:3857 -r lanczos -multi  ${clippedfile} ${warpedfile}`;
         executeCommand(cmd);
         
         console.log(`*** Translate virtual image back to GTiff ***`);
@@ -167,11 +167,11 @@ function processImages(){
         executeCommand(cmd);
         
         console.log(`*** Add gdaladdo overviews ***`);
-        cmd = `gdaladdo -r average --config GDAL_NUM_THREADS ALL_CPUS ${translatedfile}`;
+        cmd = `gdaladdo -r lanczos --config GDAL_NUM_THREADS ALL_CPUS ${translatedfile}`;
         executeCommand(cmd); 
         
         console.log(`*** Tile ${area} images in TMS format ***`);
-        cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --resume --processes=8 ${translatedfile} ${tiledir}`;
+        cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --resume --processes=8 --tmscompatible --webviewer=none ${translatedfile} ${tiledir}`;
         executeCommand(cmd);
     });
 }
