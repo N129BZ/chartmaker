@@ -3,6 +3,6 @@
   "TiledImageQuality" : "75",
   "CleanMergeFolder": true,
   "RenameWorkArea": false,
-  "ZoomRange" : "5-11",
+  "ZoomRange" : "1-11",
   "ChartIndex": 0
 }

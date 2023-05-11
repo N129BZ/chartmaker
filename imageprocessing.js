@@ -17,14 +17,12 @@ let chartworkname = "";
 let dir_0_download = "";
 let dir_1_unzipped = "";       
 let dir_2_normalized = "";     
-let dir_3_expanded = "";       
-let dir_4_clipped = "";        
-let dir_5_warped = "";         
-let dir_6_translated = "";     
-let dir_7_tiled = "";          
-let dir_8_merged = "";         
-let dir_8_quantized = "";      
-let dir_9_dbtiles = "";
+let dir_3_clipped = "";       
+let dir_4_expanded = "";        
+let dir_5_combined = "";     
+let dir_6_tiled = "";          
+let dir_7_quantized = "";      
+let dir_8_dbtiles = "";
 
 const runChartProcessing = function(runsettings) {
     settings = runsettings;
@@ -45,14 +43,14 @@ const runChartProcessing = function(runsettings) {
     dir_0_download       = `${chartfolder}/0_download`;
     dir_1_unzipped       = `${chartfolder}/1_unzipped`;
     dir_2_normalized     = `${chartfolder}/2_normalized`;
-    dir_3_expanded       = `${chartfolder}/3_expanded`;
-    dir_4_clipped        = `${chartfolder}/4_clipped`;
+    dir_3_clipped        = `${chartfolder}/3_expanded`;
+    dir_4_expanded       = `${chartfolder}/4_clipped`;
     dir_5_warped         = `${chartfolder}/5_warped`;
-    dir_6_translated     = `${chartfolder}/6_translated`;
-    dir_7_tiled          = `${chartfolder}/7_tiled`;
+    dir_5_combined       = `${chartfolder}/6_translated`;
+    dir_6_tiled          = `${chartfolder}/7_tiled`;
     dir_8_merged         = `${chartfolder}/8_merged`;
-    dir_8_quantized      = `${chartfolder}/8_quantized`;
-    dir_9_dbtiles        = `${chartfolder}/9_dbtiles`;
+    dir_7_quantized      = `${chartfolder}/8_quantized`;
+    dir_8_dbtiles        = `${chartfolder}/9_dbtiles`;
     
     chartdate = getBestChartDate();
     charturl = settings.ChartUrlTemplate.replace("<chartdate>", chartdate);
@@ -63,10 +61,11 @@ module.exports = runChartProcessing;
 
 function runProcessingSteps() {
     makeWorkingFolders();
-    downloadCharts();
-    unzipCharts();
-    normalizeChartNames();
+    //downloadCharts();
+    //unzipCharts();
+    //normalizeChartNames();
     processImages();
+    combineAndTileImages();
     mergeTiles();
     quantizePngImages();
     makeMbTiles();
@@ -79,14 +78,12 @@ function makeWorkingFolders() {
     if (!fs.existsSync(dir_0_download)) fs.mkdirSync(dir_0_download);
     if (!fs.existsSync(dir_1_unzipped)) fs.mkdirSync(dir_1_unzipped);
     if (!fs.existsSync(dir_2_normalized)) fs.mkdirSync(dir_2_normalized);
-    if (!fs.existsSync(dir_3_expanded)) fs.mkdirSync(dir_3_expanded);
-    if (!fs.existsSync(dir_4_clipped)) fs.mkdirSync(dir_4_clipped);
-    if (!fs.existsSync(dir_5_warped)) fs.mkdirSync(dir_5_warped);
-    if (!fs.existsSync(dir_6_translated)) fs.mkdirSync(dir_6_translated);
-    if (!fs.existsSync(dir_7_tiled)) fs.mkdirSync(dir_7_tiled);
-    if (!fs.existsSync(dir_8_merged)) fs.mkdirSync(dir_8_merged);
-    if (!fs.existsSync(dir_8_quantized)) fs.mkdirSync(dir_8_quantized);
-    if (!fs.existsSync(dir_9_dbtiles)) fs.mkdirSync(dir_9_dbtiles);
+    if (!fs.existsSync(dir_3_clipped)) fs.mkdirSync(dir_3_clipped);
+    if (!fs.existsSync(dir_4_expanded)) fs.mkdirSync(dir_4_expanded);
+    if (!fs.existsSync(dir_5_combined)) fs.mkdirSync(dir_5_combined);
+    if (!fs.existsSync(dir_6_tiled)) fs.mkdirSync(dir_6_tiled);
+    if (!fs.existsSync(dir_7_quantized)) fs.mkdirSync(dir_7_quantized);
+    if (!fs.existsSync(dir_8_dbtiles)) fs.mkdirSync(dir_8_dbtiles);
 }
 
 function downloadCharts() {
@@ -128,13 +125,13 @@ function normalizeChartNames() {
 
 function processImages(){
     /*--------------------------------------------------------------
-     1) clip the source image to VRT with the associated shape file 
-     2) warp to EPSG:3857 so that final output pixels are square
-     3) translate the VRT back into a GTIFF file
-     4) add zoom overlays to the GTIFF 
+     1) clip and warp all area charts to EPSG:3857, strip off legend and make output pixels square
+     2) translate and combine the individual VRT's into a single VRT file
+     3) build a single combined VRT from the individual VRT's 
+     4) tile everything into PNG tile images 
     --------------------------------------------------------------*/
     
-    let clippedShapesDir = `${__dirname}/clipshapes/${chartworkname}`;
+    let clippedShapesDir = `${__dirname}/clipshapes/${chartworkname}/`;
 
     buildChartNameArray();
 
@@ -144,48 +141,47 @@ function processImages(){
         
         let shapefile = `${clippedShapesDir}/${area}.shp`;
         let normalizedfile = `${dir_2_normalized}/${area}.tif`;
-        let expandedfile = `${dir_3_expanded}/${area}.vrt`;
-        let clippedfile = `${dir_4_clipped}/${area}.vrt`;
-        let warpedfile = `${dir_5_warped}/${area}.vrt`;
-        let translatedfile = `${dir_6_translated}/${area}.vrt`;
-        let tiledir = `${dir_7_tiled}/${area}`;
+        let clippedfile = `${dir_3_clipped}/${area}.tif`;
+        let expandedfile = `${dir_4_expanded}/${area}.vrt`;
         
-        console.log(`*** Expand color table to RGBA GTiff ***`);
-        cmd = `gdal_translate -strict -of vrt -expand rgba ${normalizedfile} ${expandedfile}`;
-        executeCommand(cmd);
-        
+
         console.log(`*** Clip border off of virtual image ***`);
-        cmd = `gdalwarp -of vrt -multi -cutline "${shapefile}" -crop_to_cutline -cblend 10 -dstalpha -co ALPHA=YES ${expandedfile} ${clippedfile}`; 
-        executeCommand(cmd);
-    
-        console.log(`*** Warp virtual image to EPSG:3857 ***`);
-        cmd = `gdalwarp -of vrt -t_srs EPSG:3857 -r lanczos -multi  ${clippedfile} ${warpedfile}`;
+        cmd = `gdalwarp -t_srs EPSG:3857 -co TILED=YES -dstalpha -of GTiff -cutline "${shapefile}" -crop_to_cutline -wo NUM_THREADS=4 -multi -overwrite ${normalizedfile} ${clippedfile}`
         executeCommand(cmd);
         
-        console.log(`*** Translate virtual image back to GTiff ***`);
-        cmd = `gdal_translate -co TILED=YES -co NUM_THREADS=ALL_CPUS ${warpedfile} ${translatedfile}`;
-        executeCommand(cmd);
-        
-        console.log(`*** Add gdaladdo overviews ***`);
-        cmd = `gdaladdo -r lanczos --config GDAL_NUM_THREADS ALL_CPUS ${translatedfile}`;
+        console.log(`*** Expand color table to RGBA vrt ***`);
+        cmd = `gdal_translate -of vrt -expand rgba ${clippedfile} ${expandedfile}`;
         executeCommand(cmd); 
-        
-        console.log(`*** Tile ${area} images in TMS format ***`);
-        cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --s_srs=EPSG:3857 --resume --processes=8 --tmscompatible --webviewer=none ${translatedfile} ${tiledir}`;
-        executeCommand(cmd);
     });
 }
-        
+
+function combineAndTileImages() {
+    let vrtfile = `${dir_5_combined}/combined.vrt`;
+
+    console.log(`*** Translate clipped virtual images to a single vrt ***`);
+    cmd = `gdalbuildvrt ${vrtfile} ${dir_4_expanded}/*.vrt` 
+    executeCommand(cmd);
+
+    console.log(`*** Add gdaladdo overviews ***`);
+    cmd = `gdaladdo -r lanczos --config GDAL_NUM_THREADS ALL_CPUS ${translatedfile}`;
+    executeCommand(cmd); 
+    
+    console.log(`*** Tile ${chartworkname} combined virtual image ***`);
+    cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --exclude --processes=4 --webviewer=leaflet ${vrtfile} ${dir_6_tiled}`;
+    executeCommand(cmd); 
+}
+
+/*
 function mergeTiles() {
     buildChartNameArray();
     chartareas.forEach((area) => {
-        let mergesource = `${dir_7_tiled}/${area}`;
+        let mergesource = `${dir_6_tiled}/${area}`;
         let cmd = `perl ./mergetiles.pl ${mergesource} ${dir_8_merged}`;
         console.log(`*** Merging ${area} tiles`);
         executeCommand(cmd);
     });
 }
-    
+*/    
 function quantizePngImages() {
     let interimct = 0;
     let i;
@@ -227,13 +223,13 @@ function makeMbTiles() {
         "maxzoom": "${maxzoom}", 
         "pngquality": "${settings.TiledImageQuality}"
     }`;
-    let fpath = `${dir_8_quantized}/metadata.json`; 
+    let fpath = `${dir_7_quantized}/metadata.json`; 
     let fd = fs.openSync(fpath, 'w');
     fs.writeSync(fd, metajson);
     fs.closeSync(fd);
 
-    let mbtiles = `${dir_9_dbtiles}/${chtype}.mbtiles`;   
-    let cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_8_quantized} ${mbtiles}`;
+    let mbtiles = `${dir_8_dbtiles}/${chtype}.mbtiles`;   
+    let cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_7_quantized} ${mbtiles}`;
     executeCommand(cmd);
 }
 
@@ -253,7 +249,7 @@ function buildCommandArray() {
     mergefolder.forEach((zoomlevel) => {
         let zoomfolder = `${dir_8_merged}/${zoomlevel}`;
         if (fs.statSync(zoomfolder).isDirectory()) {    
-            let quantzoomfolder = `${dir_8_quantized}/${zoomlevel}`;
+            let quantzoomfolder = `${dir_7_quantized}/${zoomlevel}`;
             if (!fs.existsSync(quantzoomfolder)) {
                 fs.mkdirSync(quantzoomfolder);
             }
@@ -279,10 +275,8 @@ function buildCommandArray() {
 }
 
 function normalizeFileName(file) {
-    let newname = "";
-    newname = replaceAll(file, " ", "_");
-    newname = newname.replace("_SEC", "");
-    newname = newname.replace("_TAC", "");
+    let newname = replaceAll(file, " ", "_");
+    newname = newname.replace("-", "_").replace("_SEC", "").replace("_TAC", "").toLowerCase();
     return newname;
 }
 
