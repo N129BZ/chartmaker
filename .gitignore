@@ -3,4 +3,4 @@
 **/node_modules
 **/workarea
 **/mbutil/mbutil/__pycache__
-**/package-lock.json
+package-lock.json
