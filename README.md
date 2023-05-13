@@ -2,11 +2,11 @@
 
 ### Instructions:   
 1.) This node.js application requires several other applications to be installed. See ***Debian*** example below.              
-2.) clone this repository - ***git clone https://github.com/N129BZ/ChartMaker.git***            
-3.) from a terminal prompt in the ChartMaker directory, enter ***npm install***                        
-4.) edit **settings.json** with a text editor and change the **ChartType** value to one of the types in the ChartTypes list                      
-5.) run the app via command **npm start**         
-6.) go do something else... depending on the desired charts, the process can take several hours to complete.
+2.) Clone this repository - ***git clone https://github.com/N129BZ/ChartMaker.git***            
+3.) From a terminal prompt in the ChartMaker directory, enter ***npm install***                        
+4.) Edit **settings.json** with a text editor and change the **ChartType** value to one of the types in the ChartTypes list                      
+5.) Run the app via command **npm start**         
+6.) Go do something else... depending on the desired charts, the process can take several hours to complete.
      
 ### Settings.json  
 Since the FAA publishes charts 20 days *before* the official chart date, this application will automatically select                 
