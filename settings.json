@@ -1,8 +1,20 @@
 {
-  "ChartUrlTemplate" : "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
-  "TiledImageQuality" : "50",
-  "CleanMergeFolder": true,
-  "RenameWorkArea": false,
-  "ZoomRange" : "3-11",
-  "ChartIndex": 0
+    "TiledImageQuality" : "50",
+    "CleanMergeFolder": true,
+    "RenameWorkArea": false,
+    "ZoomRange" : "3-11",
+    "ChartTypeIndex": 0,
+    "LayerTypeIndex": 0,
+    "ChartTypes": [
+        "Sectional",
+        "Terminal",
+        "Caribbean",
+        "Helicopter",
+        "Grand_Canyon_Air_Tour_Operators",
+        "Grand_Canyon_General_Aviation"
+    ],
+    "LayerTypes": [
+        "baselayer", 
+        "overlay"
+    ]
 }

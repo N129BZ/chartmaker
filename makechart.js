@@ -3,73 +3,37 @@
 const fs = require('fs');
 const { execSync } = require('child_process');
 
-let settings;
+
+let settings = JSON.parse(fs.readFileSync(`${__dirname}/settings.json`));
+let chartdate = getBestChartDate();
+
 let cmd = "";
-let chartdate = "";
-let charturl = ""; 
-let charttype = "";
-let chartlayertype = "";
-let zipfile = "";
-let workarea = ""; 
-let chartfolder = "";
-let chartworkname = "";
-let dir_0_download = "";
-let dir_1_unzipped = "";       
-let dir_2_normalized = "";     
-let dir_3_expanded = "";       
-let dir_4_clipped = "";        
-let dir_5_tiled = "";    
-let dir_6_merged = "";      
-let dir_7_quantized = "";       
-let dir_8_mbtiles = "";
+let urltemplate = "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip";
+let charttype = settings.ChartTypes[settings.ChartTypeIndex];
+let chartlayertype = settings.LayerTypes[settings.LayerTypeIndex];
+let chartworkname = charttype.search("Grand_Canyon") !== -1 ? "Grand_Canyon" : charttype;
+let charturl = urltemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
 
-settings = loadSettings();
+let workarea             = `${__dirname}/workarea`;
+let chartfolder          = `${workarea}/${chartworkname}`;
+let dir_0_download       = `${chartfolder}/0_download`;
+let dir_1_unzipped       = `${chartfolder}/1_unzipped`;
+let dir_2_expanded       = `${chartfolder}/3_expanded`;
+let dir_3_clipped        = `${chartfolder}/4_clipped`;
+let dir_4_tiled          = `${chartfolder}/5_tiled`;
+let dir_5_merged         = `${chartfolder}/6_merged`;
+let dir_6_quantized      = `${chartfolder}/7_quantized`;
+let dir_7_mbtiles        = `${chartfolder}/8_mbtiles`;
 
-let tmp = fs.readFileSync(`${__dirname}/charttypes.json`);
-let obj = JSON.parse(tmp.toString());
-charttype = obj.ChartTypes[settings.ChartIndex][0];
-chartlayertype = obj.ChartTypes[settings.ChartIndex][1];
-if (charttype.search("Grand_Canyon") !== -1) {
-    chartworkname = "Grand_Canyon";
-}
-else {
-    chartworkname = charttype;
-}
-tmp = null;
-obj = null;
-workarea             = `${__dirname}/workarea`;
-chartfolder          = `${workarea}/${chartworkname}`;
-dir_0_download       = `${chartfolder}/0_download`;
-dir_1_unzipped       = `${chartfolder}/1_unzipped`;
-dir_2_normalized     = `${chartfolder}/2_normalized`;
-dir_3_expanded       = `${chartfolder}/3_expanded`;
-dir_4_clipped        = `${chartfolder}/4_clipped`;
-dir_5_tiled          = `${chartfolder}/5_tiled`;
-dir_6_merged         = `${chartfolder}/6_merged`;
-dir_7_quantized      = `${chartfolder}/7_quantized`;
-dir_8_mbtiles        = `${chartfolder}/8_mbtiles`;
 
-chartdate = getBestChartDate();
-charturl = settings.ChartUrlTemplate.replace("<chartdate>", chartdate);
-charturl = charturl.replace("<charttype>", chartworkname);
-
-runProcessingSteps();
-
-function loadSettings() {
-    let rawdata = fs.readFileSync(`${__dirname}/settings.json`);
-    return JSON.parse(rawdata);
-}
-
-function runProcessingSteps() {
-    makeWorkingFolders();
-    //downloadCharts();
-    unzipCharts();
-    normalizeChartNames();
-    processImages();
-    mergeTiles();
-    quantizePngImages();
-    makeMbTiles();
-}
+makeWorkingFolders();
+//downloadCharts();
+unzipCharts();
+normalizeChartNames();
+processImages();
+mergeTiles();
+quantizePngImages();
+makeMbTiles();
 
 function normalizeClipFiles(chartType) {
     let clippedShapesDir = `${__dirname}/clipshapes/${chartType}`;
@@ -88,13 +52,12 @@ function makeWorkingFolders() {
     if (!fs.existsSync(chartfolder)) fs.mkdirSync(chartfolder);
     if (!fs.existsSync(dir_0_download)) fs.mkdirSync(dir_0_download);
     if (!fs.existsSync(dir_1_unzipped)) fs.mkdirSync(dir_1_unzipped);
-    if (!fs.existsSync(dir_2_normalized)) fs.mkdirSync(dir_2_normalized);
-    if (!fs.existsSync(dir_3_expanded)) fs.mkdirSync(dir_3_expanded);
-    if (!fs.existsSync(dir_4_clipped)) fs.mkdirSync(dir_4_clipped);
-    if (!fs.existsSync(dir_5_tiled)) fs.mkdirSync(dir_5_tiled);
-    if (!fs.existsSync(dir_6_merged)) fs.mkdirSync(dir_6_merged);
-    if (!fs.existsSync(dir_7_quantized)) fs.mkdirSync(dir_7_quantized);
-    if (!fs.existsSync(dir_8_mbtiles)) fs.mkdirSync(dir_8_mbtiles);
+    if (!fs.existsSync(dir_2_expanded)) fs.mkdirSync(dir_2_expanded);
+    if (!fs.existsSync(dir_3_clipped)) fs.mkdirSync(dir_3_clipped);
+    if (!fs.existsSync(dir_4_tiled)) fs.mkdirSync(dir_4_tiled);
+    if (!fs.existsSync(dir_5_merged)) fs.mkdirSync(dir_5_merged);
+    if (!fs.existsSync(dir_6_quantized)) fs.mkdirSync(dir_6_quantized);
+    if (!fs.existsSync(dir_7_mbtiles)) fs.mkdirSync(dir_7_mbtiles);
 }
 
 function downloadCharts() {
@@ -121,8 +84,8 @@ function normalizeChartNames() {
             let tfwfile = file.replace(".tif", ".tfw");
             let basename = normalizeFileName(file).replace(".tif", "");
 
-            tifname = `${dir_2_normalized}/${basename}.tif`;
-            tfwname = `${dir_2_normalized}/${basename}.tfw`;
+            tifname = `${dir_1_unzipped}/${basename}.tif`;
+            tfwname = `${dir_1_unzipped}/${basename}.tfw`;
             
             fs.renameSync(`${dir_1_unzipped}/${file}`, tifname);
             fs.renameSync(`${dir_1_unzipped}/${tfwfile}`, tfwname);   
@@ -155,13 +118,13 @@ function processImages(){
         console.log(`************** Processing chart: ${area} **************`);
         
         let shapefile = `${clippedShapesDir}/${area}.shp`;
-        let normalizedfile = `${dir_2_normalized}/${area}.tif`;
-        let expandedfile = `${dir_3_expanded}/${area}.vrt`;
-        let clippedfile = `${dir_4_clipped}/${area}.vrt`;
-        let tiledir = `${dir_5_tiled}/${area}` 
+        let rawtiffile = `${dir_1_unzipped}/${area}.tif`;
+        let expandedfile = `${dir_2_expanded}/${area}.vrt`;
+        let clippedfile = `${dir_3_clipped}/${area}.vrt`;
+        let tiledir = `${dir_4_tiled}/${area}` 
 
         console.log(`*** Expand color table to RGBA GTiff ***`);
-        cmd = `gdal_translate -strict -of vrt -co TILED=YES -expand rgba ${normalizedfile} ${expandedfile}`;
+        cmd = `gdal_translate -strict -of vrt -co TILED=YES -expand rgba ${rawtiffile} ${expandedfile}`;
         executeCommand(cmd);
         
         console.log(`*** Clip border off of virtual image ***`);
@@ -185,10 +148,10 @@ function processImages(){
 }
 
 function mergeTiles() {
-    let areas = fs.readdirSync(dir_5_tiled);
+    let areas = fs.readdirSync(dir_4_tiled);
     areas.forEach((area) => {
-        let mergesource = `${dir_5_tiled}/${area}`;
-        let cmd = `perl ./mergetiles.pl ${mergesource} ${dir_6_merged}`;
+        let mergesource = `${dir_4_tiled}/${area}`;
+        let cmd = `perl ./mergetiles.pl ${mergesource} ${dir_5_merged}`;
 
         console.log(`*** Merging ${area} tiles`);
         executeCommand(cmd);
@@ -235,13 +198,13 @@ function makeMbTiles() {
         "maxzoom": "${maxzoom}", 
         "pngquality": "${settings.TiledImageQuality}"
     }`;
-    let fpath = `${dir_7_quantized}/metadata.json`; 
+    let fpath = `${dir_6_quantized}/metadata.json`; 
     let fd = fs.openSync(fpath, 'w');
     fs.writeSync(fd, metajson);
     fs.closeSync(fd);
 
-    let mbtiles = `${dir_8_mbtiles}/${chtype}.mbtiles`;   
-    let cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_7_quantized} ${mbtiles}`;
+    let mbtiles = `${dir_7_mbtiles}/${chtype}.mbtiles`;   
+    let cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_6_quantized} ${mbtiles}`;
     executeCommand(cmd);
 }
 
@@ -257,13 +220,13 @@ function buildChartNameArray() {
 }
 
 function buildCommandArray() {
-    let mergedfolders = fs.readdirSync(dir_6_merged);
+    let mergedfolders = fs.readdirSync(dir_5_merged);
     let cmdarray = [];
 
     mergedfolders.forEach((zoomlevel) => {
-        let zoomfolder = `${dir_6_merged}/${zoomlevel}`;
+        let zoomfolder = `${dir_5_merged}/${zoomlevel}`;
         if (fs.statSync(zoomfolder).isDirectory()) {    
-            let quantzoomfolder = `${dir_7_quantized}/${zoomlevel}`;
+            let quantzoomfolder = `${dir_6_quantized}/${zoomlevel}`;
             if (!fs.existsSync(quantzoomfolder)) {
                 fs.mkdirSync(quantzoomfolder);
             }
