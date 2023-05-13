@@ -1,11 +1,7 @@
 # ChartMaker - Download FAA digital raster charts and translate into mbtiles databases  
 
-###
-**Generating a Terminal.mbtiles chart database**  
-![TERMINALCHART](./images/TerminalChart.png)  
-
 ### Instructions:   
-1.) This ***electron*** based application requires several other applications to be installed. See ***Debian*** example below.              
+1.) This node.js application requires several other applications to be installed. See ***Debian*** example below.              
 2.) clone this repository - ***git clone https://github.com/N129BZ/ChartMaker.git***            
 3.) from a terminal prompt in the ChartMaker directory, enter ***npm install***                        
 4.) edit **settings.json** with a text editor and change the **ChartType** value to one of the types in the ChartTypes list                      
