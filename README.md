@@ -1,9 +1,9 @@
-# ChartMaker - Download FAA digital raster charts and translate into mbtiles databases  
+# chartmaker - Download FAA digital raster charts and translate into mbtiles databases  
 
 ### Instructions:   
 1.) This node.js application requires several other applications to be installed. See ***Debian*** example below.              
-2.) Clone this repository - ***git clone https://github.com/N129BZ/ChartMaker.git***            
-3.) From a terminal prompt in the ChartMaker directory, enter ***npm install***                        
+2.) Clone this repository - ***git clone https://github.com/N129BZ/chartmaker.git***            
+3.) From a terminal prompt in the chartmaker directory, enter ***npm install***                        
 4.) Edit **settings.json** with a text editor and change the **ChartType** value to one of the types in the ChartTypes list                      
 5.) Run the app via command **npm start**         
 6.) Go do something else... depending on the desired charts, the process can take several hours to complete.
@@ -38,14 +38,14 @@ sudo apt install        \
         npm             \
         unzip
 
-# change directory to where you will clone ChartMaker, for example:
+# change directory to where you will clone chartmaker, for example:
 cd /myinstalldirectory
 
-# clone ChartMaker
-git clone https:github.com/N129BZ/ChartMaker.git
+# clone chartmaker
+git clone https:github.com/N129BZ/chartmaker.git
                             
-# change directory to ChartMaker
-cd /myinstalldirectory/ChartMaker
+# change directory to chartmaker
+cd /myinstalldirectory/chartmaker
                                    
 # unzip clipshapes.zip 
 unzip clishapes.zip
