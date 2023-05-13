@@ -5,7 +5,7 @@
 2.) Clone this repository - ***git clone https://github.com/N129BZ/chartmaker.git***            
 3.) From a terminal prompt in the ChartMaker directory, enter ***npm install***                        
 4.) Edit **settings.json** with a text editor and change the **ChartType** value to one of the types in the ChartTypes list                      
-5.) Run the application in a terminal with the command **node imageprocessing.js**         
+5.) Run the application in a terminal with the command **node makechart.js**         
 6.) Go do something else... depending on the desired chart, the process can take several hours to complete.
      
 ### Settings.json  
