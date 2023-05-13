@@ -3,7 +3,7 @@
 ### Instructions:   
 1.) This node.js application requires several other applications to be installed. See ***Debian*** example below.              
 2.) Clone this repository - ***git clone https://github.com/N129BZ/chartmaker.git***            
-3.) From a terminal prompt in the chartmaker directory, enter ***npm install***                        
+3.) From a terminal prompt in the ChartMaker directory, enter ***npm install***                        
 4.) Edit **settings.json** with a text editor and change the **ChartType** value to one of the types in the ChartTypes list                      
 5.) Run the app via command **npm start**         
 6.) Go do something else... depending on the desired charts, the process can take several hours to complete.

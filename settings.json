@@ -1,8 +1,8 @@
 {
   "ChartUrlTemplate" : "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
-  "TiledImageQuality" : "75",
+  "TiledImageQuality" : "50",
   "CleanMergeFolder": true,
   "RenameWorkArea": false,
-  "ZoomRange" : "1-11",
+  "ZoomRange" : "3-11",
   "ChartIndex": 0
 }
