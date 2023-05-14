@@ -27,7 +27,7 @@ let dir_7_mbtiles        = `${chartfolder}/8_mbtiles`;
 
 
 makeWorkingFolders();
-//downloadCharts();
+downloadCharts();
 unzipCharts();
 normalizeChartNames();
 processImages();
@@ -102,11 +102,12 @@ function normalizeChartNames() {
 
 function processImages(){
     /*--------------------------------------------------------------------------------------------------
-     1) GDALWARP: Warp all area charts to EPSG:3857 (mercator) from EPSG:9802 (lambert conformal conic), 
+     1) GDAL_TRANSLATE: Expand color table to RGBA
+     2) GDALWARP: Warp all area charts to EPSG:4326 from lambert conformal conic, 
                   clip off the borders and legend and make output pixels square
-     2) GDAL_TRANSLATE: Expand the GTiff color table to RGBA and ouput a VRT file
-     3) GDALADDO: Generate overviews of the VRT for all zoom levels 
-     4) GDAL2TILES: Convert overviews into tiled PNG images
+     3) GDAL_TRANSLATE: Expand the GTiff color table to RGBA and ouput a VRT file
+     4) GDALADDO: Generate overviews of the VRT for all zoom levels 
+     5) GDAL2TILES: Convert overviews into tiled PNG images
     ----------------------------------------------------------------------------------------------------*/
     
     let clippedShapesDir = `${__dirname}/clipshapes/${chartworkname.toLowerCase()}`;
@@ -128,7 +129,7 @@ function processImages(){
         executeCommand(cmd);
         
         console.log(`*** Clip border off of virtual image ***`);
-        cmd = `gdalwarp -of vrt -t_srs EPSG:3857 -multi -cutline "${shapefile}" -crop_to_cutline -cblend 10 -dstalpha -co ALPHA=YES ${expandedfile} ${clippedfile}`; 
+        cmd = `gdalwarp -of vrt -t_srs EPSG:4326 -multi -cutline "${shapefile}" -crop_to_cutline -cblend 16 -dstalpha -co ALPHA=YES ${expandedfile} ${clippedfile}`; 
         executeCommand(cmd);
     
         console.log(`*** Add gdaladdo overviews ***`);
@@ -152,11 +153,7 @@ function mergeTiles() {
     areas.forEach((area) => {
         let mergesource = `${dir_4_tiled}/${area}`;
         let cmd = `perl ./mergetiles.pl ${mergesource} ${dir_5_merged}`;
-
-        console.log(`*** Merging ${area} tiles`);
         executeCommand(cmd);
-
-        console.log('*** Removing tile files (no longer needed) ***')
         cmd = `rm -r -f ${mergesource}`;
         executeCommand(cmd);
     });
@@ -165,15 +162,30 @@ function mergeTiles() {
 function quantizePngImages() {
     let interimct = 0;
     let i;
+    let qcmd = "";
     let cmds = buildCommandArray();
-
+    let quantcmd = `pngquant --quality ${settings.TiledImageQuality}`; 
     console.log(`*** Quantizing ${cmds.length} png images at ${settings.TiledImageQuality}%`);
 
     for (i=0; i < cmds.length; i++) {
-        console.log(cmds[i]);
-        executeCommand(cmds[i]);
+        qcmd = `${quantcmd} ${cmds[i][0]} --output ${cmds[i][1]}`;
+        try {    
+            execSync(qcmd, { stdio: 'inherit' }); 
+        }
+        catch(error) { 
+            // if there is a error quantizing, just copy the original image
+            let file0 = cmds[i][0];
+            let file1 = cmds[i][1];
+            qcmd = `cp -f ${file0} ${file1}`;
+            executeCommand(qcmd);
+        }
+        interimct ++;
+        if (interimct >= 1000){
+            console.log(`${i + 1} of ${cmds.length} images processed`);
+            interimct = 0;
+        }
     }
-    console.log(`  * Processed image count = ${i} of ${cmds.length}`);
+    console.log(`  * Total processed image count = ${cmds.length}`);
 }
 
 function makeMbTiles() {            
@@ -209,9 +221,9 @@ function makeMbTiles() {
 }
 
 function buildChartNameArray() {
-    let normfiles = fs.readdirSync(dir_2_normalized);
+    let files = fs.readdirSync(dir_1_unzipped);
     let chartnames = [];
-    normfiles.forEach((file) => {
+    files.forEach((file) => {
         if (file.endsWith(".tif") && file.search("_FLY") == -1) {
             chartnames.push(file.replace(".tif", ""));
         }
@@ -222,7 +234,7 @@ function buildChartNameArray() {
 function buildCommandArray() {
     let mergedfolders = fs.readdirSync(dir_5_merged);
     let cmdarray = [];
-
+    let subarray = [];
     mergedfolders.forEach((zoomlevel) => {
         let zoomfolder = `${dir_5_merged}/${zoomlevel}`;
         if (fs.statSync(zoomfolder).isDirectory()) {    
@@ -243,8 +255,8 @@ function buildCommandArray() {
                 images.forEach((image) => {
                     let imgpath = `${y}/${image}`;
                     let outpath = `${quantizedfolders}/${image}`;
-                    cmd = `pngquant --quality ${settings.TiledImageQuality} ${imgpath} --output ${outpath}`;
-                    cmdarray.push(cmd);
+                    let subarray = new Array(imgpath, outpath);
+                    cmdarray.push(subarray);
                 });
             });
         }
@@ -299,13 +311,25 @@ function getBestChartDate() {
 
 function executeCommand(command) {
     let retcode = 0;
+    let retry = false;
+    
     try {
         execSync(command, { stdio: 'inherit' }); 
     }
     catch(error) {
-        console.error(error)
-        retcode = -1
+        retry = true;
     }
+
+    if (retry) {
+        try {
+            execSync(command, {stdio: 'inherit'});
+        }
+        catch(error) {
+            console.log(error.message);
+            retcode = -1
+        }
+    }
+    
     return retcode;
 }
 
