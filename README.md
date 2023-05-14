@@ -59,17 +59,12 @@ As of May 13 2023, the official chart release is for **04-20-2023. You can view 
 **settings.json:**                                                                                                              
 ```
 {
-    "ChartUrlTemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
-    "TiledImageQuality": 75,
+    "TiledImageQuality" : "55",
     "CleanMergeFolder": true,
     "RenameWorkArea": false,
-    "ZoomRange": "5-11",
-    "ChartType": "Terminal"
-}
-```
-**charttypes.json:**
-```
-{
+    "ZoomRange" : "3-11",
+    "ChartTypeIndex": 0,
+    "LayerTypeIndex": 0,
     "ChartTypes": [
         "Sectional",
         "Terminal",
@@ -77,6 +72,10 @@ As of May 13 2023, the official chart release is for **04-20-2023. You can view 
         "Helicopter",
         "Grand_Canyon_Air_Tour_Operators",
         "Grand_Canyon_General_Aviation"
+    ],
+    "LayerTypes": [
+        "baselayer", 
+        "overlay"
     ]
 }
 ```
