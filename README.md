@@ -1,7 +1,8 @@
 # chartmaker - Download FAA digital raster charts and translate into mbtiles databases  
-
+### Requirements: Python 3, Node.js, Perl, GDAL.
 ### Instructions:   
-1.) This node.js application requires several other applications to be installed. See ***Debian*** example below.              
+1.) This node.js application is designed to run on Linux and requires GDAL and Perl (See ***Debian*** example below)
+    **NOTE:** It will also run fine on WSL2 (Windows Subsystem for Linux) 
 2.) Clone this repository - ***git clone https://github.com/N129BZ/chartmaker.git***            
 3.) From a terminal prompt in the ChartMaker directory, enter ***npm install***                        
 4.) Edit **settings.json** with a text editor and change the **ChartType** value to one of the types in the ChartTypes list                      
@@ -32,7 +33,6 @@ sudo apt install        \
         perl            \
         imagemagick     \
         pngquant        \
-        python-imaging  \
         gdal-bin        \
         nodejs          \
         npm             \
@@ -46,10 +46,7 @@ git clone https:github.com/N129BZ/chartmaker.git
                             
 # change directory to chartmaker
 cd /myinstalldirectory/chartmaker
-                                   
-# unzip clipshapes.zip 
-unzip clishapes.zip
-                                    
+                                                                    
 # install required node packages
 npm install                                      
 ```
