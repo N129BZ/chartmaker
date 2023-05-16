@@ -18,12 +18,12 @@ let workarea             = `${__dirname}/workarea`;
 let chartfolder          = `${workarea}/${chartworkname}`;
 let dir_0_download       = `${chartfolder}/0_download`;
 let dir_1_unzipped       = `${chartfolder}/1_unzipped`;
-let dir_2_expanded       = `${chartfolder}/3_expanded`;
-let dir_3_clipped        = `${chartfolder}/4_clipped`;
-let dir_4_tiled          = `${chartfolder}/5_tiled`;
-let dir_5_merged         = `${chartfolder}/6_merged`;
-let dir_6_quantized      = `${chartfolder}/7_quantized`;
-let dir_7_mbtiles        = `${chartfolder}/8_mbtiles`;
+let dir_2_expanded       = `${chartfolder}/2_expanded`;
+let dir_3_clipped        = `${chartfolder}/3_clipped`;
+let dir_4_tiled          = `${chartfolder}/4_tiled`;
+let dir_5_merged         = `${chartfolder}/5_merged`;
+let dir_6_quantized      = `${chartfolder}/6_quantized`;
+let dir_7_mbtiles        = `${chartfolder}/7_mbtiles`;
 
 
 makeWorkingFolders();
@@ -116,7 +116,7 @@ function processImages(){
 
     chartareas.forEach((area) => {
         
-        console.log(`************** Processing chart: ${area} **************`);
+        console.log(`************** Processing chart: ${area} **************\r\n`);
         
         let shapefile = `${clippedShapesDir}/${area}.shp`;
         let rawtiffile = `${dir_1_unzipped}/${area}.tif`;
@@ -124,23 +124,23 @@ function processImages(){
         let clippedfile = `${dir_3_clipped}/${area}.vrt`;
         let tiledir = `${dir_4_tiled}/${area}` 
 
-        console.log(`*** Expand color table to RGBA GTiff ***`);
+        console.log(`* Expand color table to RGBA GTiff`); //
         cmd = `gdal_translate -strict -of vrt -co TILED=YES -expand rgba ${rawtiffile} ${expandedfile}`;
         executeCommand(cmd);
         
-        console.log(`*** Clip border off of virtual image ***`);
-        cmd = `gdalwarp -of vrt -t_srs EPSG:4326 -multi -cutline "${shapefile}" -crop_to_cutline -cblend 16 -dstalpha -co ALPHA=YES ${expandedfile} ${clippedfile}`; 
+        console.log(`* Clip border off of virtual image`);
+        cmd = `gdalwarp -of vrt -t_srs EPSG:4326 -multi -cutline "${shapefile}" -crop_to_cutline -cblend 8 -dstalpha -co ALPHA=YES ${expandedfile} ${clippedfile}`; 
         executeCommand(cmd);
     
-        console.log(`*** Add gdaladdo overviews ***`);
+        console.log(`* Add gdaladdo overviews`);
         cmd = `gdaladdo -r average --config GDAL_NUM_THREADS ALL_CPUS ${clippedfile}`;
         executeCommand(cmd); 
         
-        console.log(`*** Tile ${area} images in TMS format ***`);
+        console.log(`* Generate tile ${area} tile images`);
         cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --processes=4 --tmscompatible --webviewer=leaflet ${clippedfile} ${tiledir}`;
         executeCommand(cmd);
 
-        console.log(`*** Remove virtual processing vrt files ***`);
+        console.log(`* Remove virtual processing vrt files`);
         cmd = `rm -r -f ${clippedfile}`;
         executeCommand(cmd);
         cmd = `rm -r -f ${expandedfile}*`;
