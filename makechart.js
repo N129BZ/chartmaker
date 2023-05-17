@@ -18,18 +18,20 @@ let workarea             = `${__dirname}/workarea`;
 let chartfolder          = `${workarea}/${chartworkname}`;
 let dir_0_download       = `${chartfolder}/0_download`;
 let dir_1_unzipped       = `${chartfolder}/1_unzipped`;
-let dir_2_expanded       = `${chartfolder}/2_expanded`;
-let dir_3_clipped        = `${chartfolder}/3_clipped`;
-let dir_4_tiled          = `${chartfolder}/4_tiled`;
-let dir_5_merged         = `${chartfolder}/5_merged`;
-let dir_6_quantized      = `${chartfolder}/6_quantized`;
-let dir_7_mbtiles        = `${chartfolder}/7_mbtiles`;
+let dir_2_clipped        = `${chartfolder}/2_clipped`;
+let dir_3_tiled          = `${chartfolder}/3_tiled`;
+let dir_4_merged         = `${chartfolder}/4_merged`;
+let dir_5_quantized      = `${chartfolder}/5_quantized`;
+let dir_6_mbtiles        = `${chartfolder}/6_mbtiles`;
 
 
 makeWorkingFolders();
+/***********************/
 downloadCharts();
 unzipCharts();
 normalizeChartNames();
+preprocessImages();
+/***********************/
 processImages();
 mergeTiles();
 quantizePngImages();
@@ -52,12 +54,11 @@ function makeWorkingFolders() {
     if (!fs.existsSync(chartfolder)) fs.mkdirSync(chartfolder);
     if (!fs.existsSync(dir_0_download)) fs.mkdirSync(dir_0_download);
     if (!fs.existsSync(dir_1_unzipped)) fs.mkdirSync(dir_1_unzipped);
-    if (!fs.existsSync(dir_2_expanded)) fs.mkdirSync(dir_2_expanded);
-    if (!fs.existsSync(dir_3_clipped)) fs.mkdirSync(dir_3_clipped);
-    if (!fs.existsSync(dir_4_tiled)) fs.mkdirSync(dir_4_tiled);
-    if (!fs.existsSync(dir_5_merged)) fs.mkdirSync(dir_5_merged);
-    if (!fs.existsSync(dir_6_quantized)) fs.mkdirSync(dir_6_quantized);
-    if (!fs.existsSync(dir_7_mbtiles)) fs.mkdirSync(dir_7_mbtiles);
+    if (!fs.existsSync(dir_2_clipped)) fs.mkdirSync(dir_2_clipped);
+    if (!fs.existsSync(dir_3_tiled)) fs.mkdirSync(dir_3_tiled);
+    if (!fs.existsSync(dir_4_merged)) fs.mkdirSync(dir_4_merged);
+    if (!fs.existsSync(dir_5_quantized)) fs.mkdirSync(dir_5_quantized);
+    if (!fs.existsSync(dir_6_mbtiles)) fs.mkdirSync(dir_6_mbtiles);
 }
 
 function downloadCharts() {
@@ -101,26 +102,21 @@ function normalizeChartNames() {
     });
 }
 
-/*
 function preprocessImages() {
     let chartareas = buildChartNameArray();
     chartareas.forEach((area) => {
         let rawtif = `${dir_1_unzipped}/${area}.tif`;
-        let expanded = `${dir_2_expanded}/${area}.vrt`;
-        let warped = `${dir_3_warped}/${area}.tif`
+        let expanded = `${dir_1_unzipped}/${area}_tmp.tif`;
+        //let warped = `${dir_3_warped}/${area}.tif`
         
-        console.log(`* Expand ${area} to RGBA and warp to EPSG:4236`);
+        console.log(`* Expand ${area} to RGBA`);
         cmd = `gdal_translate -strict -co TILED=YES -expand rgba ${rawtif} ${expanded}`;
         executeCommand(cmd);
         
-        cmd = `gdalwarp -t_srs EPSG:4326 -dstalpha -co ALPHA=YES ${expanded} ${warped}`; 
-        executeCommand(cmd);
-
-        cmd = `rm -rf ${expanded}`;
+        cmd = `mv -f ${expanded} ${rawtif}`; 
         executeCommand(cmd);
     });
 }
-*/
 
 function processImages(){
     /*-----------------------------------------------------------------------
@@ -139,48 +135,43 @@ function processImages(){
         console.log(`\r\n************** Processing chart: ${area} **************`);
         
         let shapefile = `${clippedShapesDir}/${area}.shp`;
-        let rawtif = `${dir_1_unzipped}/${area}.tif`;
-        let expanded = `${dir_2_expanded}/${area}.vrt`;
-        let clipped = `${dir_3_clipped}/${area}.vrt`;
-        let tiled = `${dir_4_tiled}/${area}` 
+        let sourcetif = `${dir_1_unzipped}/${area}.tif`;
+        let clipped = `${dir_2_clipped}/${area}.vrt`;
+        let tiled = `${dir_3_tiled}/${area}` 
 
-        console.log(`* Expand color table to RGB`); //
-        cmd = `gdal_translate -strict -of vrt -co TILED=YES -expand rgb ${rawtif} ${expanded}`;
-        executeCommand(cmd);
-        
         console.log(`* Clip off border & legend`);
-        cmd = `gdalwarp -t_srs EPSG:4326 -nosrcalpha -dstalpha -cblend 6 -cutline "${shapefile}" -crop_to_cutline ${expanded} ${clipped}`; 
+        cmd = `gdalwarp -t_srs EPSG:4326 -nosrcalpha -dstalpha -cblend 6 -cutline "${shapefile}" -crop_to_cutline ${sourcetif} ${clipped}`; 
         executeCommand(cmd);
     
         console.log(`* Add overviews for each zoom level`);
         cmd = `gdaladdo --config GDAL_NUM_THREADS ALL_CPUS ${clipped}`;
         executeCommand(cmd); 
         
-        console.log(`* Generate tile ${area} tile images`);
+        console.log(`* Generate ${area} tile images`);
         cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --processes=4 --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
         executeCommand(cmd);
 
-        /*
-        console.log(`* Remove virtual processing vrt files`);
+        console.log(`* Remove virtual processing vrt file`);
         cmd = `rm -r -f ${clipped}`;
         executeCommand(cmd);
-        cmd = `rm -r -f ${expanded}*`;
-        executeCommand(cmd);
-        */
     });
 }
 
 function mergeTiles() {
-    let areas = fs.readdirSync(dir_4_tiled);
+    let areas = fs.readdirSync(dir_3_tiled);
     areas.forEach((area) => {
-        let mergesource = `${dir_4_tiled}/${area}`;
-        let cmd = `perl ./mergetiles.pl ${mergesource} ${dir_5_merged}`;
+        let mergesource = `${dir_3_tiled}/${area}`;
+        let cmd = `perl ./mergetiles.pl ${mergesource} ${dir_4_merged}`;
         executeCommand(cmd);
         cmd = `rm -r -f ${mergesource}`;
         executeCommand(cmd);
     });
 }
-    
+
+function postProcessing() {
+
+}
+
 function quantizePngImages() {
     let interimct = 0;
     let i;
@@ -232,13 +223,16 @@ function makeMbTiles() {
         "maxzoom": "${maxzoom}", 
         "pngquality": "${settings.TiledImageQuality}"
     }`;
-    let fpath = `${dir_6_quantized}/metadata.json`; 
+    let fpath = `${dir_5_quantized}/metadata.json`; 
     let fd = fs.openSync(fpath, 'w');
     fs.writeSync(fd, metajson);
     fs.closeSync(fd);
 
-    let mbtiles = `${dir_7_mbtiles}/${chtype}.mbtiles`;   
-    cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_6_quantized} ${mbtiles}`;
+    let mbtiles = `${dir_6_mbtiles}/${chtype}.mbtiles`;   
+    cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_5_quantized} ${mbtiles}`;
+    executeCommand(cmd);
+
+    cmd = `ls -l ${mbtiles}`;
     executeCommand(cmd);
 }
 
@@ -255,13 +249,13 @@ function buildChartNameArray() {
 }
 
 function buildCommandArray() {
-    let mergedfolders = fs.readdirSync(dir_5_merged);
+    let mergedfolders = fs.readdirSync(dir_4_merged);
     let cmdarray = [];
     let subarray = [];
     mergedfolders.forEach((zoomlevel) => {
-        let zoomfolder = `${dir_5_merged}/${zoomlevel}`;
+        let zoomfolder = `${dir_4_merged}/${zoomlevel}`;
         if (fs.statSync(zoomfolder).isDirectory()) {    
-            let quantzoomfolder = `${dir_6_quantized}/${zoomlevel}`;
+            let quantzoomfolder = `${dir_5_quantized}/${zoomlevel}`;
             if (!fs.existsSync(quantzoomfolder)) {
                 fs.mkdirSync(quantzoomfolder);
             }
