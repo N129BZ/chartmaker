@@ -18,20 +18,18 @@ let workarea             = `${__dirname}/workarea`;
 let chartfolder          = `${workarea}/${chartworkname}`;
 let dir_0_download       = `${chartfolder}/0_download`;
 let dir_1_unzipped       = `${chartfolder}/1_unzipped`;
-let dir_2_clipped        = `${chartfolder}/2_clipped`;
-let dir_3_tiled          = `${chartfolder}/3_tiled`;
-let dir_4_merged         = `${chartfolder}/4_merged`;
-let dir_5_quantized      = `${chartfolder}/5_quantized`;
-let dir_6_mbtiles        = `${chartfolder}/6_mbtiles`;
+let dir_2_expanded       = `${chartfolder}/2_expanded`;
+let dir_3_clipped        = `${chartfolder}/3_clipped`;
+let dir_4_tiled          = `${chartfolder}/4_tiled`;
+let dir_5_merged         = `${chartfolder}/5_merged`;
+let dir_6_quantized      = `${chartfolder}/6_quantized`;
+let dir_7_mbtiles        = `${chartfolder}/7_mbtiles`;
 
 
 makeWorkingFolders();
-/***********************/
 downloadCharts();
-unzipCharts();
+unzipCharts(); 
 normalizeChartNames();
-preprocessImages();
-/***********************/
 processImages();
 mergeTiles();
 quantizePngImages();
@@ -54,11 +52,12 @@ function makeWorkingFolders() {
     if (!fs.existsSync(chartfolder)) fs.mkdirSync(chartfolder);
     if (!fs.existsSync(dir_0_download)) fs.mkdirSync(dir_0_download);
     if (!fs.existsSync(dir_1_unzipped)) fs.mkdirSync(dir_1_unzipped);
-    if (!fs.existsSync(dir_2_clipped)) fs.mkdirSync(dir_2_clipped);
-    if (!fs.existsSync(dir_3_tiled)) fs.mkdirSync(dir_3_tiled);
-    if (!fs.existsSync(dir_4_merged)) fs.mkdirSync(dir_4_merged);
-    if (!fs.existsSync(dir_5_quantized)) fs.mkdirSync(dir_5_quantized);
-    if (!fs.existsSync(dir_6_mbtiles)) fs.mkdirSync(dir_6_mbtiles);
+    if (!fs.existsSync(dir_2_expanded)) fs.mkdirSync(dir_2_expanded);
+    if (!fs.existsSync(dir_3_clipped)) fs.mkdirSync(dir_3_clipped);
+    if (!fs.existsSync(dir_4_tiled)) fs.mkdirSync(dir_4_tiled);
+    if (!fs.existsSync(dir_5_merged)) fs.mkdirSync(dir_5_merged);
+    if (!fs.existsSync(dir_6_quantized)) fs.mkdirSync(dir_6_quantized);
+    if (!fs.existsSync(dir_7_mbtiles)) fs.mkdirSync(dir_7_mbtiles);
 }
 
 function downloadCharts() {
@@ -102,22 +101,6 @@ function normalizeChartNames() {
     });
 }
 
-function preprocessImages() {
-    let chartareas = buildChartNameArray();
-    chartareas.forEach((area) => {
-        let rawtif = `${dir_1_unzipped}/${area}.tif`;
-        let expanded = `${dir_1_unzipped}/${area}_tmp.tif`;
-        //let warped = `${dir_3_warped}/${area}.tif`
-        
-        console.log(`* Expand ${area} to RGBA`);
-        cmd = `gdal_translate -strict -co TILED=YES -expand rgba ${rawtif} ${expanded}`;
-        executeCommand(cmd);
-        
-        cmd = `mv -f ${expanded} ${rawtif}`; 
-        executeCommand(cmd);
-    });
-}
-
 function processImages(){
     /*-----------------------------------------------------------------------
      1) GDAL_TRANSLATE: Expand color table to RGBA
@@ -127,7 +110,6 @@ function processImages(){
     -------------------------------------------------------------------------*/
     
     let clippedShapesDir = `${__dirname}/clipshapes/${chartworkname.toLowerCase()}`;
-
     let chartareas = buildChartNameArray();
 
     chartareas.forEach((area) => {
@@ -136,8 +118,13 @@ function processImages(){
         
         let shapefile = `${clippedShapesDir}/${area}.shp`;
         let sourcetif = `${dir_1_unzipped}/${area}.tif`;
-        let clipped = `${dir_2_clipped}/${area}.vrt`;
-        let tiled = `${dir_3_tiled}/${area}` 
+        let expanded = `${dir_2_expanded}/${area}.vrt`;
+        let clipped = `${dir_3_clipped}/${area}.vrt`;
+        let tiled = `${dir_4_tiled}/${area}` 
+
+        console.log(`* Expand ${area} to RGBA`);
+        cmd = `gdal_translate -strict -co TILED=YES -expand rgba ${sourcetif} ${expanded}`;
+        executeCommand(cmd);
 
         console.log(`* Clip off border & legend`);
         cmd = `gdalwarp -t_srs EPSG:4326 -nosrcalpha -dstalpha -cblend 6 -cutline "${shapefile}" -crop_to_cutline ${sourcetif} ${clipped}`; 
@@ -151,17 +138,14 @@ function processImages(){
         cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --processes=4 --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
         executeCommand(cmd);
 
-        console.log(`* Remove virtual processing vrt file`);
-        cmd = `rm -r -f ${clipped}`;
-        executeCommand(cmd);
     });
 }
 
 function mergeTiles() {
-    let areas = fs.readdirSync(dir_3_tiled);
+    let areas = fs.readdirSync(dir_4_tiled);
     areas.forEach((area) => {
-        let mergesource = `${dir_3_tiled}/${area}`;
-        let cmd = `perl ./mergetiles.pl ${mergesource} ${dir_4_merged}`;
+        let mergesource = `${dir_4_tiled}/${area}`;
+        let cmd = `perl ./mergetiles.pl ${mergesource} ${dir_5_merged}`;
         executeCommand(cmd);
         cmd = `rm -r -f ${mergesource}`;
         executeCommand(cmd);
@@ -223,13 +207,13 @@ function makeMbTiles() {
         "maxzoom": "${maxzoom}", 
         "pngquality": "${settings.TiledImageQuality}"
     }`;
-    let fpath = `${dir_5_quantized}/metadata.json`; 
+    let fpath = `${dir_6_quantized}/metadata.json`; 
     let fd = fs.openSync(fpath, 'w');
     fs.writeSync(fd, metajson);
     fs.closeSync(fd);
 
-    let mbtiles = `${dir_6_mbtiles}/${chtype}.mbtiles`;   
-    cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_5_quantized} ${mbtiles}`;
+    let mbtiles = `${dir_7_mbtiles}/${chtype}.mbtiles`;   
+    cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_6_quantized} ${mbtiles}`;
     executeCommand(cmd);
 
     cmd = `ls -l ${mbtiles}`;
@@ -249,13 +233,13 @@ function buildChartNameArray() {
 }
 
 function buildCommandArray() {
-    let mergedfolders = fs.readdirSync(dir_4_merged);
+    let mergedfolders = fs.readdirSync(dir_5_merged);
     let cmdarray = [];
     let subarray = [];
     mergedfolders.forEach((zoomlevel) => {
-        let zoomfolder = `${dir_4_merged}/${zoomlevel}`;
+        let zoomfolder = `${dir_5_merged}/${zoomlevel}`;
         if (fs.statSync(zoomfolder).isDirectory()) {    
-            let quantzoomfolder = `${dir_5_quantized}/${zoomlevel}`;
+            let quantzoomfolder = `${dir_6_quantized}/${zoomlevel}`;
             if (!fs.existsSync(quantzoomfolder)) {
                 fs.mkdirSync(quantzoomfolder);
             }
