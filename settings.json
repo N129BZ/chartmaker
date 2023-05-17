@@ -1,6 +1,6 @@
 {
-    "TiledImageQuality" : "55",
-    "CleanMergeFolder": true,
+    "TiledImageQuality" : "80",
+    "CleanMergeFolder": false,
     "RenameWorkArea": false,
     "ZoomRange" : "3-11",
     "ChartTypeIndex": 0,

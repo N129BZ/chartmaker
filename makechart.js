@@ -11,7 +11,7 @@ let cmd = "";
 let urltemplate = "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip";
 let charttype = settings.ChartTypes[settings.ChartTypeIndex];
 let chartlayertype = settings.LayerTypes[settings.LayerTypeIndex];
-let chartworkname = charttype.search("Grand_Canyon") !== -1 ? "Grand_Canyon" : charttype;
+let chartworkname = charttype.search("Grand_Canyon") != -1 ? "Grand_Canyon" : charttype;
 let charturl = urltemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
 
 let workarea             = `${__dirname}/workarea`;
@@ -79,10 +79,11 @@ function normalizeChartNames() {
     let files = fs.readdirSync(dir_1_unzipped);
     
     files.forEach((file) => {
-        if (file.endsWith(".tif") && file.search("FLY") === -1) {
-            
+        let fname = file.toLowerCase();
+        if (fname.endsWith(".tif") && fname.search("fly") == -1 && fname.search("vfr_planning") == -1) {
+           
             let tfwfile = file.replace(".tif", ".tfw");
-            let basename = normalizeFileName(file).replace(".tif", "");
+            let basename = normalizeFileName(fname).replace("_tac", "").replace(".tif", "");
 
             tifname = `${dir_1_unzipped}/${basename}.tif`;
             tfwname = `${dir_1_unzipped}/${basename}.tfw`;
@@ -91,7 +92,7 @@ function normalizeChartNames() {
             fs.renameSync(`${dir_1_unzipped}/${tfwfile}`, tfwname);   
             
             if (basename.search("Grand_Canyon") > -1) {
-                if (basename !== charttype) {
+                if (basename != charttype) {
                     fs.rmSync(tifname);
                     fs.rmSync(tfwname);
                 }
@@ -100,15 +101,34 @@ function normalizeChartNames() {
     });
 }
 
+/*
+function preprocessImages() {
+    let chartareas = buildChartNameArray();
+    chartareas.forEach((area) => {
+        let rawtif = `${dir_1_unzipped}/${area}.tif`;
+        let expanded = `${dir_2_expanded}/${area}.vrt`;
+        let warped = `${dir_3_warped}/${area}.tif`
+        
+        console.log(`* Expand ${area} to RGBA and warp to EPSG:4236`);
+        cmd = `gdal_translate -strict -co TILED=YES -expand rgba ${rawtif} ${expanded}`;
+        executeCommand(cmd);
+        
+        cmd = `gdalwarp -t_srs EPSG:4326 -dstalpha -co ALPHA=YES ${expanded} ${warped}`; 
+        executeCommand(cmd);
+
+        cmd = `rm -rf ${expanded}`;
+        executeCommand(cmd);
+    });
+}
+*/
+
 function processImages(){
-    /*--------------------------------------------------------------------------------------------------
+    /*-----------------------------------------------------------------------
      1) GDAL_TRANSLATE: Expand color table to RGBA
-     2) GDALWARP: Warp all area charts to EPSG:4326 from lambert conformal conic, 
-                  clip off the borders and legend and make output pixels square
-     3) GDAL_TRANSLATE: Expand the GTiff color table to RGBA and ouput a VRT file
-     4) GDALADDO: Generate overviews of the VRT for all zoom levels 
-     5) GDAL2TILES: Convert overviews into tiled PNG images
-    ----------------------------------------------------------------------------------------------------*/
+     2) GDALWARP: Warp chart to EPSG:4326 and clip off the borders and legend
+     3) GDALADDO: Generate overviews of the VRT for all zoom levels 
+     4) GDAL2TILES: Convert overviews into tiled PNG images
+    -------------------------------------------------------------------------*/
     
     let clippedShapesDir = `${__dirname}/clipshapes/${chartworkname.toLowerCase()}`;
 
@@ -116,35 +136,37 @@ function processImages(){
 
     chartareas.forEach((area) => {
         
-        console.log(`************** Processing chart: ${area} **************\r\n`);
+        console.log(`\r\n************** Processing chart: ${area} **************`);
         
         let shapefile = `${clippedShapesDir}/${area}.shp`;
-        let rawtiffile = `${dir_1_unzipped}/${area}.tif`;
-        let expandedfile = `${dir_2_expanded}/${area}.vrt`;
-        let clippedfile = `${dir_3_clipped}/${area}.vrt`;
-        let tiledir = `${dir_4_tiled}/${area}` 
+        let rawtif = `${dir_1_unzipped}/${area}.tif`;
+        let expanded = `${dir_2_expanded}/${area}.vrt`;
+        let clipped = `${dir_3_clipped}/${area}.vrt`;
+        let tiled = `${dir_4_tiled}/${area}` 
 
-        console.log(`* Expand color table to RGBA GTiff`); //
-        cmd = `gdal_translate -strict -of vrt -co TILED=YES -expand rgba ${rawtiffile} ${expandedfile}`;
+        console.log(`* Expand color table to RGB`); //
+        cmd = `gdal_translate -strict -of vrt -co TILED=YES -expand rgb ${rawtif} ${expanded}`;
         executeCommand(cmd);
         
-        console.log(`* Clip border off of virtual image`);
-        cmd = `gdalwarp -of vrt -t_srs EPSG:4326 -multi -cutline "${shapefile}" -crop_to_cutline -cblend 8 -dstalpha -co ALPHA=YES ${expandedfile} ${clippedfile}`; 
+        console.log(`* Clip off border & legend`);
+        cmd = `gdalwarp -t_srs EPSG:4326 -nosrcalpha -dstalpha -cblend 6 -cutline "${shapefile}" -crop_to_cutline ${expanded} ${clipped}`; 
         executeCommand(cmd);
     
-        console.log(`* Add gdaladdo overviews`);
-        cmd = `gdaladdo -r average --config GDAL_NUM_THREADS ALL_CPUS ${clippedfile}`;
+        console.log(`* Add overviews for each zoom level`);
+        cmd = `gdaladdo --config GDAL_NUM_THREADS ALL_CPUS ${clipped}`;
         executeCommand(cmd); 
         
         console.log(`* Generate tile ${area} tile images`);
-        cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --processes=4 --tmscompatible --webviewer=leaflet ${clippedfile} ${tiledir}`;
+        cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --processes=4 --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
         executeCommand(cmd);
 
+        /*
         console.log(`* Remove virtual processing vrt files`);
-        cmd = `rm -r -f ${clippedfile}`;
+        cmd = `rm -r -f ${clipped}`;
         executeCommand(cmd);
-        cmd = `rm -r -f ${expandedfile}*`;
+        cmd = `rm -r -f ${expanded}*`;
         executeCommand(cmd);
+        */
     });
 }
 
@@ -216,7 +238,7 @@ function makeMbTiles() {
     fs.closeSync(fd);
 
     let mbtiles = `${dir_7_mbtiles}/${chtype}.mbtiles`;   
-    let cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_6_quantized} ${mbtiles}`;
+    cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_6_quantized} ${mbtiles}`;
     executeCommand(cmd);
 }
 
@@ -224,8 +246,9 @@ function buildChartNameArray() {
     let files = fs.readdirSync(dir_1_unzipped);
     let chartnames = [];
     files.forEach((file) => {
-        if (file.endsWith(".tif") && file.search("_FLY") == -1) {
-            chartnames.push(file.replace(".tif", ""));
+        let fname = file.toLowerCase();
+        if (fname.endsWith(".tif") && fname.search("_fly") == -1 && fname.search("vfr_planning")== -1) {
+            chartnames.push(fname.replace(".tif", ""));
         }
     });
     return chartnames;
@@ -266,7 +289,7 @@ function buildCommandArray() {
 
 function normalizeFileName(file) {
     let newname = replaceAll(file, " ", "_");
-    newname = newname.replace("-", "_").replace("_SEC", "").replace("_TAC", "").toLowerCase();
+    newname = newname.replace("-", "_").replace("_SEC", "").toLowerCase();
     return newname;
 }
 
