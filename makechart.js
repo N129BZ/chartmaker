@@ -123,11 +123,11 @@ function processImages(){
         let tiled = `${dir_4_tiled}/${area}` 
 
         console.log(`* Expand ${area} to RGBA`);
-        cmd = `gdal_translate -strict -co TILED=YES -expand rgba ${sourcetif} ${expanded}`;
+        cmd = `gdal_translate -strict -of vrt -co TILED=YES -expand rgba ${sourcetif} ${expanded}`;
         executeCommand(cmd);
 
         console.log(`* Clip off border & legend`);
-        cmd = `gdalwarp -t_srs EPSG:4326 -nosrcalpha -dstalpha -cblend 6 -cutline "${shapefile}" -crop_to_cutline ${sourcetif} ${clipped}`; 
+        cmd = `gdalwarp -t_srs EPSG:4326 -dstalpha -cblend 6 -cutline "${shapefile}" -crop_to_cutline ${expanded} ${clipped}`; 
         executeCommand(cmd);
     
         console.log(`* Add overviews for each zoom level`);
@@ -267,7 +267,7 @@ function buildCommandArray() {
 
 function normalizeFileName(file) {
     let newname = replaceAll(file, " ", "_");
-    newname = newname.replace("-", "_").replace("_SEC", "").toLowerCase();
+    newname = newname.replace("-", "_").replace("_sec", "").toLowerCase();
     return newname;
 }
 
