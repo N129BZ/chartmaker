@@ -1,7 +1,8 @@
 # chartmaker - Download FAA digital raster charts and translate into mbtiles databases  
-
+### Requirements: Python 3, Node.js, Perl, GDAL.
 ### Instructions:   
-1.) This node.js application requires several other applications to be installed. See ***Debian*** example below.              
+1.) This node.js application is designed to run on Linux and requires GDAL and Perl (See ***Debian*** example below)
+    **NOTE:** It will also run fine on WSL2 (Windows Subsystem for Linux) 
 2.) Clone this repository - ***git clone https://github.com/N129BZ/chartmaker.git***            
 3.) From a terminal prompt in the ChartMaker directory, enter ***npm install***                        
 4.) Edit **settings.json** with a text editor and change the **ChartType** value to one of the types in the ChartTypes list                      
@@ -32,7 +33,6 @@ sudo apt install        \
         perl            \
         imagemagick     \
         pngquant        \
-        python-imaging  \
         gdal-bin        \
         nodejs          \
         npm             \
@@ -46,10 +46,7 @@ git clone https:github.com/N129BZ/chartmaker.git
                             
 # change directory to chartmaker
 cd /myinstalldirectory/chartmaker
-                                   
-# unzip clipshapes.zip 
-unzip clishapes.zip
-                                    
+                                                                    
 # install required node packages
 npm install                                      
 ```
@@ -62,17 +59,12 @@ As of May 13 2023, the official chart release is for **04-20-2023. You can view 
 **settings.json:**                                                                                                              
 ```
 {
-    "ChartUrlTemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
-    "TiledImageQuality": 75,
+    "TiledImageQuality" : "55",
     "CleanMergeFolder": true,
     "RenameWorkArea": false,
-    "ZoomRange": "5-11",
-    "ChartType": "Terminal"
-}
-```
-**charttypes.json:**
-```
-{
+    "ZoomRange" : "3-11",
+    "ChartTypeIndex": 0,
+    "LayerTypeIndex": 0,
     "ChartTypes": [
         "Sectional",
         "Terminal",
@@ -80,6 +72,10 @@ As of May 13 2023, the official chart release is for **04-20-2023. You can view 
         "Helicopter",
         "Grand_Canyon_Air_Tour_Operators",
         "Grand_Canyon_General_Aviation"
+    ],
+    "LayerTypes": [
+        "baselayer", 
+        "overlay"
     ]
 }
 ```
