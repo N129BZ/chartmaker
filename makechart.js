@@ -6,6 +6,7 @@ const { execSync } = require('child_process');
 
 let settings = JSON.parse(fs.readFileSync(`${__dirname}/settings.json`));
 let chartdate = getBestChartDate();
+let format = settings.TileDriverIndex == 0 ? "png" : "webp";
 
 let cmd = "";
 let urltemplate = "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip";
@@ -28,11 +29,10 @@ let dir_7_mbtiles        = `${chartfolder}/7_mbtiles`;
 
 makeWorkingFolders();
 downloadCharts();
-unzipCharts(); 
+unzipCharts();
 normalizeChartNames();
 processImages();
 mergeTiles();
-quantizePngImages();
 makeMbTiles();
 
 function normalizeClipFiles(chartType) {
@@ -135,7 +135,7 @@ function processImages(){
         executeCommand(cmd); 
         
         console.log(`* Generate ${area} tile images`);
-        cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --processes=4 --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
+        cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --processes=4 --tiledriver=${format} --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
         executeCommand(cmd);
 
     });
@@ -150,17 +150,18 @@ function mergeTiles() {
         cmd = `rm -r -f ${mergesource}`;
         executeCommand(cmd);
     });
-}
 
-function postProcessing() {
-
+    // Only quantize png images, webp images are quantized via tiling option...
+    if (format == "png") {
+        quantizePngImages();
+    } 
 }
 
 function quantizePngImages() {
     let interimct = 0;
     let i;
     let qcmd = "";
-    let cmds = buildCommandArray();
+    let cmds = buildQuantizingCommandArray();
     let quantcmd = `pngquant --quality ${settings.TiledImageQuality}`; 
     console.log(`*** Quantizing ${cmds.length} png images at ${settings.TiledImageQuality}%`);
 
@@ -190,11 +191,12 @@ function makeMbTiles() {
     let zooms = settings.ZoomRange.split("-");
     let minzoom = zooms[0];
     let maxzoom = zooms[0];
-    
+    let srcfolder = format == "webp" ? dir_5_merged : dir_6_quantized;
+
     if (zooms.length === 2) {
         maxzoom = zooms[1];
     }
-    // create a metadata.json file in the root of the tiles directory,
+    // create a metadata.json file in the root of the tile directory,
     // mbutil will use this to generate a metadata table in the database.  
     let chtype = charttype.replaceAll("_", " ");
     let metajson = `{ 
@@ -202,18 +204,17 @@ function makeMbTiles() {
         "description": "${chtype} Charts",
         "version": "1.1",
         "type": "${chartlayertype}",
-        "format": "png",
+        "format": "${format}",
         "minzoom": "${minzoom}", 
-        "maxzoom": "${maxzoom}", 
-        "pngquality": "${settings.TiledImageQuality}"
+        "maxzoom": "${maxzoom}"
     }`;
-    let fpath = `${dir_6_quantized}/metadata.json`; 
+    let fpath = `${sourcefolder}/metadata.json`; 
     let fd = fs.openSync(fpath, 'w');
     fs.writeSync(fd, metajson);
     fs.closeSync(fd);
 
     let mbtiles = `${dir_7_mbtiles}/${chtype}.mbtiles`;   
-    cmd = `python3 ./mbutil/mb-util --scheme=tms ${dir_6_quantized} ${mbtiles}`;
+    cmd = `python3 ./mbutil/mb-util --image_format=${format} --scheme=tms ${srcfolder} ${mbtiles}`;
     executeCommand(cmd);
 
     cmd = `ls -l ${mbtiles}`;
@@ -232,7 +233,7 @@ function buildChartNameArray() {
     return chartnames;
 }
 
-function buildCommandArray() {
+function buildQuantizingCommandArray() {
     let mergedfolders = fs.readdirSync(dir_5_merged);
     let cmdarray = [];
     let subarray = [];

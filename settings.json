@@ -5,6 +5,7 @@
     "ZoomRange" : "3-11",
     "ChartTypeIndex": 0,
     "LayerTypeIndex": 0,
+    "TileDriverIndex": 1,
     "ChartTypes": [
         "Sectional",
         "Terminal",
@@ -16,5 +17,9 @@
     "LayerTypes": [
         "baselayer", 
         "overlay"
+    ],
+    "TileDrivers": [
+        "png",
+        "webp"
     ]
 }
