@@ -138,7 +138,7 @@ function processImages(){
         executeCommand(cmd); 
         
         console.log(`* Generate ${area} tile images`);
-        cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --processes=4 --tiledriver=${format} --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
+        cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --processes=4 --tiledriver=${format.toUpperCase()} --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
         executeCommand(cmd);
 
     });
