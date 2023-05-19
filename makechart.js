@@ -26,6 +26,8 @@ let dir_5_merged         = `${chartfolder}/5_merged`;
 let dir_6_quantized      = `${chartfolder}/6_quantized`;
 let dir_7_mbtiles        = `${chartfolder}/7_mbtiles`;
 
+let startdate = new Date(new Date().toLocaleString());
+console.log(`Started processing: ${startdate}\r\n`);
 
 makeWorkingFolders();
 downloadCharts();
@@ -34,6 +36,7 @@ normalizeChartNames();
 processImages();
 mergeTiles();
 makeMbTiles();
+reportProcessingTime();
 
 function normalizeClipFiles(chartType) {
     let clippedShapesDir = `${__dirname}/clipshapes/${chartType}`;
@@ -333,6 +336,28 @@ function executeCommand(command) {
     }
     
     return retcode;
+}
+
+function reportProcessingTime() {
+
+    let date2 = new Date(new Date().toLocaleString());
+
+    // the following is to handle cases where the times are on the opposite side of
+    // midnight e.g. when you want to get the difference between 9:00 PM and 5:00 AM
+
+    if (date2 < startdate) {
+        date2.setDate(date2.getDate() + 1);
+    }
+
+    let msec = date2 - startdate;
+    let hh = Math.floor(msec / 1000 / 60 / 60);
+    msec -= hh * 1000 * 60 * 60;
+    let mm = Math.floor(msec / 1000 / 60);
+    msec -= mm * 1000 * 60;
+    let ss = Math.floor(msec / 1000);
+    msec -= ss * 1000;
+    // diff = 28800000 => hh = 8, mm = 0, ss = 0, msec = 0
+    console.log(`\r\nTotal processing time:${hh}:${mm}:${ss}`);
 }
 
 // helper functions
