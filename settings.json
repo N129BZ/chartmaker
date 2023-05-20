@@ -1,11 +1,11 @@
 {
-    "TiledImageQuality" : "100",
+    "TiledImageQuality" : "80",
     "CleanMergeFolder": false,
     "RenameWorkArea": false,
     "ZoomRange" : "3-11",
     "ChartTypeIndex": 0,
     "LayerTypeIndex": 0,
-    "TileDriverIndex": 1,
+    "TileDriverIndex": 0,
     "ChartTypes": [
         "Sectional",
         "Terminal",
@@ -19,7 +19,7 @@
         "overlay"
     ],
     "TileDrivers": [
-        "PNG",
-        "WEBP"
+        "png",
+        "webp"
     ]
 }

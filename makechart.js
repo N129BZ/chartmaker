@@ -136,14 +136,13 @@ function processImages(){
         console.log(`* Add overviews for each zoom level`);
         cmd = `gdaladdo --config GDAL_NUM_THREADS ALL_CPUS ${clipped}`;
         executeCommand(cmd); 
-        
-        console.log(`* Generate ${area} tile images`);
-        let formatarg = "--tiledriver=PNG"; //default value...
-        if (imageformat == "WEBP") {
-            formatarg = `--tiledriver=WEBP --webp-quality=${settings.TiledImageQuality}`
-        }
 
-        cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --processes=4 ${formatarg} --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
+        let formatargs = "--tiledriver=PNG"; 
+        if (imageformat == "webp") {
+            formatargs = `--tiledriver=WEBP --webp-quality=${settings.TiledImageQuality}`
+        }
+        console.log(`* Generate ${area} tile images`);
+        cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --processes=4 ${formatargs} --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
         executeCommand(cmd);
 
     });
@@ -160,7 +159,7 @@ function mergeTiles() {
     });
 
     // Only quantize png images, webp images are quantized via tiling option...
-    if (imageformat == "PNG") {
+    if (imageformat == "png") {
         quantizePngImages();
     } 
 }
@@ -199,7 +198,7 @@ function makeMbTiles() {
     let zooms = settings.ZoomRange.split("-");
     let minzoom = zooms[0];
     let maxzoom = zooms[0];
-    let sourcefolder = imageformat == "WEBP" ? dir_5_merged : dir_6_quantized;
+    let sourcefolder = imageformat == "webp" ? dir_5_merged : dir_6_quantized;
 
     if (zooms.length === 2) {
         maxzoom = zooms[1];
