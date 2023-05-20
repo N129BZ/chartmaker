@@ -29,12 +29,12 @@ let dir_7_mbtiles        = `${chartfolder}/7_mbtiles`;
 let startdate = new Date(new Date().toLocaleString());
 console.log(`Started processing: ${startdate}\r\n`);
 
-makeWorkingFolders();
-downloadCharts();
-unzipCharts();
-normalizeChartNames();
-processImages();
-mergeTiles();
+// makeWorkingFolders();
+// downloadCharts();
+// unzipCharts();
+// normalizeChartNames();
+// processImages();
+// mergeTiles();
 makeMbTiles();
 reportProcessingTime();
 
@@ -194,7 +194,7 @@ function makeMbTiles() {
     let zooms = settings.ZoomRange.split("-");
     let minzoom = zooms[0];
     let maxzoom = zooms[0];
-    let srcfolder = format == "webp" ? dir_5_merged : dir_6_quantized;
+    let sourcefolder = format == "webp" ? dir_5_merged : dir_6_quantized;
 
     if (zooms.length === 2) {
         maxzoom = zooms[1];
@@ -217,7 +217,7 @@ function makeMbTiles() {
     fs.closeSync(fd);
 
     let mbtiles = `${dir_7_mbtiles}/${chtype}.mbtiles`;   
-    cmd = `python3 ./mbutil/mb-util --image_format=${format} --scheme=tms ${srcfolder} ${mbtiles}`;
+    cmd = `python3 ./mbutil/mb-util --image_format=${format} --scheme=tms ${sourcefolder} ${mbtiles}`;
     executeCommand(cmd);
 
     cmd = `ls -l ${mbtiles}`;
@@ -357,7 +357,7 @@ function reportProcessingTime() {
     let ss = Math.floor(msec / 1000);
     msec -= ss * 1000;
     // diff = 28800000 => hh = 8, mm = 0, ss = 0, msec = 0
-    console.log(`\r\nTotal processing time:${hh}:${mm}:${ss}`);
+    console.log(`\r\nStart time: ${startdate}\r\nEnd time: ${date2}\r\nTotal processing time: ${hh}:${mm}:${ss}`);
 }
 
 // helper functions
