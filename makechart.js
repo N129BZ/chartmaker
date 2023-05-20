@@ -6,7 +6,7 @@ const { execSync } = require('child_process');
 
 let settings = JSON.parse(fs.readFileSync(`${__dirname}/settings.json`));
 let chartdate = getBestChartDate();
-let format = settings.TileDriverIndex == 0 ? "png" : "webp";
+let imageformat = settings.TileDrivers[settings.TileDriverIndex];
 
 let cmd = "";
 let urltemplate = "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip";
@@ -138,7 +138,12 @@ function processImages(){
         executeCommand(cmd); 
         
         console.log(`* Generate ${area} tile images`);
-        cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --processes=4 --tiledriver=${format.toUpperCase()} --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
+        let formatarg = "--tiledriver=PNG"; //default value...
+        if (imageformat == "WEBP") {
+            formatarg = `--tiledriver=WEBP --webp_quality=${settings.TiledImageQuality}`
+        }
+
+        cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --processes=4 ${formatarg} --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
         executeCommand(cmd);
 
     });
@@ -155,7 +160,7 @@ function mergeTiles() {
     });
 
     // Only quantize png images, webp images are quantized via tiling option...
-    if (format == "png") {
+    if (imageformat == "PNG") {
         quantizePngImages();
     } 
 }
@@ -194,7 +199,7 @@ function makeMbTiles() {
     let zooms = settings.ZoomRange.split("-");
     let minzoom = zooms[0];
     let maxzoom = zooms[0];
-    let sourcefolder = format == "webp" ? dir_5_merged : dir_6_quantized;
+    let sourcefolder = imageformat == "WEBP" ? dir_5_merged : dir_6_quantized;
 
     if (zooms.length === 2) {
         maxzoom = zooms[1];
@@ -207,7 +212,8 @@ function makeMbTiles() {
         "description": "${chtype} Charts",
         "version": "1.1",
         "type": "${chartlayertype}",
-        "format": "${format}",
+        "format": "${imageformat}",
+        "quality": ${settings.TiledImageQuality},
         "minzoom": "${minzoom}", 
         "maxzoom": "${maxzoom}"
     }`;
@@ -217,7 +223,7 @@ function makeMbTiles() {
     fs.closeSync(fd);
 
     let mbtiles = `${dir_7_mbtiles}/${chtype}.mbtiles`;   
-    cmd = `python3 ./mbutil/mb-util --image_format=${format} --scheme=tms ${sourcefolder} ${mbtiles}`;
+    cmd = `python3 ./mbutil/mb-util --image_format=${imageformat} --scheme=tms ${sourcefolder} ${mbtiles}`;
     executeCommand(cmd);
 
     cmd = `ls -l ${mbtiles}`;

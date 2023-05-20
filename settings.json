@@ -1,5 +1,5 @@
 {
-    "TiledImageQuality" : "80",
+    "TiledImageQuality" : "100",
     "CleanMergeFolder": false,
     "RenameWorkArea": false,
     "ZoomRange" : "3-11",
@@ -19,7 +19,7 @@
         "overlay"
     ],
     "TileDrivers": [
-        "png",
-        "webp"
+        "PNG",
+        "WEBP"
     ]
 }
