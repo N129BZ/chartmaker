@@ -140,7 +140,7 @@ function processImages(){
         console.log(`* Generate ${area} tile images`);
         let formatarg = "--tiledriver=PNG"; //default value...
         if (imageformat == "WEBP") {
-            formatarg = `--tiledriver=WEBP --webp_quality=${settings.TiledImageQuality}`
+            formatarg = `--tiledriver=WEBP --webp-quality=${settings.TiledImageQuality}`
         }
 
         cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --processes=4 ${formatarg} --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
