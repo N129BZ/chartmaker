@@ -29,12 +29,12 @@ let dir_7_mbtiles        = `${chartfolder}/7_mbtiles`;
 let startdate = new Date(new Date().toLocaleString());
 console.log(`Started processing: ${startdate}\r\n`);
 
-// makeWorkingFolders();
-// downloadCharts();
-// unzipCharts();
-// normalizeChartNames();
-// processImages();
-// mergeTiles();
+makeWorkingFolders();
+downloadCharts();
+unzipCharts();
+normalizeChartNames();
+processImages();
+mergeTiles();
 makeMbTiles();
 reportProcessingTime();
 
