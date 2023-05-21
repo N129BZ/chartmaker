@@ -154,8 +154,11 @@ function mergeTiles() {
         let mergesource = `${dir_4_tiled}/${area}`;
         let cmd = `perl ./mergetiles.pl ${mergesource} ${dir_5_merged}`;
         executeCommand(cmd);
-        cmd = `rm -r -f ${mergesource}`;
-        executeCommand(cmd);
+
+        if (settings.CleanMergeFolder) {
+            cmd = `rm -r -f ${mergesource}`;
+            executeCommand(cmd);
+        }
     });
 
     // Only quantize png images, webp images are quantized via tiling option...
