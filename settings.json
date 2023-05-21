@@ -1,11 +1,10 @@
 {
-    "TiledImageQuality" : "80",
-    "CleanMergeFolder": false,
+    "TiledImageQuality" : "100",
     "RenameWorkArea": false,
     "ZoomRange" : "3-11",
     "ChartTypeIndex": 0,
     "LayerTypeIndex": 0,
-    "TileDriverIndex": 0,
+    "TileDriverIndex": 1,
     "ChartTypes": [
         "Sectional",
         "Terminal",
