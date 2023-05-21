@@ -21,35 +21,9 @@ a valid chart date argument when launching the application, in the format ***-d 
    *  Quantized images are preserved in their own folder, these will be less than 1/3 the size of the merge folder
 *  To preserve all of the processing folders, you can set **RenameWorkArea** to true.
    *  This setting will rename the **workarea** folder to include the processed chart date. 
-                   
-***(See details below in additional information for the all application settings.)***                                    
 
-### Full Installation example on a Debian distro (your system may be different)
-* Note that on some versions of Ubuntu, ```python-imaging``` has been replaced by ```python-pil```
-```
-# install required dependencies using apt as sudo, this assumes you already have Python installed
-sudo apt install        \    
-        git             \       
-        perl            \
-        imagemagick     \
-        pngquant        \
-        gdal-bin        \
-        nodejs          \
-        npm             \
-        unzip
+#### Go to the chartmaker folder and run "npm install" in a terminal session, then look at the header of the mergetiles.pl pearl script and verify with cpan that all of the Perl dependencies are installed.
 
-# change directory to where you will clone chartmaker, for example:
-cd /myinstalldirectory
-
-# clone chartmaker
-git clone https:github.com/N129BZ/chartmaker.git
-                            
-# change directory to chartmaker
-cd /myinstalldirectory/chartmaker
-                                                                    
-# install required node packages
-npm install                                      
-```
 ### Additional information       
 The chart zip files are downloaded from the FAA digital raster chart repository and unzipped. The unzipping process will normalize the resultant GEOtiff images and their matching tfw world files to filenames with underscores in place of spaces.     
        
@@ -60,11 +34,11 @@ As of May 13 2023, the official chart release is for **04-20-2023. You can view 
 ```
 {
     "TiledImageQuality" : "55",
-    "CleanMergeFolder": true,
     "RenameWorkArea": false,
     "ZoomRange" : "3-11",
     "ChartTypeIndex": 0,
     "LayerTypeIndex": 0,
+    "TileDriverIndex": 1,
     "ChartTypes": [
         "Sectional",
         "Terminal",
@@ -76,6 +50,10 @@ As of May 13 2023, the official chart release is for **04-20-2023. You can view 
     "LayerTypes": [
         "baselayer", 
         "overlay"
+    ],
+    "TileDrivers": [
+        "png".
+        "webp"
     ]
 }
 ```
