@@ -420,14 +420,14 @@ function reportProcessingTime() {
 }
 
 /**
- * Replace 1-n instances of the search string with the replace string
+ * Replace 1-n instances of the search string with the replace string and return array of substrings
  * @param {string} original 
  * @param {string} search 
  * @param {string} replace 
- * @returns 
+ * @returns array of substrings
  */
 function replaceAll(original, search, replace) {
-    return string.split(search).join(replace);
+    return original.split(search).join(replace);
 }
 
 /**
