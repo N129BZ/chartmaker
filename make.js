@@ -3,12 +3,19 @@
 const fs = require('fs');
 const { execSync } = require('child_process');
 
-
+/**
+ * Read the settings.json file into a json object
+ */
 let settings = JSON.parse(fs.readFileSync(`${__dirname}/settings.json`));
+
+/**
+ * Get the current chart for the indicated chart type in settings
+ */
 let chartdate = getBestChartDate();
-let imageformat = settings.TileDrivers[settings.TileDriverIndex];
+
 
 let cmd = "";
+let imageformat = settings.TileDrivers[settings.TileDriverIndex];
 let urltemplate = "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip";
 let charttype = settings.ChartTypes[settings.ChartTypeIndex];
 let chartlayertype = settings.LayerTypes[settings.LayerTypeIndex];
@@ -29,6 +36,9 @@ let dir_7_mbtiles        = `${chartfolder}/7_mbtiles`;
 let startdate = new Date(new Date().toLocaleString());
 console.log(`Started processing: ${startdate}\r\n`);
 
+/**
+ * All chart processing begins here
+ */
 makeWorkingFolders();
 downloadCharts();
 unzipCharts();
@@ -38,17 +48,11 @@ mergeTiles();
 makeMbTiles();
 reportProcessingTime();
 
-function normalizeClipFiles(chartType) {
-    let clippedShapesDir = `${__dirname}/clipshapes/${chartType}`;
-    let clips = fs.readdirSync(clippedShapesDir);
-    let cmd = "";
-    clips.forEach((clip) => {
-        let newname = clip.replace("_SEC", "").replace("-", "_").toLowerCase();
-        let cmd = `mv ${clippedShapesDir}/${clip} ${clippedShapesDir}/${newname}`;
-        executeCommand(cmd);
-    });
-}
+return;
 
+/**
+ * Generate all of the working folders for image processing
+ */
 function makeWorkingFolders() {
     console.log("Creating working area folders");
     if (!fs.existsSync(workarea)) fs.mkdirSync(workarea);
@@ -62,6 +66,9 @@ function makeWorkingFolders() {
     if (!fs.existsSync(dir_7_mbtiles)) fs.mkdirSync(dir_7_mbtiles);
 }
 
+/**
+ * Get the desired chart zip file from the FAA's digital sources URL
+ */
 function downloadCharts() {
     let chartzip = `${chartcache}/${chartworkname}-${chartdate}.zip`;
     if (!fs.existsSync(chartzip)) {
@@ -71,12 +78,18 @@ function downloadCharts() {
     }
 }
 
+/**
+ * Unzip chart file
+ */
 function unzipCharts() {
     let chartzip = `${chartcache}/${chartworkname}-${chartdate}.zip`;
     cmd = `unzip -o ${chartzip} -x '*.htm' -d ${dir_1_unzipped}`;
     executeCommand(cmd);
 }
 
+/** 
+ * Clean up chart tif names by converting spaces and dashes to underscores
+ */
 function normalizeChartNames() {
     let tifname = "";
     let tfwname = "";
@@ -105,6 +118,9 @@ function normalizeChartNames() {
     });
 }
 
+/**
+ * Perform GDAL operations on all the unzipped charts 
+ */
 function processImages(){
     /*-----------------------------------------------------------------------
      1) GDAL_TRANSLATE: Expand color table to RGBA
@@ -149,6 +165,9 @@ function processImages(){
     });
 }
 
+/**
+ * Merge all of the individual chart zoom folders into a single master chart folder 
+ */
 function mergeTiles() {
     let areas = fs.readdirSync(dir_4_tiled);
     areas.forEach((area) => {
@@ -168,6 +187,9 @@ function mergeTiles() {
     } 
 }
 
+/**
+ * Perform quantization of all .png images if that was the processed image type
+ */
 function quantizePngImages() {
     let interimct = 0;
     let i;
@@ -197,6 +219,9 @@ function quantizePngImages() {
     console.log(`  * Total processed image count = ${cmds.length}`);
 }
 
+/**
+ * Create the .mbtiles chart database 
+ */
 function makeMbTiles() {            
     console.log(`  * Making MBTILES database`);
     let zooms = settings.ZoomRange.split("-");
@@ -233,6 +258,10 @@ function makeMbTiles() {
     executeCommand(cmd);
 }
 
+/**
+ * Called by processImages() so it can iterate through all unzipped chart names
+ * @returns array containing all of the chart names to be processed
+ */
 function buildChartNameArray() {
     let files = fs.readdirSync(dir_1_unzipped);
     let chartnames = [];
@@ -245,6 +274,10 @@ function buildChartNameArray() {
     return chartnames;
 }
 
+/**
+ * Called by quantizePngImages() to build processing commands for the pngquant utility
+ * @returns array containing all pngquant commands
+ */
 function buildQuantizingCommandArray() {
     let mergedfolders = fs.readdirSync(dir_5_merged);
     let cmdarray = [];
@@ -278,12 +311,21 @@ function buildQuantizingCommandArray() {
     return cmdarray;
 }
 
+/**
+ * Get rid of spaces and dashes in chart names and "normalize" with underscores
+ * @param {string} file 
+ * @returns string with underscores instead of spaces or dashes
+ */
 function normalizeFileName(file) {
     let newname = replaceAll(file, " ", "_");
     newname = newname.replace("-", "_").replace("_sec", "").toLowerCase();
     return newname;
 }
 
+/**
+ * Iterate through the chartdates.json file that contains chart publication dates
+ * @returns the closest date of currently available FAA published charts 
+ */
 function getBestChartDate() {
     let thisdate = new  Date();
     let thistime = thisdate.getTime();
@@ -323,6 +365,11 @@ function getBestChartDate() {
     }
 }
 
+/**
+ * Execute the passed in command and return success or failure code
+ * @param {string} command 
+ * @returns the return code of a processing command
+ */
 function executeCommand(command) {
     let retcode = 0;
     let retry = false;
@@ -347,6 +394,9 @@ function executeCommand(command) {
     return retcode;
 }
 
+/**
+ * Generate console comment with start, end, and total time of processing run 
+ */
 function reportProcessingTime() {
 
     let date2 = new Date(new Date().toLocaleString());
@@ -369,11 +419,23 @@ function reportProcessingTime() {
     console.log(`\r\nStart time: ${startdate}\r\nEnd time: ${date2}\r\nTotal processing time: ${hh}:${mm}:${ss}`);
 }
 
-// helper functions
-function replaceAll(string, search, replace) {
+/**
+ * Replace 1-n instances of the search string with the replace string
+ * @param {string} original 
+ * @param {string} search 
+ * @param {string} replace 
+ * @returns 
+ */
+function replaceAll(original, search, replace) {
     return string.split(search).join(replace);
 }
 
+/**
+ * Utility to scan a tif and return the desired information 
+ * @param {string} file 
+ * @param {string} searchtext 
+ * @returns 
+ */
 function getGdalInfo(file, searchtext) {
     let gdalresults = `${__dirname}/gdal.txt`;
 
@@ -391,6 +453,11 @@ function getGdalInfo(file, searchtext) {
     return retval;
 }
 
+/**
+ * Utility to left-pad zeros for numbers under 10
+ * @param {string} n 
+ * @returns left zero padded numeric string 
+ */
 function pad2(n) {
     return (n < 10 ? '0' : '') + n;
 }
