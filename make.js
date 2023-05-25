@@ -16,8 +16,8 @@ let chartworkname = charttype.search("Grand_Canyon") != -1 ? "Grand_Canyon" : ch
 let charturl = urltemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
 
 let workarea             = `${__dirname}/workarea`;
+let chartcache           = `${__dirname}/chartcache`;
 let chartfolder          = `${workarea}/${chartworkname}`;
-let dir_0_download       = `${chartfolder}/0_download`;
 let dir_1_unzipped       = `${chartfolder}/1_unzipped`;
 let dir_2_expanded       = `${chartfolder}/2_expanded`;
 let dir_3_clipped        = `${chartfolder}/3_clipped`;
@@ -53,7 +53,6 @@ function makeWorkingFolders() {
     console.log("Creating working area folders");
     if (!fs.existsSync(workarea)) fs.mkdirSync(workarea);
     if (!fs.existsSync(chartfolder)) fs.mkdirSync(chartfolder);
-    if (!fs.existsSync(dir_0_download)) fs.mkdirSync(dir_0_download);
     if (!fs.existsSync(dir_1_unzipped)) fs.mkdirSync(dir_1_unzipped);
     if (!fs.existsSync(dir_2_expanded)) fs.mkdirSync(dir_2_expanded);
     if (!fs.existsSync(dir_3_clipped)) fs.mkdirSync(dir_3_clipped);
@@ -64,14 +63,16 @@ function makeWorkingFolders() {
 }
 
 function downloadCharts() {
-    console.log(`Downloading ${chartworkname}.zip`);
-    let chartzip = `${dir_0_download}/${chartworkname}.zip`;
-    cmd = `wget ${charturl} --output-document=${chartzip}`;
-    executeCommand(cmd);
+    let chartzip = `${chartcache}/${chartworkname}-${chartdate}.zip`;
+    if (!fs.existsSync(chartzip)) {
+        console.log(`Downloading ${chartzip}`);
+        cmd = `wget ${charturl} --output-document=${chartzip}`;
+        executeCommand(cmd);
+    }
 }
 
 function unzipCharts() {
-    let chartzip = `${dir_0_download}/${chartworkname}.zip`;
+    let chartzip = `${chartcache}/${chartworkname}-${chartdate}.zip`;
     cmd = `unzip -o ${chartzip} -x '*.htm' -d ${dir_1_unzipped}`;
     executeCommand(cmd);
 }
