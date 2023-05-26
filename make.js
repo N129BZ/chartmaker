@@ -21,6 +21,7 @@ let charttype = settings.ChartTypes[settings.ChartTypeIndex];
 let chartlayertype = settings.LayerTypes[settings.LayerTypeIndex];
 let chartworkname = charttype.search("Grand_Canyon") != -1 ? "Grand_Canyon" : charttype;
 let charturl = urltemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
+let clippedShapeFolder = `${__dirname}/clipshapes/${chartworkname.toLowerCase()}`;
 
 let workarea             = `${__dirname}/workarea`;
 let chartcache           = `${__dirname}/chartcache`;
@@ -32,6 +33,8 @@ let dir_4_tiled          = `${chartfolder}/4_tiled`;
 let dir_5_merged         = `${chartfolder}/5_merged`;
 let dir_6_quantized      = `${chartfolder}/6_quantized`;
 let dir_7_mbtiles        = `${chartfolder}/7_mbtiles`;
+
+normalizeClipNames();
 
 let startdate = new Date(new Date().toLocaleString());
 console.log(`Started processing: ${startdate}\r\n`);
@@ -49,6 +52,18 @@ makeMbTiles();
 reportProcessingTime();
 
 return;
+
+/**
+ * Make sure all clipping files are lower-case
+ */
+function normalizeClipNames() {
+    let files = fs.readdirSync(clippedShapeFolder);
+    files.forEach((file) => {
+        let oldname = `${clippedShapeFolder}/${file}`;
+        let newname = oldname.toLowerCase();
+        fs.renameSync(oldname, newname);
+    });
+}
 
 /**
  * Generate all of the working folders for image processing
@@ -97,7 +112,9 @@ function normalizeChartNames() {
     
     files.forEach((file) => {
         let fname = file.toLowerCase();
-        if (fname.endsWith(".tif") && fname.search("fly") == -1 && fname.search("vfr_planning") == -1) {
+        if ((fname.endsWith(".tif")) && 
+            (fname.search("fly") == -1) && 
+            (fname.search("planning") == -1)) {
            
             let tfwfile = file.replace(".tif", ".tfw");
             let basename = normalizeFileName(fname).replace("_tac", "").replace(".tif", "");
@@ -129,14 +146,13 @@ function processImages(){
      4) GDAL2TILES: Convert overviews into tiled PNG images
     -------------------------------------------------------------------------*/
     
-    let clippedShapesDir = `${__dirname}/clipshapes/${chartworkname.toLowerCase()}`;
     let chartareas = buildChartNameArray();
 
     chartareas.forEach((area) => {
         
         console.log(`\r\n************** Processing chart: ${area} **************`);
         
-        let shapefile = `${clippedShapesDir}/${area}.shp`;
+        let shapefile = `${clippedShapeFolder}/${area}.shp`;
         let sourcetif = `${dir_1_unzipped}/${area}.tif`;
         let expanded = `${dir_2_expanded}/${area}.vrt`;
         let clipped = `${dir_3_clipped}/${area}.vrt`;
@@ -267,7 +283,9 @@ function buildChartNameArray() {
     let chartnames = [];
     files.forEach((file) => {
         let fname = file.toLowerCase();
-        if (fname.endsWith(".tif") && fname.search("_fly") == -1 && fname.search("vfr_planning")== -1) {
+        if ((fname.endsWith(".tif")) && 
+            (fname.search("fly") == -1) && 
+            (fname.search("planning")== -1)) {
             chartnames.push(fname.replace(".tif", ""));
         }
     });
