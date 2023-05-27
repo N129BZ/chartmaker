@@ -69,23 +69,6 @@ settings.ChartTypes.forEach((chtype) => {
 return;
 
 /**
- * Make sure all clipping files are lower-case
- */
-function normalizeClipNames() {
-    let files = fs.readdirSync(clippedShapeFolder);
-    try {
-        files.forEach((file) => {
-            let oldname = `${clippedShapeFolder}/${file}`;
-            let newname = oldname.toLowerCase();
-            fs.renameSync(oldname, newname);
-        });
-    }
-    catch(err) {
-        console.log(err.message);
-    }
-}
-
-/**
  * Generate all of the working folders for image processing
  */
 function makeWorkingFolders() {
@@ -486,4 +469,21 @@ function getGdalInfo(file, searchtext) {
  */
 function pad2(n) {
     return (n < 10 ? '0' : '') + n;
+}
+
+/**
+ * Utility to make sure clipping files are all lower-case
+ */
+function normalizeClipNames() {
+    let files = fs.readdirSync(clippedShapeFolder);
+    try {
+        files.forEach((file) => {
+            let oldname = `${clippedShapeFolder}/${file}`;
+            let newname = oldname.toLowerCase();
+            fs.renameSync(oldname, newname);
+        });
+    }
+    catch(err) {
+        console.log(err.message);
+    }
 }
