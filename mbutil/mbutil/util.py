@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # MBUtil: a tool for MBTiles files
 # Supports importing, exporting, and more

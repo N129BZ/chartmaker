@@ -15,48 +15,38 @@ let chartdate = getBestChartDate();
 
 
 let cmd = "";
-let imageformat = ""; //settings.TileDrivers[settings.TileDriverIndex];
+let imageformat = settings.TileDrivers[settings.TileDriverIndex];
 let urltemplate = "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip";
-let charttype = ""; //settings.ChartTypes[settings.ChartTypeIndex];
-let chartlayertype = ""; //settings.LayerTypes[settings.LayerTypeIndex];
-let chartworkname = ""; //charttype.search("Grand_Canyon") != -1 ? "Grand_Canyon" : charttype;
-let charturl = ""; //urltemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
-let clippedShapeFolder = ""; //`${__dirname}/clipshapes/${chartworkname.toLowerCase()}`;
+let chartlayertype = ""; 
+let chartworkname = ""; 
+let charturl = ""; 
+let clippedShapeFolder = "";
 
-let workarea             = ""; //`${__dirname}/workarea`;
-let chartcache           = ""; //`${__dirname}/chartcache`;
-let chartfolder          = ""; //`${workarea}/${chartworkname}`;
-let dir_1_unzipped       = ""; //`${chartfolder}/1_unzipped`;
-let dir_2_expanded       = ""; //`${chartfolder}/2_expanded`;
-let dir_3_clipped        = ""; //`${chartfolder}/3_clipped`;
-let dir_4_tiled          = ""; //`${chartfolder}/4_tiled`;
-let dir_5_merged         = ""; //`${chartfolder}/5_merged`;
-let dir_6_quantized      = ""; //`${chartfolder}/6_quantized`;
-let dir_7_mbtiles        = ""; //`${chartfolder}/7_mbtiles`;
-
-
-let startdate = new Date(new Date().toLocaleString());
-console.log(`Started processing: ${startdate}\r\n`);
+let workarea             = ""; 
+let chartcache           = ""; 
+let chartfolder          = ""; 
+let dir_1_unzipped       = ""; 
+let dir_2_expanded       = ""; 
+let dir_3_clipped        = ""; 
+let dir_4_tiled          = ""; 
+let dir_5_merged         = ""; 
+let dir_6_quantized      = ""; 
+let dir_7_mbtiles        = ""; 
+let startdate            = "";
 
 /**
  * All chart processing begins here
  */
 settings.ChartTypes.forEach((chtype) => {
-    charttype = chtype;
+    startdate = new Date(new Date().toLocaleString());
+    console.log(`Started processing: ${startdate}\r\n`);
+    chartworkname = chtype;
     chartlayertype = settings.LayerTypes[settings.LayerTypeIndex];
-    chartworkname = charttype.search("Grand_Canyon") != -1 ? "Grand_Canyon" : charttype;
     charturl = urltemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
     clippedShapeFolder = `${__dirname}/clipshapes/${chartworkname.toLowerCase()}`;
     chartcache = `${__dirname}/chartcache`;
 
-    if (!fs.existsSync(`${chartcache}/.clipshapes_${charttype}`)) {
-        normalizeClipNames();
-        cmd = `touch ${chartcache}/.clipshapes_${charttype}`;
-        executeCommand(cmd);
-    }
-
     workarea             = `${__dirname}/workarea`;
-    chartcache           = `${__dirname}/chartcache`;
     chartfolder          = `${workarea}/${chartworkname}`;
     dir_1_unzipped       = `${chartfolder}/1_unzipped`;
     dir_2_expanded       = `${chartfolder}/2_expanded`;
@@ -154,13 +144,6 @@ function normalizeChartNames() {
             
             fs.renameSync(`${dir_1_unzipped}/${file}`, tifname);
             fs.renameSync(`${dir_1_unzipped}/${tfwfile}`, tfwname);   
-            
-            if (basename.search("Grand_Canyon") > -1) {
-                if (basename != charttype) {
-                    fs.rmSync(tifname);
-                    fs.rmSync(tfwname);
-                }
-            }
         }
     });
 }
@@ -220,11 +203,6 @@ function mergeTiles() {
         let mergesource = `${dir_4_tiled}/${area}`;
         let cmd = `perl ./mergetiles.pl ${mergesource} ${dir_5_merged}`;
         executeCommand(cmd);
-
-        if (settings.CleanMergeFolder) {
-            cmd = `rm -r -f ${mergesource}`;
-            executeCommand(cmd);
-        }
     });
 
     // Only quantize png images, webp images are quantized via tiling option...
@@ -280,10 +258,10 @@ function makeMbTiles() {
     }
     // create a metadata.json file in the root of the tile directory,
     // mbutil will use this to generate a metadata table in the database.  
-    let chtype = charttype.replaceAll("_", " ");
+    let chartname = chartworkname.replaceAll("_", " ");
     let metajson = `{ 
-        "name": "${chtype}",
-        "description": "${chtype} Charts",
+        "name": "${chartname}",
+        "description": "${chartname} Charts",
         "version": "1.1",
         "type": "${chartlayertype}",
         "format": "${imageformat}",
@@ -296,7 +274,7 @@ function makeMbTiles() {
     fs.writeSync(fd, metajson);
     fs.closeSync(fd);
 
-    let mbtiles = `${dir_7_mbtiles}/${chtype}.mbtiles`;   
+    let mbtiles = `${dir_7_mbtiles}/${chartworkname}.mbtiles`;   
     cmd = `python3 ./mbutil/mb-util --image_format=${imageformat} --scheme=tms ${sourcefolder} ${mbtiles}`;
     executeCommand(cmd);
 
