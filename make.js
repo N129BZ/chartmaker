@@ -66,7 +66,7 @@ settings.ChartTypes.forEach((chtype) => {
     dir_6_quantized      = `${chartfolder}/6_quantized`;
     dir_7_mbtiles        = `${chartfolder}/7_mbtiles`;
 
-    akeWorkingFolders();
+    makeWorkingFolders();
     downloadCharts();
     unzipCharts();
     normalizeChartNames();
