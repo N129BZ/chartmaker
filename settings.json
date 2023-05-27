@@ -1,17 +1,17 @@
 {
-    "TiledImageQuality" : "100",
+    "TiledImageQuality" : "70",
     "RenameWorkArea": false,
-    "ZoomRange" : "3-11",
-    "ChartTypeIndex": 3,
+    "ZoomRange" : "0-11",
+    "ChartTypeIndex": 0,
     "LayerTypeIndex": 0,
-    "TileDriverIndex": 1,
+    "TileDriverIndex": 0,
     "ChartTypes": [
-        "Sectional",
-        "Terminal",
-        "Caribbean",
-        "Helicopter",
+        "Grand_Canyon_General_Aviation",
         "Grand_Canyon_Air_Tour_Operators",
-        "Grand_Canyon_General_Aviation"
+        "Helicopter",
+        "Caribbean",
+        "Terminal",
+        "Sectional"
     ],
     "LayerTypes": [
         "baselayer", 

@@ -15,30 +15,24 @@ let chartdate = getBestChartDate();
 
 
 let cmd = "";
-let imageformat = settings.TileDrivers[settings.TileDriverIndex];
+let imageformat = ""; //settings.TileDrivers[settings.TileDriverIndex];
 let urltemplate = "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip";
-let charttype = settings.ChartTypes[settings.ChartTypeIndex];
-let chartlayertype = settings.LayerTypes[settings.LayerTypeIndex];
-let chartworkname = charttype.search("Grand_Canyon") != -1 ? "Grand_Canyon" : charttype;
-let charturl = urltemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
-let clippedShapeFolder = `${__dirname}/clipshapes/${chartworkname.toLowerCase()}`;
+let charttype = ""; //settings.ChartTypes[settings.ChartTypeIndex];
+let chartlayertype = ""; //settings.LayerTypes[settings.LayerTypeIndex];
+let chartworkname = ""; //charttype.search("Grand_Canyon") != -1 ? "Grand_Canyon" : charttype;
+let charturl = ""; //urltemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
+let clippedShapeFolder = ""; //`${__dirname}/clipshapes/${chartworkname.toLowerCase()}`;
 
-let workarea             = `${__dirname}/workarea`;
-let chartcache           = `${__dirname}/chartcache`;
-let chartfolder          = `${workarea}/${chartworkname}`;
-let dir_1_unzipped       = `${chartfolder}/1_unzipped`;
-let dir_2_expanded       = `${chartfolder}/2_expanded`;
-let dir_3_clipped        = `${chartfolder}/3_clipped`;
-let dir_4_tiled          = `${chartfolder}/4_tiled`;
-let dir_5_merged         = `${chartfolder}/5_merged`;
-let dir_6_quantized      = `${chartfolder}/6_quantized`;
-let dir_7_mbtiles        = `${chartfolder}/7_mbtiles`;
-
-if (!fs.existsSync(`${chartcache}/.clipshapes`)) {
-    normalizeClipNames();
-    let cmd = `touch ${chartcache}/.clipshapes`;
-    executeCommand(cmd);
-}
+let workarea             = ""; //`${__dirname}/workarea`;
+let chartcache           = ""; //`${__dirname}/chartcache`;
+let chartfolder          = ""; //`${workarea}/${chartworkname}`;
+let dir_1_unzipped       = ""; //`${chartfolder}/1_unzipped`;
+let dir_2_expanded       = ""; //`${chartfolder}/2_expanded`;
+let dir_3_clipped        = ""; //`${chartfolder}/3_clipped`;
+let dir_4_tiled          = ""; //`${chartfolder}/4_tiled`;
+let dir_5_merged         = ""; //`${chartfolder}/5_merged`;
+let dir_6_quantized      = ""; //`${chartfolder}/6_quantized`;
+let dir_7_mbtiles        = ""; //`${chartfolder}/7_mbtiles`;
 
 
 let startdate = new Date(new Date().toLocaleString());
@@ -47,14 +41,40 @@ console.log(`Started processing: ${startdate}\r\n`);
 /**
  * All chart processing begins here
  */
-makeWorkingFolders();
-downloadCharts();
-unzipCharts();
-normalizeChartNames();
-processImages();
-mergeTiles();
-makeMbTiles();
-reportProcessingTime();
+settings.ChartTypes.forEach((chtype) => {
+    charttype = chtype;
+    chartlayertype = settings.LayerTypes[settings.LayerTypeIndex];
+    chartworkname = charttype.search("Grand_Canyon") != -1 ? "Grand_Canyon" : charttype;
+    charturl = urltemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
+    clippedShapeFolder = `${__dirname}/clipshapes/${chartworkname.toLowerCase()}`;
+    chartcache = `${__dirname}/chartcache`;
+
+    if (!fs.existsSync(`${chartcache}/.clipshapes_${charttype}`)) {
+        normalizeClipNames();
+        cmd = `touch ${chartcache}/.clipshapes_${charttype}`;
+        executeCommand(cmd);
+    }
+
+    workarea             = `${__dirname}/workarea`;
+    chartcache           = `${__dirname}/chartcache`;
+    chartfolder          = `${workarea}/${chartworkname}`;
+    dir_1_unzipped       = `${chartfolder}/1_unzipped`;
+    dir_2_expanded       = `${chartfolder}/2_expanded`;
+    dir_3_clipped        = `${chartfolder}/3_clipped`;
+    dir_4_tiled          = `${chartfolder}/4_tiled`;
+    dir_5_merged         = `${chartfolder}/5_merged`;
+    dir_6_quantized      = `${chartfolder}/6_quantized`;
+    dir_7_mbtiles        = `${chartfolder}/7_mbtiles`;
+
+    akeWorkingFolders();
+    downloadCharts();
+    unzipCharts();
+    normalizeChartNames();
+    processImages();
+    mergeTiles();
+    makeMbTiles();
+    reportProcessingTime();
+});
 
 return;
 
