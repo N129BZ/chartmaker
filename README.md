@@ -22,7 +22,7 @@ a valid chart date argument when launching the application, in the format ***-d 
 *  To preserve all of the processing folders, you can set **RenameWorkArea** to true.
    *  This setting will rename the **workarea** folder to include the processed chart date. 
 
-#### Go to the chartmaker folder and run "npm install" in a terminal session, then look at the header of the mergetiles.pl pearl script and verify with cpan that all of the Perl dependencies are installed.
+#### Go to the chartmaker folder and run "npm install" in a terminal session, then set executable permission on perlsetup.sh and run it. This will make sure all of the Perl dependencies for mergetiles.pl are installed.
 
 ### Additional information       
 The chart zip files are downloaded from the FAA digital raster chart repository and unzipped. The unzipping process will normalize the resultant GEOtiff images and their matching tfw world files to filenames with underscores in place of spaces.     
@@ -33,26 +33,24 @@ As of May 13 2023, the official chart release is for **04-20-2023. You can view 
 **settings.json:**                                                                                                              
 ```
 {
-    "TiledImageQuality" : "55",
+    "TiledImageQuality" : "70",
     "RenameWorkArea": false,
-    "ZoomRange" : "3-11",
-    "ChartTypeIndex": 0,
+    "ZoomRange" : "0-11",
     "LayerTypeIndex": 0,
-    "TileDriverIndex": 1,
+    "TileDriverIndex": 0,
     "ChartTypes": [
-        "Sectional",
-        "Terminal",
-        "Caribbean",
+        "Grand_Canyon",
         "Helicopter",
-        "Grand_Canyon_Air_Tour_Operators",
-        "Grand_Canyon_General_Aviation"
+        "Caribbean",
+        "Terminal",
+        "Sectional"
     ],
     "LayerTypes": [
         "baselayer", 
         "overlay"
     ],
     "TileDrivers": [
-        "png".
+        "png",
         "webp"
     ]
 }
