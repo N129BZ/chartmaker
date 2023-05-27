@@ -34,7 +34,12 @@ let dir_5_merged         = `${chartfolder}/5_merged`;
 let dir_6_quantized      = `${chartfolder}/6_quantized`;
 let dir_7_mbtiles        = `${chartfolder}/7_mbtiles`;
 
-normalizeClipNames();
+if (!fs.existsSync(`${chartcache}/.clipshapes`)) {
+    normalizeClipNames();
+    let cmd = `touch ${chartcache}/.clipshapes`;
+    executeCommand(cmd);
+}
+
 
 let startdate = new Date(new Date().toLocaleString());
 console.log(`Started processing: ${startdate}\r\n`);
@@ -58,11 +63,16 @@ return;
  */
 function normalizeClipNames() {
     let files = fs.readdirSync(clippedShapeFolder);
-    files.forEach((file) => {
-        let oldname = `${clippedShapeFolder}/${file}`;
-        let newname = oldname.toLowerCase();
-        fs.renameSync(oldname, newname);
-    });
+    try {
+        files.forEach((file) => {
+            let oldname = `${clippedShapeFolder}/${file}`;
+            let newname = oldname.toLowerCase();
+            fs.renameSync(oldname, newname);
+        });
+    }
+    catch(err) {
+        console.log(err.message);
+    }
 }
 
 /**
