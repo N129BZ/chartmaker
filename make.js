@@ -38,8 +38,6 @@ let startdate = new Date(new Date().toLocaleString());
 /**
  * All chart processing begins here
  */
-console.log(`Started processing: ${startdate}\r\n`);
-
 settings.ChartTypes.forEach((chtype) => {
     chartworkname = chtype;
     chartlayertype = settings.LayerTypes[settings.LayerTypeIndex];
