@@ -15,7 +15,13 @@ let chartdate = getBestChartDate();
 
 let imageformat = settings.TileDrivers[settings.TileDriverIndex];
 let urltemplate = "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip";
+
+/**
+ * Create the database repository folder if it doesn't exist
+ */
 let tiledbfolder = `${__dirname}/tiledatabases`;
+if (!fs.existsSync(tiledbfolder)) fs.mkdirSync(tiledbfolder);
+
 let chartlayertype = ""; 
 let chartworkname = ""; 
 let charturl = ""; 
