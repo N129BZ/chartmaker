@@ -32,12 +32,12 @@ let dir_4_tiled          = "";
 let dir_5_merged         = ""; 
 let dir_6_quantized      = ""; 
 let dir_7_mbtiles        = ""; 
-let startdate            = "";
+
+let startdate = new Date(new Date().toLocaleString());
 
 /**
  * All chart processing begins here
  */
-startdate = new Date(new Date().toLocaleString());
 console.log(`Started processing: ${startdate}\r\n`);
 
 settings.ChartTypes.forEach((chtype) => {
