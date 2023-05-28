@@ -9,7 +9,7 @@ const { execSync } = require('child_process');
 let settings = JSON.parse(fs.readFileSync(`${__dirname}/settings.json`));
 
 /**
- * Get the current chart for the indicated chart type in settings
+ * Get the current chart date from the chartdates.json file
  */
 let chartdate = getBestChartDate();
 
