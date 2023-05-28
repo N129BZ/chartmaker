@@ -37,9 +37,10 @@ let startdate            = "";
 /**
  * All chart processing begins here
  */
+startdate = new Date(new Date().toLocaleString());
+console.log(`Started processing: ${startdate}\r\n`);
+
 settings.ChartTypes.forEach((chtype) => {
-    startdate = new Date(new Date().toLocaleString());
-    console.log(`Started processing: ${startdate}\r\n`);
     chartworkname = chtype;
     chartlayertype = settings.LayerTypes[settings.LayerTypeIndex];
     charturl = urltemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
@@ -62,10 +63,10 @@ settings.ChartTypes.forEach((chtype) => {
     normalizeChartNames();
     processImages();
     mergeTiles();
-    makeMbTiles();
-    reportProcessingTime();
+    makeMbTiles();  
 });
 
+reportProcessingTime();
 return;
 
 /**
