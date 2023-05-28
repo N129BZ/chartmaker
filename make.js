@@ -22,21 +22,21 @@ let urltemplate = "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<chartty
 let tiledbfolder = `${__dirname}/tiledatabases`;
 if (!fs.existsSync(tiledbfolder)) fs.mkdirSync(tiledbfolder);
 
-let chartlayertype = ""; 
-let chartworkname = ""; 
-let charturl = ""; 
+let chartlayertype = "";
+let chartworkname = "";
+let charturl = "";
 let clippedShapeFolder = "";
 
 let cmd = "";
-let workarea             = ""; 
-let chartcache           = ""; 
-let chartfolder          = ""; 
-let dir_1_unzipped       = ""; 
-let dir_2_expanded       = ""; 
-let dir_3_clipped        = ""; 
-let dir_4_tiled          = ""; 
-let dir_5_merged         = ""; 
-let dir_6_quantized      = ""; 
+let workarea = "";
+let chartcache = "";
+let chartfolder = "";
+let dir_1_unzipped = "";
+let dir_2_expanded = "";
+let dir_3_clipped = "";
+let dir_4_tiled = "";
+let dir_5_merged = "";
+let dir_6_quantized = "";
 
 let startdate = new Date(new Date().toLocaleString());
 
@@ -50,22 +50,22 @@ settings.ChartTypes.forEach((chtype) => {
     clippedShapeFolder = `${__dirname}/clipshapes/${chartworkname.toLowerCase()}`;
     chartcache = `${__dirname}/chartcache`;
 
-    workarea             = `${__dirname}/workarea`;
-    chartfolder          = `${workarea}/${chartworkname}`;
-    dir_1_unzipped       = `${chartfolder}/1_unzipped`;
-    dir_2_expanded       = `${chartfolder}/2_expanded`;
-    dir_3_clipped        = `${chartfolder}/3_clipped`;
-    dir_4_tiled          = `${chartfolder}/4_tiled`;
-    dir_5_merged         = `${chartfolder}/5_merged`;
-    dir_6_quantized      = `${chartfolder}/6_quantized`;
-    
+    workarea = `${__dirname}/workarea`;
+    chartfolder = `${workarea}/${chartworkname}`;
+    dir_1_unzipped = `${chartfolder}/1_unzipped`;
+    dir_2_expanded = `${chartfolder}/2_expanded`;
+    dir_3_clipped = `${chartfolder}/3_clipped`;
+    dir_4_tiled = `${chartfolder}/4_tiled`;
+    dir_5_merged = `${chartfolder}/5_merged`;
+    dir_6_quantized = `${chartfolder}/6_quantized`;
+
     makeWorkingFolders();
     downloadCharts();
     unzipCharts();
     normalizeChartNames();
     processImages();
     mergeTiles();
-    makeMbTiles();  
+    makeMbTiles();
 });
 
 reportProcessingTime();
@@ -125,21 +125,21 @@ function normalizeChartNames() {
     let tifname = "";
     let tfwname = "";
     let files = fs.readdirSync(dir_1_unzipped);
-    
+
     files.forEach((file) => {
         let fname = file.toLowerCase();
-        if ((fname.endsWith(".tif")) && 
-            (fname.search("fly") == -1) && 
+        if ((fname.endsWith(".tif")) &&
+            (fname.search("fly") == -1) &&
             (fname.search("planning") == -1)) {
-           
+
             let tfwfile = file.replace(".tif", ".tfw");
             let basename = normalizeFileName(fname).replace("_tac", "").replace(".tif", "");
 
             tifname = `${dir_1_unzipped}/${basename}.tif`;
             tfwname = `${dir_1_unzipped}/${basename}.tfw`;
-            
+
             fs.renameSync(`${dir_1_unzipped}/${file}`, tifname);
-            fs.renameSync(`${dir_1_unzipped}/${tfwfile}`, tfwname);   
+            fs.renameSync(`${dir_1_unzipped}/${tfwfile}`, tfwname);
         }
     });
 }
@@ -147,39 +147,39 @@ function normalizeChartNames() {
 /**
  * Perform GDAL operations on all the unzipped charts 
  */
-function processImages(){
+function processImages() {
     /*-----------------------------------------------------------------------
      1) GDAL_TRANSLATE: Expand color table to RGBA
      2) GDALWARP: Warp chart to EPSG:4326 and clip off the borders and legend
      3) GDALADDO: Generate overviews of the VRT for all zoom levels 
      4) GDAL2TILES: Convert overviews into tiled PNG images
     -------------------------------------------------------------------------*/
-    
+
     let chartareas = buildChartNameArray();
 
     chartareas.forEach((area) => {
-        
+
         console.log(`\r\n************** Processing chart: ${area} **************`);
-        
+
         let shapefile = `${clippedShapeFolder}/${area}.shp`;
         let sourcetif = `${dir_1_unzipped}/${area}.tif`;
         let expanded = `${dir_2_expanded}/${area}.vrt`;
         let clipped = `${dir_3_clipped}/${area}.vrt`;
-        let tiled = `${dir_4_tiled}/${area}` 
+        let tiled = `${dir_4_tiled}/${area}`
 
         console.log(`* Expand ${area} to RGBA`);
         cmd = `gdal_translate -strict -of vrt -co TILED=YES -expand rgba ${sourcetif} ${expanded}`;
         executeCommand(cmd);
 
         console.log(`* Clip off border & legend`);
-        cmd = `gdalwarp -t_srs EPSG:4326 -dstalpha -cblend 6 -cutline "${shapefile}" -crop_to_cutline ${expanded} ${clipped}`; 
+        cmd = `gdalwarp -t_srs EPSG:4326 -dstalpha -cblend 6 -cutline "${shapefile}" -crop_to_cutline ${expanded} ${clipped}`;
         executeCommand(cmd);
-    
+
         console.log(`* Add overviews for each zoom level`);
         cmd = `gdaladdo --config GDAL_NUM_THREADS ALL_CPUS ${clipped}`;
-        executeCommand(cmd); 
+        executeCommand(cmd);
 
-        let formatargs = "--tiledriver=PNG"; 
+        let formatargs = "--tiledriver=PNG";
         if (imageformat == "webp") {
             formatargs = `--tiledriver=WEBP --webp-quality=${settings.TiledImageQuality}`
         }
@@ -204,7 +204,7 @@ function mergeTiles() {
     // Only quantize png images, webp images are quantized via tiling option...
     if (imageformat == "png") {
         quantizePngImages();
-    } 
+    }
 }
 
 /**
@@ -215,23 +215,23 @@ function quantizePngImages() {
     let i;
     let qcmd = "";
     let cmds = buildQuantizingCommandArray();
-    let quantcmd = `pngquant --strip --skip-if-larger --force --quality ${settings.TiledImageQuality}`; 
+    let quantcmd = `pngquant --strip --skip-if-larger --force --quality ${settings.TiledImageQuality}`;
     console.log(`*** Quantizing ${cmds.length} png images at ${settings.TiledImageQuality}%`);
 
-    for (i=0; i < cmds.length; i++) {
+    for (i = 0; i < cmds.length; i++) {
         qcmd = `${quantcmd} ${cmds[i][0]} --output ${cmds[i][1]}`;
-        try {    
-            execSync(qcmd, { stdio: 'inherit' }); 
+        try {
+            execSync(qcmd, { stdio: 'inherit' });
         }
-        catch(error) { 
+        catch (error) {
             // if there is a error quantizing, just copy the original image
             let file0 = cmds[i][0];
             let file1 = cmds[i][1];
             qcmd = `cp -f ${file0} ${file1}`;
             executeCommand(qcmd);
         }
-        interimct ++;
-        if (interimct >= 1000){
+        interimct++;
+        if (interimct >= 1000) {
             console.log(`${i + 1} of ${cmds.length} images processed`);
             interimct = 0;
         }
@@ -242,7 +242,7 @@ function quantizePngImages() {
 /**
  * Create the .mbtiles chart database 
  */
-function makeMbTiles() {            
+function makeMbTiles() {
     console.log(`  * Making MBTILES database`);
     let zooms = settings.ZoomRange.split("-");
     let minzoom = zooms[0];
@@ -264,13 +264,14 @@ function makeMbTiles() {
         "quality": ${settings.TiledImageQuality},
         "minzoom": "${minzoom}", 
         "maxzoom": "${maxzoom}"
+        "attribution": "Maps generated by https://github.com/n129bz/chartmaker" 
     }`;
-    let fpath = `${sourcefolder}/metadata.json`; 
+    let fpath = `${sourcefolder}/metadata.json`;
     let fd = fs.openSync(fpath, 'w');
     fs.writeSync(fd, metajson);
     fs.closeSync(fd);
 
-    let mbtiles = `${tiledbfolder}/${chartworkname}.mbtiles`;   
+    let mbtiles = `${tiledbfolder}/${chartworkname}.db`;
     cmd = `python3 ./mbutil/mb-util --image_format=${imageformat} --scheme=tms ${sourcefolder} ${mbtiles}`;
     executeCommand(cmd);
 }
@@ -284,9 +285,9 @@ function buildChartNameArray() {
     let chartnames = [];
     files.forEach((file) => {
         let fname = file.toLowerCase();
-        if ((fname.endsWith(".tif")) && 
-            (fname.search("fly") == -1) && 
-            (fname.search("planning")== -1)) {
+        if ((fname.endsWith(".tif")) &&
+            (fname.search("fly") == -1) &&
+            (fname.search("planning") == -1)) {
             chartnames.push(fname.replace(".tif", ""));
         }
     });
@@ -303,7 +304,7 @@ function buildQuantizingCommandArray() {
     let subarray = [];
     mergedfolders.forEach((zoomlevel) => {
         let zoomfolder = `${dir_5_merged}/${zoomlevel}`;
-        if (fs.statSync(zoomfolder).isDirectory()) {    
+        if (fs.statSync(zoomfolder).isDirectory()) {
             let quantzoomfolder = `${dir_6_quantized}/${zoomlevel}`;
             if (!fs.existsSync(quantzoomfolder)) {
                 fs.mkdirSync(quantzoomfolder);
@@ -316,7 +317,7 @@ function buildQuantizingCommandArray() {
                     fs.mkdirSync(quantizedfolders);
                 }
                 let images = fs.readdirSync(y);
-                
+
                 // build an array of chart names
                 images.forEach((image) => {
                     let imgpath = `${y}/${image}`;
@@ -346,7 +347,7 @@ function normalizeFileName(file) {
  * @returns the closest date of currently available FAA published charts 
  */
 function getBestChartDate() {
-    let thisdate = new  Date();
+    let thisdate = new Date();
     let thistime = thisdate.getTime();
     let cdates = [];
     let found = false;
@@ -356,7 +357,7 @@ function getBestChartDate() {
     datelist.ChartDates.forEach((cdate) => {
         cdates.push(new Date(cdate))
     });
-    
+
     let sortedDates = cdates.sort((a, b) => b.date - a.date);
 
     sortedDates.forEach((dateobj) => {
@@ -367,9 +368,9 @@ function getBestChartDate() {
             let diffdays = parseInt(tdays.toFixed(0));
             if (diffdays >= -20 && diffdays <= 36) {
                 console.log(diffdays);
-                let m = pad2(dateobj.getMonth()+1); // months (0-11)
+                let m = pad2(dateobj.getMonth() + 1); // months (0-11)
                 let d = pad2(dateobj.getDate());    // day (1-31)
-                let y= dateobj.getFullYear();
+                let y = dateobj.getFullYear();
                 selectedDate = `${m}-${d}-${y}`;
                 found = true;
             }
@@ -392,24 +393,24 @@ function getBestChartDate() {
 function executeCommand(command) {
     let retcode = 0;
     let retry = false;
-    
+
     try {
-        execSync(command, { stdio: 'inherit' }); 
+        execSync(command, { stdio: 'inherit' });
     }
-    catch(error) {
+    catch (error) {
         retry = true;
     }
 
     if (retry) {
         try {
-            execSync(command, {stdio: 'inherit'});
+            execSync(command, { stdio: 'inherit' });
         }
-        catch(error) {
+        catch (error) {
             console.log(error.message);
             retcode = -1
         }
     }
-    
+
     return retcode;
 }
 
@@ -458,17 +459,17 @@ function replaceAll(original, search, replace) {
 function getGdalInfo(file, searchtext) {
     let gdalresults = `${__dirname}/gdal.txt`;
 
-    cmd = `gdalinfo ${file} -noct > ${gdalresults}`; 
-    
+    cmd = `gdalinfo ${file} -noct > ${gdalresults}`;
+
     let { stderr } = shell.exec(cmd, { silent: true })
     if (stderr) {
         console.log(stderr);
     }
-    
-    let gdaldata = fs.readFileSync(gdalresults, {encoding:'utf8', flag:'r'});         
-    let retval = (gdaldata.toString().search(searchtext) > -1) 
+
+    let gdaldata = fs.readFileSync(gdalresults, { encoding: 'utf8', flag: 'r' });
+    let retval = (gdaldata.toString().search(searchtext) > -1)
     fs.rmSync(gdalresults);
-    
+
     return retval;
 }
 
@@ -493,7 +494,7 @@ function normalizeClipNames() {
             fs.renameSync(oldname, newname);
         });
     }
-    catch(err) {
+    catch (err) {
         console.log(err.message);
     }
 }
