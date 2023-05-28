@@ -13,15 +13,15 @@ let settings = JSON.parse(fs.readFileSync(`${__dirname}/settings.json`));
  */
 let chartdate = getBestChartDate();
 
-
-let cmd = "";
 let imageformat = settings.TileDrivers[settings.TileDriverIndex];
 let urltemplate = "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip";
+let tiledbfolder = `${__dirname}/tiledatabases`;
 let chartlayertype = ""; 
 let chartworkname = ""; 
 let charturl = ""; 
 let clippedShapeFolder = "";
 
+let cmd = "";
 let workarea             = ""; 
 let chartcache           = ""; 
 let chartfolder          = ""; 
@@ -31,7 +31,6 @@ let dir_3_clipped        = "";
 let dir_4_tiled          = ""; 
 let dir_5_merged         = ""; 
 let dir_6_quantized      = ""; 
-let dir_7_mbtiles        = ""; 
 
 let startdate = new Date(new Date().toLocaleString());
 
@@ -53,8 +52,7 @@ settings.ChartTypes.forEach((chtype) => {
     dir_4_tiled          = `${chartfolder}/4_tiled`;
     dir_5_merged         = `${chartfolder}/5_merged`;
     dir_6_quantized      = `${chartfolder}/6_quantized`;
-    dir_7_mbtiles        = `${chartfolder}/7_mbtiles`;
-
+    
     makeWorkingFolders();
     downloadCharts();
     unzipCharts();
@@ -80,7 +78,6 @@ function makeWorkingFolders() {
     if (!fs.existsSync(dir_4_tiled)) fs.mkdirSync(dir_4_tiled);
     if (!fs.existsSync(dir_5_merged)) fs.mkdirSync(dir_5_merged);
     if (!fs.existsSync(dir_6_quantized)) fs.mkdirSync(dir_6_quantized);
-    if (!fs.existsSync(dir_7_mbtiles)) fs.mkdirSync(dir_7_mbtiles);
 }
 
 /**
@@ -267,11 +264,8 @@ function makeMbTiles() {
     fs.writeSync(fd, metajson);
     fs.closeSync(fd);
 
-    let mbtiles = `${dir_7_mbtiles}/${chartworkname}.mbtiles`;   
+    let mbtiles = `${tiledbfolder}/${chartworkname}.mbtiles`;   
     cmd = `python3 ./mbutil/mb-util --image_format=${imageformat} --scheme=tms ${sourcefolder} ${mbtiles}`;
-    executeCommand(cmd);
-
-    cmd = `ls -l ${mbtiles}`;
     executeCommand(cmd);
 }
 
