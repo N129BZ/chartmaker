@@ -194,14 +194,14 @@ function mergeTiles() {
 }
 
 /**
- * Perform quantization of all .png images if that was the processed image type
+ * Perform quantization of all .png images
  */
 function quantizePngImages() {
     let interimct = 0;
     let i;
     let qcmd = "";
     let cmds = buildQuantizingCommandArray();
-    let quantcmd = `pngquant --quality ${settings.TiledImageQuality}`; 
+    let quantcmd = `pngquant --strip --skip-if-larger --force --quality ${settings.TiledImageQuality}`; 
     console.log(`*** Quantizing ${cmds.length} png images at ${settings.TiledImageQuality}%`);
 
     for (i=0; i < cmds.length; i++) {
