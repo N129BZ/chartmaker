@@ -88,7 +88,18 @@ function makeWorkingFolders() {
  */
 function downloadCharts() {
     let chartzip = `${chartcache}/${chartworkname}-${chartdate}.zip`;
-    if (!fs.existsSync(chartzip)) {
+    if (fs.existsSync(chartzip)) {
+        console.log(`Using cached ${chartzip}`);
+        return;
+    }
+    else {
+        let oldfiles = fs.readdirSync(chartcache);
+        for (var i = 0; i < oldfiles.length; i++) {
+            if (oldfiles[i].startsWith(chartworkname)) {
+                fs.rmSync(`${chartcache}/${oldfiles[i]}`);
+                break;
+            }
+        }
         console.log(`Downloading ${chartzip}`);
         cmd = `wget ${charturl} --output-document=${chartzip}`;
         executeCommand(cmd);
