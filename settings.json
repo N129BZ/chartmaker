@@ -2,14 +2,14 @@
     "TiledImageQuality" : "70",
     "RenameWorkArea": false,
     "ZoomRange" : "0-11",
-    "LayerTypeIndex": 0,
+    "LayerTypeIndex": 1,
+    "Attribution": "Aviation chart processing https://github.com/N129BZ",
     "TileDriverIndex": 0,
     "ChartTypes": [
         "Grand_Canyon",
         "Helicopter",
         "Caribbean",
-        "Terminal",
-        "Sectional"
+        "Terminal"
     ],
     "LayerTypes": [
         "baselayer", 
