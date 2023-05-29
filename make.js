@@ -13,14 +13,8 @@ let settings = JSON.parse(fs.readFileSync(`${__dirname}/settings.json`));
  */
 let chartdate = getBestChartDate();
 
-let imageformat = settings.TileDrivers[settings.TileDriverIndex];
+let imageformat = settings.tiledrivers[settings.tiledriverindex];
 let urltemplate = "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip";
-
-/**
- * Create the database repository folder if it doesn't exist
- */
-let tiledbfolder = `${__dirname}/tiledatabases`;
-if (!fs.existsSync(tiledbfolder)) fs.mkdirSync(tiledbfolder);
 
 let chartlayertype = "";
 let chartworkname = "";
@@ -43,9 +37,9 @@ let startdate = new Date(new Date().toLocaleString());
 /**
  * All chart processing begins here
  */
-settings.ChartTypes.forEach((chtype) => {
+settings.charttypes.forEach((chtype) => {
     chartworkname = chtype;
-    chartlayertype = settings.LayerTypes[settings.LayerTypeIndex];
+    chartlayertype = settings.layertypes[settings.layertypeindex];
     charturl = urltemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
     clippedShapeFolder = `${__dirname}/clipshapes/${chartworkname.toLowerCase()}`;
     chartcache = `${__dirname}/chartcache`;
@@ -181,10 +175,10 @@ function processImages() {
 
         let formatargs = "--tiledriver=PNG";
         if (imageformat == "webp") {
-            formatargs = `--tiledriver=WEBP --webp-quality=${settings.TiledImageQuality}`
+            formatargs = `--tiledriver=WEBP --webp-quality=${settings.tiledimagequality}`
         }
         console.log(`* Generate ${area} tile images`);
-        cmd = `gdal2tiles.py --zoom=${settings.ZoomRange} --processes=4 ${formatargs} --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
+        cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=4 ${formatargs} --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
         executeCommand(cmd);
 
     });
@@ -215,8 +209,8 @@ function quantizePngImages() {
     let i;
     let qcmd = "";
     let cmds = buildQuantizingCommandArray();
-    let quantcmd = `pngquant --strip --skip-if-larger --force --quality ${settings.TiledImageQuality}`;
-    console.log(`*** Quantizing ${cmds.length} png images at ${settings.TiledImageQuality}%`);
+    let quantcmd = `pngquant --strip --skip-if-larger --force --quality ${settings.tiledimagequality}`;
+    console.log(`*** Quantizing ${cmds.length} png images at ${settings.tiledimagequality}%`);
 
     for (i = 0; i < cmds.length; i++) {
         qcmd = `${quantcmd} ${cmds[i][0]} --output ${cmds[i][1]}`;
@@ -244,7 +238,7 @@ function quantizePngImages() {
  */
 function makeMbTiles() {
     console.log(`  * Making MBTILES database`);
-    let zooms = settings.ZoomRange.split("-");
+    let zooms = settings.zoomrange.split("-");
     let minzoom = zooms[0];
     let maxzoom = zooms[0];
     let sourcefolder = imageformat == "webp" ? dir_5_merged : dir_6_quantized;
@@ -261,17 +255,17 @@ function makeMbTiles() {
         "version": "1.1",
         "type": "${chartlayertype}",
         "format": "${imageformat}",
-        "quality": ${settings.TiledImageQuality},
+        "quality": ${settings.tiledimagequality},
         "minzoom": "${minzoom}", 
         "maxzoom": "${maxzoom}",
-        "attribution": ${settings.Attribution} 
+        "attribution": "${settings.attribution}" 
     }`;
     let fpath = `${sourcefolder}/metadata.json`;
     let fd = fs.openSync(fpath, 'w');
     fs.writeSync(fd, metajson);
     fs.closeSync(fd);
 
-    let mbtiles = `${tiledbfolder}/${chartworkname}.db`;
+    let mbtiles = `${workarea}/${chartworkname}.db`;
     cmd = `python3 ./mbutil/mb-util --image_format=${imageformat} --scheme=tms ${sourcefolder} ${mbtiles}`;
     executeCommand(cmd);
 }
