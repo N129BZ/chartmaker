@@ -13,7 +13,7 @@ Since the FAA publishes charts 20 days *before* the official chart date, this ap
 the appropriate chart date from the list of official FAA chart dates in the chartdates.json file.                  
                    
 *  For example, the zoom range value can either be in the format **n-n**, or you can use a single zoom level **n**                
-*  You can also change the ***tiledimagequality*** percentage **(1 -100)** and ***tiledriverindex*** index to ***1 (= webp)*** to reduce mbtiles file size.    
+*  You can also change the ***tiledimagequality*** percentage **(1 -100)** and ***tiledriverindex*** index to ***2 (= webp)*** to reduce mbtiles file size.    
    *  The tiledimagequality setting works for both ***png*** and ***webp*** images.  
 *  To save disk space, you can set ***cleanmergefolder*** to true.
    *  The merge folder can end up being as fat as 13 gigabytes for the entire chart set
@@ -48,8 +48,8 @@ As of May 13 2023, the official chart release is for **04-20-2023. You can view 
     ],
     "tiledrivers": [
         "png",
-        "webp",
-        "jpg"
+        "jpg",
+        "webp"
     ]
 }
 ```
