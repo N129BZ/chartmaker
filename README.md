@@ -10,8 +10,7 @@
      
 ### Settings.json  
 Since the FAA publishes charts 20 days *before* the official chart date, this application will automatically select                 
-the appropriate chart date from the list of official FAA chart dates in the chartdates.json file.  Alternatively, you can pass              
-a valid chart date argument when launching the application, in the format ***-d MM-dd-YYYY***.                     
+the appropriate chart date from the list of official FAA chart dates in the chartdates.json file.                  
                    
 *  For example, the zoom range value can either be in the format **n-n**, or you can use a single zoom level **n**                
 *  You can also change the ***tiledimagequality*** percentage **(1 -100)** and ***tiledriverindex*** index to ***1 (= webp)*** to reduce mbtiles file size.    
