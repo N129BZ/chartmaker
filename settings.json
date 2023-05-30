@@ -3,7 +3,7 @@
     "renameworkarea": false,
     "zoomrange" : "0-11",
     "layertypeindex": 1,
-    "attribution": "Aviation chart processing <a href='https://github.com/n129bz/chartmaker/'>github.com/n129bz/chartmaker</a>",
+    "attribution": "Aviation charts <a href='https://github.com/n129bz/chartmaker'>github.com/n129bz/chartmaker</a>",
     "tiledriverindex": 2,
     "charttypes": [
         "Grand_Canyon",
