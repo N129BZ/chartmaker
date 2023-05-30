@@ -183,7 +183,7 @@ function processImages() {
 
         let formatargs = "--tiledriver=PNG";
         if (imageformat == "webp") {
-            formatargs = `--tiledriver=WEBP --webp-quality=${settings.tiledimagequality}`
+            formatargs = `--tiledriver=WEBP --webp-quality=${settings.tileimagequality}`
         }
         console.log(`* Generate ${area} tile images`);
         cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=4 ${formatargs} --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
@@ -217,8 +217,8 @@ function quantizePngImages() {
     let i;
     let qcmd = "";
     let cmds = buildQuantizingCommandArray();
-    let quantcmd = `pngquant --strip --skip-if-larger --force --quality ${settings.tiledimagequality}`;
-    console.log(`*** Quantizing ${cmds.length} png images at ${settings.tiledimagequality}%`);
+    let quantcmd = `pngquant --strip --skip-if-larger --force --quality ${settings.tileimagequality}`;
+    console.log(`*** Quantizing ${cmds.length} png images at ${settings.tileimagequality}%`);
 
     for (i = 0; i < cmds.length; i++) {
         qcmd = `${quantcmd} ${cmds[i][0]} --output ${cmds[i][1]}`;
@@ -263,7 +263,7 @@ function makeMbTiles() {
         "version": "1.1",
         "type": "${chartlayertype}",
         "format": "${imageformat}",
-        "quality": ${settings.tiledimagequality},
+        "quality": ${settings.tileimagequality},
         "minzoom": "${minzoom}", 
         "maxzoom": "${maxzoom}",
         "attribution": "${settings.attribution}" 
