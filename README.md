@@ -12,7 +12,7 @@
 Since the FAA publishes charts 20 days *before* the official chart date, this application will automatically select                 
 the appropriate chart date from the list of official FAA chart dates in the chartdates.json file.                  
                    
-*  Edit the array values in ***chartprocessindexlist*** with any ordinal index numbers from the ***faachartnames*** array for charts you want process, in the order you want them processed. The default is all charts in the index list, in index order. The setting array ***faachartnames*** are the actual zip filenames the FAA uses and are for reference only. **Changes to faachartnames, layertypes, and tiledrivers values and are not recommended!**    
+*  Edit the array values in ***chartprocessindexlist*** with any ordinal index numbers from the ***faachartnames*** array for charts you want process, in the order you want them processed. The default is all charts in the index list, in index order. The setting array ***faachartnames*** are the actual zip filenames the FAA uses and are for reference only. **Changes to downloadtemplate, faachartnames, layertypes, and tiledrivers values and are not recommended!**    
 *  The zoom range value can either be in the format **n-n**, or you can use a single zoom level **n**                
 *  You can change the ***tiledimagequality*** percentage from ***1*** up to ***100*** and ***tiledriverindex*** index to ***2*** (webp) to reduce mbtiles file size. The smaller the percentage, the fuzzier the chart will be.   
    *  The tiledimagequality setting works for both ***png*** and ***webp*** images.  
@@ -30,8 +30,9 @@ As of May 13 2023, the official chart release is for **04-20-2023. You can view 
 ```
 {
     "attribution": "Aviation charts <a href='https://github.com/n129bz/chartmaker'>github.com/n129bz/chartmaker</a>",
+    "downloadtemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
     "tiledimagequality" : "100",
-    "renameworkarea": false,
+    "renameworkarea": true,
     "cleanprocessfolders": true,
     "zoomrange" : "0-11",
     "chartprocessindexlist": [0,1,2,3,4],
