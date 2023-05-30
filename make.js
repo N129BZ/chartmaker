@@ -39,7 +39,7 @@ let dir_6_quantized = "";
 /**
  * All chart processing begins here
  */
-settings.chartprocessindexlist.forEach((index) => {
+settings.chartprocessindexes.forEach((index) => {
     chartworkname = settings.faachartnames[index];
     chartlayertype = settings.layertypes[settings.layertypeindex];
     charturl = settings.downloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
