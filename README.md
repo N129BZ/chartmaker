@@ -30,12 +30,13 @@ As of May 13 2023, the official chart release is for **04-20-2023. You can view 
 **settings.json:**                                                                                                              
 ```
 {
-    "tiledimagequality" : "70",
+    "attribution": "Aviation charts <a href='https://github.com/n129bz/chartmaker'>github.com/n129bz/chartmaker</a>",
+    "tiledimagequality" : "100",
     "renameworkarea": false,
     "zoomrange" : "0-11",
-    "layertypeindex": 0,
-    "tiledriverindex": 0,
-    "attribution": Aviation chart processor: <a href="https://github.com/n129bz/chartmaker"> github.com/n129bz/chartmaker</a>",
+    "chartprocessindexlist": [0,1,2,3,4],
+    "layertypeindex": 1,
+    "tiledriverindex": 2,
     "charttypes": [
         "Grand_Canyon",
         "Helicopter",
