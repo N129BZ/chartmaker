@@ -78,8 +78,7 @@ return;
  * Generate all of the working folders for image processing
  */
 function makeWorkingFolders() {
-    console.log("Creating working area folders");
-    if (!fs.existsSync(workarea)) fs.mkdirSync(workarea);
+    console.log("Creating working area subfolders");
     if (!fs.existsSync(chartfolder)) fs.mkdirSync(chartfolder);
     if (!fs.existsSync(dir_1_unzipped)) fs.mkdirSync(dir_1_unzipped);
     if (!fs.existsSync(dir_2_expanded)) fs.mkdirSync(dir_2_expanded);
