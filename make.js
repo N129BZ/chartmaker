@@ -8,22 +8,25 @@ const { execSync } = require('child_process');
  */
 let settings = JSON.parse(fs.readFileSync(`${__dirname}/settings.json`));
 
-/**
- * Get the current chart date from the chartdates.json file
- */
+// Get the current chart date from the chartdates.json file
 let chartdate = getBestChartDate();
 
-let imageformat = settings.tiledrivers[settings.tiledriverindex];
-let urltemplate = "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip";
+// used for processing timing
+let startdate = new Date(new Date().toLocaleString());
 
+let workarea = `${__dirname}/workarea`;
+if (settings.renameworkarea) workarea += `_${chartdate}`;
+if (!fs.existsSync(workarea)) fs.mkdirSync(workarea)
+
+let chartcache = `${__dirname}/chartcache`;
+if (!fs.existsSync(chartcache)) fs.mkdirSync(chartcache);
+
+let imageformat = settings.tiledrivers[settings.tiledriverindex];
 let chartlayertype = "";
 let chartworkname = "";
 let charturl = "";
 let clippedShapeFolder = "";
-
 let cmd = "";
-let workarea = "";
-
 let chartfolder = "";
 let dir_1_unzipped = "";
 let dir_2_expanded = "";
@@ -32,22 +35,14 @@ let dir_4_tiled = "";
 let dir_5_merged = "";
 let dir_6_quantized = "";
 
-let chartcache = `${__dirname}/chartcache`;
-if (!fs.existsSync(chartcache)) fs.mkdirSync(chartcache);
-
-let startdate = new Date(new Date().toLocaleString());
-
 /**
  * All chart processing begins here
  */
-let processindexes = settings.chartprocessindexlist;
-processindexes.forEach((index) => {
-    chartworkname = settings.charttypes[index];
+settings.chartprocessindexlist.forEach((index) => {
+    chartworkname = settings.faachartnames[index];
     chartlayertype = settings.layertypes[settings.layertypeindex];
-    charturl = urltemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
+    charturl = settings.downloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
     clippedShapeFolder = `${__dirname}/clipshapes/${chartworkname.toLowerCase()}`;
-
-    workarea = `${__dirname}/workarea`;
     chartfolder = `${workarea}/${chartworkname}`;
     dir_1_unzipped = `${chartfolder}/1_unzipped`;
     dir_2_expanded = `${chartfolder}/2_expanded`;
@@ -64,6 +59,17 @@ processindexes.forEach((index) => {
     mergeTiles();
     makeMbTiles();
 });
+
+if (settings.cleanprocessfolders) {
+    let cmds = [];
+    cmds.push(`rm -r -f ${dir_1_unzipped}`);
+    cmds.push(`rm -r -f ${dir_2_expanded}`);
+    cmds.push(`rm -r -f ${dir_3_clipped}`);
+    cmds.push(`rm -r -f ${dir_4_tiled}`);
+    cmds.push(`rm -r -f ${dir_5_merged}`);
+    cmds.push(`rm -r -f ${dir_6_quantized}`);
+    cmds.forEach(delcmd => executeCommand(delcmd));
+}
 
 reportProcessingTime();
 return;
