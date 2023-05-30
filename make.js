@@ -23,7 +23,7 @@ let clippedShapeFolder = "";
 
 let cmd = "";
 let workarea = "";
-let chartcache = "";
+
 let chartfolder = "";
 let dir_1_unzipped = "";
 let dir_2_expanded = "";
@@ -31,6 +31,9 @@ let dir_3_clipped = "";
 let dir_4_tiled = "";
 let dir_5_merged = "";
 let dir_6_quantized = "";
+
+let chartcache = `${__dirname}/chartcache`;
+if (!fs.existsSync(chartcache)) fs.mkdirSync(chartcache);
 
 let startdate = new Date(new Date().toLocaleString());
 
@@ -42,7 +45,6 @@ settings.charttypes.forEach((chtype) => {
     chartlayertype = settings.layertypes[settings.layertypeindex];
     charturl = urltemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
     clippedShapeFolder = `${__dirname}/clipshapes/${chartworkname.toLowerCase()}`;
-    chartcache = `${__dirname}/chartcache`;
 
     workarea = `${__dirname}/workarea`;
     chartfolder = `${workarea}/${chartworkname}`;
