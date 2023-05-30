@@ -124,8 +124,6 @@ function unzipCharts() {
  * Clean up chart tif names by converting spaces and dashes to underscores
  */
 function normalizeChartNames() {
-    let tifname = "";
-    let tfwname = "";
     let files = fs.readdirSync(dir_1_unzipped);
 
     files.forEach((file) => {
@@ -133,12 +131,12 @@ function normalizeChartNames() {
         if ((fname.endsWith(".tif")) &&
             (fname.search("fly") == -1) &&
             (fname.search("planning") == -1)) {
-
+            
+            let nfname = normalizeFileName(fname);
+            let basename = nfname.replace(".tif", "");
             let tfwfile = file.replace(".tif", ".tfw");
-            let basename = normalizeFileName(fname).replace("_tac", "").replace(".tif", "");
-
-            tifname = `${dir_1_unzipped}/${basename}.tif`;
-            tfwname = `${dir_1_unzipped}/${basename}.tfw`;
+            let tifname = `${dir_1_unzipped}/${basename}.tif`;
+            let tfwname = `${dir_1_unzipped}/${basename}.tfw`;
 
             fs.renameSync(`${dir_1_unzipped}/${file}`, tifname);
             fs.renameSync(`${dir_1_unzipped}/${tfwfile}`, tfwname);
@@ -339,9 +337,9 @@ function buildQuantizingCommandArray() {
  * @returns string with underscores instead of spaces or dashes
  */
 function normalizeFileName(file) {
-    let newname = replaceAll(file, " ", "_");
+    let newname = replaceAll(file, " ", "_").replace("'", "");
     newname = newname.replace("-", "_").replace("_sec", "").toLowerCase();
-    return newname;
+    return newname.replace("_tac", "");
 }
 
 /**
