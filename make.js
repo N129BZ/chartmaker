@@ -14,6 +14,7 @@ let chartdate = getBestChartDate();
 // used for processing timing
 let startdate = new Date(new Date().toLocaleString());
 
+// make sure these "base" folders exist
 let workarea = `${__dirname}/workarea`;
 if (settings.renameworkarea) workarea += `_${chartdate}`;
 if (!fs.existsSync(workarea)) fs.mkdirSync(workarea)
@@ -61,14 +62,13 @@ settings.chartprocessindexlist.forEach((index) => {
 });
 
 if (settings.cleanprocessfolders) {
-    let cmds = [];
-    cmds.push(`rm -r -f ${dir_1_unzipped}`);
-    cmds.push(`rm -r -f ${dir_2_expanded}`);
-    cmds.push(`rm -r -f ${dir_3_clipped}`);
-    cmds.push(`rm -r -f ${dir_4_tiled}`);
-    cmds.push(`rm -r -f ${dir_5_merged}`);
-    cmds.push(`rm -r -f ${dir_6_quantized}`);
-    cmds.forEach(delcmd => executeCommand(delcmd));
+    let workfiles = fs.readdirSync(workarea)
+    workfiles.forEach(file => {
+        if (!file.endsWith(".db")) {
+            cmd = `rm -r -f ${workarea}/${file}`;
+            executeCommand(cmd);
+        }
+    });    
 }
 
 reportProcessingTime();
@@ -147,7 +147,7 @@ function normalizeChartNames() {
 }
 
 /**
- * Perform GDAL operations on all the unzipped charts 
+ * Perform GDAL operations on all the unzipped chart tif images 
  */
 function processImages() {
     /*-----------------------------------------------------------------------
