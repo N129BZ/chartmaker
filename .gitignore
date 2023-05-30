@@ -1,8 +1,7 @@
 
 **/.vscode
 **/node_modules
-**/workarea
-**/workarea_old
+**/workarea*
 **/chartcache
 **/mbutil
 **/tiledatabases
