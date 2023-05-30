@@ -202,7 +202,7 @@ function mergeTiles() {
     });
 
     // Only quantize png images, webp images are quantized via tiling option...
-    if (imageformat == "png") {
+    if (imageformat === "png" && settings.tileimagequality < 100) {
         quantizePngImages();
     }
 }
@@ -244,11 +244,15 @@ function quantizePngImages() {
  */
 function makeMbTiles() {
     console.log(`  * Making MBTILES database`);
+    let sourcefolder = dir_5_merged;
     let zooms = settings.zoomrange.split("-");
     let minzoom = zooms[0];
     let maxzoom = zooms[0];
-    let sourcefolder = imageformat == "webp" ? dir_5_merged : dir_6_quantized;
 
+    if (imageformat === "png" && settings.tileimagequality < 100) {
+        sourcefolder = dir_6_quantized;
+    }
+    
     if (zooms.length === 2) {
         maxzoom = zooms[1];
     }
