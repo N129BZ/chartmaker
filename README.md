@@ -12,15 +12,14 @@
 Since the FAA publishes charts 20 days *before* the official chart date, this application will automatically select                 
 the appropriate chart date from the list of official FAA chart dates in the chartdates.json file.                  
                    
-*  Edit the array values in ***chartprocessindexlist*** with any index numbers for charts you want process, in the order you want them processed. The default is all charts in the index list, in index order.   
+*  Edit the array values in ***chartprocessindexlist*** with any ordinal index numbers from the ***faachartnames*** array for charts you want process, in the order you want them processed. The default is all charts in the index list, in index order. The setting array ***faachartnames*** are the actual zip filenames the FAA uses and are for reference only. **Changes to faachartnames, layertypes, and tiledrivers values and are not recommended!**    
 *  The zoom range value can either be in the format **n-n**, or you can use a single zoom level **n**                
-*  You can change the ***tiledimagequality*** percentage **(1 -100)** and ***tiledriverindex*** index to ***2 (= webp)*** to reduce mbtiles file size.    
+*  You can change the ***tiledimagequality*** percentage from ***1*** up to ***100*** and ***tiledriverindex*** index to ***2*** (webp) to reduce mbtiles file size. The smaller the percentage, the fuzzier the chart will be.   
    *  The tiledimagequality setting works for both ***png*** and ***webp*** images.  
-*  To save disk space, you can set ***cleanmergefolder*** to true
-   *  The merge folder can end up being as fat as 13 gigabytes for the entire chart set
-   *  Quantized images are preserved in their own folder, these will be less than 1/3 the size of the merge folder
-*  To preserve all of the processing folders, you can set ***cleanmergefolder*** to false and ***renameworkarea*** to true.
-   *  This setting will rename the **workarea** folder to include the processed chart date. 
+*  To save disk space, you can set ***cleanprocessfolders*** to true. 
+   *  The merge and/or pngquant work folders will be many gigabytes for the entire chart set and are not needed once processing is complete
+*  To preserve the processed databases, you can set ***renameworkarea*** to true.   
+   *  This will rename the **workarea** folder to include the processed chart date.
 
 ### Additional information       
 The chart zip files are downloaded from the FAA digital raster chart repository and unzipped. The unzipping process will normalize the resultant GEOtiff images and their matching tfw world files to all lower-case filenames with underscores in place of dashes and spaces.     
@@ -33,11 +32,12 @@ As of May 13 2023, the official chart release is for **04-20-2023. You can view 
     "attribution": "Aviation charts <a href='https://github.com/n129bz/chartmaker'>github.com/n129bz/chartmaker</a>",
     "tiledimagequality" : "100",
     "renameworkarea": false,
+    "cleanprocessfolders": true,
     "zoomrange" : "0-11",
     "chartprocessindexlist": [0,1,2,3,4],
     "layertypeindex": 1,
     "tiledriverindex": 2,
-    "charttypes": [
+    "faachartnames": [
         "Grand_Canyon",
         "Helicopter",
         "Caribbean",
