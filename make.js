@@ -40,8 +40,9 @@ let startdate = new Date(new Date().toLocaleString());
 /**
  * All chart processing begins here
  */
-settings.charttypes.forEach((chtype) => {
-    chartworkname = chtype;
+let processindexes = settings.chartprocessindexlist;
+processindexes.forEach((index) => {
+    chartworkname = settings.charttypes[index];
     chartlayertype = settings.layertypes[settings.layertypeindex];
     charturl = urltemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
     clippedShapeFolder = `${__dirname}/clipshapes/${chartworkname.toLowerCase()}`;

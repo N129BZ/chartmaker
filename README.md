@@ -12,10 +12,11 @@
 Since the FAA publishes charts 20 days *before* the official chart date, this application will automatically select                 
 the appropriate chart date from the list of official FAA chart dates in the chartdates.json file.                  
                    
-*  For example, the zoom range value can either be in the format **n-n**, or you can use a single zoom level **n**                
-*  You can also change the ***tiledimagequality*** percentage **(1 -100)** and ***tiledriverindex*** index to ***2 (= webp)*** to reduce mbtiles file size.    
+*  Edit the array values in ***chartprocessindexlist*** with any index numbers for charts you want process, in the order you want them processed. The default is all charts in the index list, in index order.   
+*  The zoom range value can either be in the format **n-n**, or you can use a single zoom level **n**                
+*  You can change the ***tiledimagequality*** percentage **(1 -100)** and ***tiledriverindex*** index to ***2 (= webp)*** to reduce mbtiles file size.    
    *  The tiledimagequality setting works for both ***png*** and ***webp*** images.  
-*  To save disk space, you can set ***cleanmergefolder*** to true.
+*  To save disk space, you can set ***cleanmergefolder*** to true
    *  The merge folder can end up being as fat as 13 gigabytes for the entire chart set
    *  Quantized images are preserved in their own folder, these will be less than 1/3 the size of the merge folder
 *  To preserve all of the processing folders, you can set ***cleanmergefolder*** to false and ***renameworkarea*** to true.

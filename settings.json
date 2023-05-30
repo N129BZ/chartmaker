@@ -1,9 +1,10 @@
 {
+    "attribution": "Aviation charts <a href='https://github.com/n129bz/chartmaker'>github.com/n129bz/chartmaker</a>",
     "tiledimagequality" : "100",
     "renameworkarea": false,
     "zoomrange" : "0-11",
+    "chartprocessindexlist": [0,1,2,3,4],
     "layertypeindex": 1,
-    "attribution": "Aviation charts <a href='https://github.com/n129bz/chartmaker'>github.com/n129bz/chartmaker</a>",
     "tiledriverindex": 2,
     "charttypes": [
         "Grand_Canyon",
