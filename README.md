@@ -21,8 +21,7 @@ Since the FAA publishes charts 20 days *before* the official chart date, this ap
   * The tiledimagequality setting works for both **png** and **webp** images.  
 * To save disk space, you can set **cleanprocessfolders** to true. 
   * The merge and/or pngquant work folders will be many gigabytes for the entire chart set and are not needed once processing is complete
-* To preserve the processed databases, you can set **renameworkarea** to true.   
-  * This will rename the **workarea** folder to include the processed chart date.
+* To preserve the processed databases, you can set **renameworkarea** to true. This will rename the **workarea** folder to include the processed chart date so the next run will not overwrite the folder.
 
 ### Additional information
 
