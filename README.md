@@ -15,7 +15,7 @@
 
 Since the FAA publishes charts 20 days *before* the official chart date, this application will automatically select the appropriate chart date from the list of official FAA chart dates in the chartdates.json file.                  
 
-* Edit the values in **chartprocessindexes** with any ordinal index numbers from the **faachartnames** list for charts you want to process, in the order you want them processed. The default is all charts in the index list, in index order. The setting array **faachartnames** are the actual zip filenames the FAA uses and are for reference only. **Changes to downloadtemplate, faachartnames, layertypes, and tiledrivers values and are not recommended!**    
+* Edit the values in **chartprocessindexes** with any ordinal index numbers from the **faachartnames** list for charts you want to process, in the order you want them processed. The default is all charts in the index list, in index order. The setting array **faachartnames** are the actual zip filenames the FAA uses and are for reference only. **Changes to the downloadtemplate or faachartnames, layertypes, and tiledrivers lists are not recommended!**    
 * The zoom range value can either be in the format **n-n**, or you can use a single zoom level **n**                
 * You can change the **tiledimagequality** percentage from ***1*** up to ***100*** and **tiledriverindex** index to ***2*** (webp) to reduce mbtiles file size. The smaller the percentage, the fuzzier the chart will be.   
   * The tiledimagequality setting works for both **png** and **webp** images.  
