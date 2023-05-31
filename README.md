@@ -37,7 +37,7 @@ As of May 13 2023, the official chart release is for **04-20-2023. You can view 
 {
     "attribution": "Aviation charts <a href='https://github.com/n129bz/chartmaker'>github.com/n129bz/chartmaker</a>",
     "downloadtemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
-    "tileimagequality" : "100",
+    "tileimagequality" : "80",
     "renameworkarea": true,
     "cleanprocessfolders": true,
     "zoomrange" : "0-11",
