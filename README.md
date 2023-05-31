@@ -13,8 +13,7 @@
 
 ### Settings.json
 
-Since the FAA publishes charts 20 days *before* the official chart date, this application will automatically select                 
-the appropriate chart date from the list of official FAA chart dates in the chartdates.json file.                  
+Since the FAA publishes charts 20 days *before* the official chart date, this application will automatically select the appropriate chart date from the list of official FAA chart dates in the chartdates.json file.                  
 
 * Edit the values in **chartprocessindexes** with any ordinal index numbers from the **faachartnames** list for charts you want to process, in the order you want them processed. The default is all charts in the index list, in index order. The setting array **faachartnames** are the actual zip filenames the FAA uses and are for reference only. **Changes to downloadtemplate, faachartnames, layertypes, and tiledrivers values and are not recommended!**    
 * The zoom range value can either be in the format **n-n**, or you can use a single zoom level **n**                
