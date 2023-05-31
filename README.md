@@ -1,6 +1,6 @@
 # chartmaker - Download FAA digital raster charts and translate into mbtiles databases
 
-### Requirements: Python 3, Node.js, Perl, pngquant, and gdal-bin.
+### Requirements: Python 3, Node.js, Perl, pngquant, and GDAL v3.6.2
 
 ### Instructions:
 
