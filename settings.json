@@ -1,7 +1,7 @@
 {
     "attribution": "Aviation charts <a href='https://github.com/n129bz/chartmaker'>github.com/n129bz/chartmaker</a>",
     "downloadtemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
-    "tileimagequality" : "70",
+    "tileimagequality" : "80",
     "renameworkarea": false,
     "zoomrange" : "0-11",
     "chartprocessindexes": [0,1,2,3,4],
