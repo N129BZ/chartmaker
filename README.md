@@ -2,8 +2,7 @@
 
 ### Requirements: Python 3, Node.js, Perl, pngquant, and GDAL v3.6.2
 
-### Instructions:
-
+#### Installation:
 1.) This node.js application is designed to run on Linux, and also runs well on **WSL2** (Windows Subsystem for Linux)         
 2.) Clone the repository, change directory to **chartmaker**, open a terminal and enter **npm install**        
 3.) Give execute permissions to **perlsetup.sh** shell script and run it to install perl dependencies           
