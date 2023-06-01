@@ -3,14 +3,25 @@
 const fs = require('fs');
 const { execSync } = require('child_process');
 
-/**
- * Read the settings.json file into a json object
- */
-let settings = JSON.parse(fs.readFileSync(`${__dirname}/settings.json`));
+// logging
 let logfd = undefined;
+const logEntry = function(entry) {
+    if (settings.logtofile) {
+        if (logfd == undefined) {
+            logfd = fs.openSync(`${__dirname}/debug.log`, 'w', 0o666);
+        }
+        fs.writeSync(logfd, `${entry}\r\n`);
+    }
+    else {
+        console.log(entry);
+    }
+}
+
+// load settings
+const settings = JSON.parse(fs.readFileSync(`${__dirname}/settings.json`));
 
 // Get the current chart date from the chartdates.json file
-let chartdate = getBestChartDate();
+const chartdate = getBestChartDate();
 
 // used for processing timing
 let startdate = new Date(new Date().toLocaleString());
@@ -50,7 +61,7 @@ settings.chartprocessindexes.forEach((index) => {
         // IFR chart
         charturl = settings.ifrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
         clippedShapeFolder = `${__dirname}/clipshapes/${settings.faachartnames[index][2].toLowerCase()}`;
-        chartname = settings.faachartnames[index][2];
+        chartname = settings.faachartnames[index][2]; // use alias value for IFR
         chartfolder = `${workarea}/${chartname}`;
     }
     else {
@@ -524,21 +535,5 @@ function normalizeClipNames() {
     }
     catch (err) {
         logEntry(err.message);
-    }
-}
-
-/**
- * Logging
- */
-function logEntry(entry)
-{
-    if (settings.logtofile) {
-        if (logfd == undefined) {
-            logfd = fs.openSync(`${__dirname}/debug.log`, 'w', 0o666);
-        }
-        fs.writeSync(logfd, `${entry}\r\n`);
-    }
-    else {
-        console.log(entry);
     }
 }

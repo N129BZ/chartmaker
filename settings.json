@@ -2,14 +2,15 @@
     "attribution": "Aviation charts <a href='https://github.com/n129bz/chartmaker'>github.com/n129bz/chartmaker</a>",
     "vfrdownloadtemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
     "ifrdownloadtemplate": "https://aeronav.faa.gov/enroute/<chartdate>/<charttype>.zip",
-    "tileimagequality" : "80",
+
     "renameworkarea": false,
     "logtofile": true,
-    "zoomrange" : "0-11",
-    "chartprocessindexes": [0,1,2,3,4,5],
     "cleanprocessfolders": false,
-    "layertypeindex": 1,
-    "tiledriverindex": 2,
+
+    "tileimagequality" : 80,
+    "zoomrange" : "0-11",
+
+    "chartprocessindexes": [0,1,2,3,4,5],
     "faachartnames": [
         ["Grand_Canyon", "vfr"],
         ["Helicopter", "vfr"],
@@ -18,10 +19,14 @@
         ["Sectional", "vfr"],
         ["DDECUS", "ifr", "Enroute_Low"]
     ],
+
+    "layertypeindex": 1,   
     "layertypes": [
         "baselayer", 
         "overlay"
     ],
+
+    "tiledriverindex": 2,
     "tiledrivers": [
         "png",
         "jpg",
