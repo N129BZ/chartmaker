@@ -8,7 +8,7 @@
 2.) Clone the repository, change directory to **chartmaker**, open a terminal and enter **npm install**        
 3.) Give execute permissions to **perlsetup.sh** shell script and run it to install perl dependencies           
 4.) Install the **pngquant** png image compression utility: (deb example) **sudo apt install pngquant**      
-5.) Run the application in a terminal with the command***** node make *****              
+5.) Run the application in a terminal with the command **node make**                 
 6.) Go do something else... depending on the desired chart, the process can take several hours to complete.     
 
 ### Settings.json
