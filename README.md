@@ -13,7 +13,7 @@
 
 ### Settings.json
 
-Since the FAA publishes charts 20 days *before* the official chart date, this application will automatically select the appropriate chart date from the list of official FAA chart dates in the chartdates.json file.                  
+Since the FAA publishes charts 20 days *before* the official chart date, this application will automatically select the nearest chart date from the list of official FAA chart dates in the chartdates.json file.                  
 
 * Edit the values in **chartprocessindexes** with any ordinal index numbers from the **faachartnames** list for charts you want to process, in the order you want them processed. The default is all charts in the index list, in index order. The setting array **faachartnames** are the actual zip filenames the FAA uses and are for reference only. **Changes to the downloadtemplate or faachartnames, layertypes, and tiledrivers lists are not recommended!**    
 * The zoom range value can either be in the format **n-n**, or you can use a single zoom level **n**                
@@ -25,9 +25,9 @@ Since the FAA publishes charts 20 days *before* the official chart date, this ap
 
 ### Additional information
 
-The chart zip files are downloaded from the FAA digital raster chart repository and unzipped. The unzipping process will normalize the resultant GEOtiff images and their matching tfw world files to all lower-case filenames with underscores in place of dashes and spaces.     
+The chart zip files are downloaded from the FAA digital raster chart repository and unzipped. After the unzipping process all of the the resultant GEOtiff images and their matching tfw world file names will be "normalized" to all lower-case filenames with underscores in place of dashes and spaces and any apostrophes removed.     
 
-As of May 13 2023, the official chart release is for **04-20-2023. You can view those release dates up to the year 2044 in the chartdates.json file. Also note that the FAA publishes these chart files *20 days before* an official release date.**        
+As of May 13 2023, the official chart release is for **04-20-2023. You can view the official FAA publish release dates up to the year 2044 in the chartdates.json file. Also note that FAA publishes these charts *20 days before* an official release date.**        
 
 **Values in settings.json:**
 
