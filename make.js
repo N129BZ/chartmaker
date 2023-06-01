@@ -7,6 +7,7 @@ const { execSync } = require('child_process');
  * Read the settings.json file into a json object
  */
 let settings = JSON.parse(fs.readFileSync(`${__dirname}/settings.json`));
+let logfd = undefined;
 
 // Get the current chart date from the chartdates.json file
 let chartdate = getBestChartDate();
@@ -35,23 +36,35 @@ let dir_3_clipped = "";
 let dir_4_tiled = "";
 let dir_5_merged = "";
 let dir_6_quantized = "";
+let isenroute = false;
 
 /**
  * All chart processing begins here
  */
 settings.chartprocessindexes.forEach((index) => {
-    chartworkname = settings.faachartnames[index];
+    chartworkname = settings.faachartnames[index][0];
     chartlayertype = settings.layertypes[settings.layertypeindex];
-    charturl = settings.downloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
-    clippedShapeFolder = `${__dirname}/clipshapes/${chartworkname.toLowerCase()}`;
-    chartfolder = `${workarea}/${chartworkname}`;
+    isenroute = settings.faachartnames[index][1] === "enroute";
+    if (isenroute) {
+        // IFR chart
+        charturl = settings.ifrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
+        clippedShapeFolder = `${__dirname}/clipshapes/${settings.faachartnames[index][2].toLowerCase()}`;
+        chartfolder = `${workarea}/${settings.faachartnames[index][2]}`;
+    }
+    else {
+        // VFR chart
+        charturl = settings.vfrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
+        clippedShapeFolder = `${__dirname}/clipshapes/${chartworkname.toLowerCase()}`;
+        chartfolder = `${workarea}/${chartworkname}`;
+    }
+    
     dir_1_unzipped = `${chartfolder}/1_unzipped`;
     dir_2_expanded = `${chartfolder}/2_expanded`;
     dir_3_clipped = `${chartfolder}/3_clipped`;
     dir_4_tiled = `${chartfolder}/4_tiled`;
     dir_5_merged = `${chartfolder}/5_merged`;
     dir_6_quantized = `${chartfolder}/6_quantized`;
-
+    
     makeWorkingFolders();
     downloadCharts();
     unzipCharts();
@@ -72,13 +85,13 @@ if (settings.cleanprocessfolders) {
 }
 
 reportProcessingTime();
-return;
+process.exit();
 
 /**
  * Generate all of the working folders for image processing
  */
 function makeWorkingFolders() {
-    console.log("Creating working area subfolders");
+    logEntry("Creating working area subfolders");
     if (!fs.existsSync(chartfolder)) fs.mkdirSync(chartfolder);
     if (!fs.existsSync(dir_1_unzipped)) fs.mkdirSync(dir_1_unzipped);
     if (!fs.existsSync(dir_2_expanded)) fs.mkdirSync(dir_2_expanded);
@@ -94,7 +107,7 @@ function makeWorkingFolders() {
 function downloadCharts() {
     let chartzip = `${chartcache}/${chartworkname}-${chartdate}.zip`;
     if (fs.existsSync(chartzip)) {
-        console.log(`Using cached ${chartzip}`);
+        logEntry(`Using cached ${chartzip}`);
         return;
     }
     else {
@@ -105,7 +118,7 @@ function downloadCharts() {
                 break;
             }
         }
-        console.log(`Downloading ${chartzip}`);
+        logEntry(`Downloading ${chartzip}`);
         cmd = `wget ${charturl} --output-document=${chartzip}`;
         executeCommand(cmd);
     }
@@ -118,6 +131,26 @@ function unzipCharts() {
     let chartzip = `${chartcache}/${chartworkname}-${chartdate}.zip`;
     cmd = `unzip -o ${chartzip} -x '*.htm' -d ${dir_1_unzipped}`;
     executeCommand(cmd);
+
+    if (isenroute) { // we now have a work area full of sub-zips!!
+        let zipfiles = fs.readdirSync(dir_1_unzipped);
+        zipfiles.forEach(zipfile => {
+            if (zipfile.search("ENR_L") > -1) {
+                cmd = `unzip -o ${dir_1_unzipped}/${zipfile} -d ${dir_1_unzipped}`;
+                executeCommand(cmd);
+            }
+        });
+
+        // now clean out all of the irrelevant files...
+        cmd = `rm -r -f ${dir_1_unzipped}/*.pdf`;
+        executeCommand(cmd);
+
+        cmd = `rm -r -f ${dir_1_unzipped}/*.htm`;
+        executeCommand(cmd);
+
+        cmd = `rm -r -f ${dir_1_unzipped}/*.zip`;
+        executeCommand(cmd);
+    }
 }
 
 /** 
@@ -125,21 +158,11 @@ function unzipCharts() {
  */
 function normalizeChartNames() {
     let files = fs.readdirSync(dir_1_unzipped);
-
     files.forEach((file) => {
-        let fname = file.toLowerCase();
-        if ((fname.endsWith(".tif")) &&
-            (fname.search("fly") == -1) &&
-            (fname.search("planning") == -1)) {
-            
-            let nfname = normalizeFileName(fname);
-            let basename = nfname.replace(".tif", "");
-            let tfwfile = file.replace(".tif", ".tfw");
-            let tifname = `${dir_1_unzipped}/${basename}.tif`;
-            let tfwname = `${dir_1_unzipped}/${basename}.tfw`;
-
-            fs.renameSync(`${dir_1_unzipped}/${file}`, tifname);
-            fs.renameSync(`${dir_1_unzipped}/${tfwfile}`, tfwname);
+        let extension = file.substring(file.indexOf("."));
+        if (extension === ".tif" || extension === ".tfw" || extension === ".tfwx") {
+            let newfile = normalizeFileName(file.toLowerCase());
+            fs.renameSync(`${dir_1_unzipped}/${file}`, `${dir_1_unzipped}/${newfile}`);
         }
     });
 }
@@ -159,7 +182,7 @@ function processImages() {
 
     chartareas.forEach((area) => {
 
-        console.log(`\r\n************** Processing chart: ${area} **************`);
+        logEntry(`* chart ${area}`);
 
         let shapefile = `${clippedShapeFolder}/${area}.shp`;
         let sourcetif = `${dir_1_unzipped}/${area}.tif`;
@@ -167,15 +190,17 @@ function processImages() {
         let clipped = `${dir_3_clipped}/${area}.vrt`;
         let tiled = `${dir_4_tiled}/${area}`
 
-        console.log(`* Expand ${area} to RGBA`);
-        cmd = `gdal_translate -strict -of vrt -co TILED=YES -expand rgba ${sourcetif} ${expanded}`;
+        if (isenroute) { 
+            cmd = `gdal_translate -strict -of vrt -co TILED=YES -co GTIFF_SRS_SOURCE=EPSG ${sourcetif} ${expanded}`;
+        }
+        else {
+            cmd = `gdal_translate -strict -of vrt -co TILED=YES -expand rgba ${sourcetif} ${expanded}`;
+        }
         executeCommand(cmd);
 
-        console.log(`* Clip off border & legend`);
         cmd = `gdalwarp -t_srs EPSG:4326 -dstalpha -cblend 6 -cutline "${shapefile}" -crop_to_cutline ${expanded} ${clipped}`;
         executeCommand(cmd);
 
-        console.log(`* Add overviews for each zoom level`);
         cmd = `gdaladdo --config GDAL_NUM_THREADS ALL_CPUS ${clipped}`;
         executeCommand(cmd);
 
@@ -183,10 +208,8 @@ function processImages() {
         if (imageformat == "webp") {
             formatargs = `--tiledriver=WEBP --webp-quality=${settings.tileimagequality}`
         }
-        console.log(`* Generate ${area} tile images`);
         cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=4 ${formatargs} --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
         executeCommand(cmd);
-
     });
 }
 
@@ -216,7 +239,7 @@ function quantizePngImages() {
     let qcmd = "";
     let cmds = buildQuantizingCommandArray();
     let quantcmd = `pngquant --strip --skip-if-larger --force --quality ${settings.tileimagequality}`;
-    console.log(`*** Quantizing ${cmds.length} png images at ${settings.tileimagequality}%`);
+    logEntry(`quantizing ${cmds.length} png images at ${settings.tileimagequality}% --------------`);
 
     for (i = 0; i < cmds.length; i++) {
         qcmd = `${quantcmd} ${cmds[i][0]} --output ${cmds[i][1]}`;
@@ -232,18 +255,18 @@ function quantizePngImages() {
         }
         interimct++;
         if (interimct >= 1000) {
-            console.log(`${i + 1} of ${cmds.length} images processed`);
+            logEntry(`${i + 1} of ${cmds.length} images processed`);
             interimct = 0;
         }
     }
-    console.log(`  * Total processed image count = ${cmds.length}`);
+    logEntry(`>> Total processed image count = ${cmds.length}`);
 }
 
 /**
  * Create the .mbtiles chart database 
  */
 function makeMbTiles() {
-    console.log(`  * Making MBTILES database`);
+     logEntry(`>> creating mbtiles database`);
     let sourcefolder = dir_5_merged;
     let zooms = settings.zoomrange.split("-");
     let minzoom = zooms[0];
@@ -258,7 +281,14 @@ function makeMbTiles() {
     }
     // create a metadata.json file in the root of the tile directory,
     // mbutil will use this to generate a metadata table in the database.  
-    let chartname = chartworkname.replaceAll("_", " ");
+    let chartname = function() {
+        if (isenroute) {
+            return settings.faachartnames[index][2].replaceAll("_", " "); 
+        }
+        else {
+            return chartworkname.replaceAll("_", " ");
+        }
+    };
     let metajson = `{ 
         "name": "${chartname}",
         "description": "${chartname} Charts",
@@ -275,7 +305,7 @@ function makeMbTiles() {
     fs.writeSync(fd, metajson);
     fs.closeSync(fd);
 
-    let mbtiles = `${workarea}/${chartworkname}.db`;
+    let mbtiles = `${workarea}/${chartname}.db`;
     cmd = `python3 ./mbutil/mb-util --image_format=${imageformat} --scheme=tms ${sourcefolder} ${mbtiles}`;
     executeCommand(cmd);
 }
@@ -371,7 +401,6 @@ function getBestChartDate() {
             let tdays = tdiff / (1000 * 3600 * 24);
             let diffdays = parseInt(tdays.toFixed(0));
             if (diffdays >= -20 && diffdays <= 36) {
-                console.log(diffdays);
                 let m = pad2(dateobj.getMonth() + 1); // months (0-11)
                 let d = pad2(dateobj.getDate());    // day (1-31)
                 let y = dateobj.getFullYear();
@@ -410,7 +439,7 @@ function executeCommand(command) {
             execSync(command, { stdio: 'inherit' });
         }
         catch (error) {
-            console.log(error.message);
+            logEntry(error.message);
             retcode = -1
         }
     }
@@ -440,7 +469,7 @@ function reportProcessingTime() {
     let ss = Math.floor(msec / 1000);
     msec -= ss * 1000;
     // diff = 28800000 => hh = 8, mm = 0, ss = 0, msec = 0
-    console.log(`\r\nStart time: ${startdate}\r\nEnd time: ${date2}\r\nTotal processing time: ${hh}:${mm}:${ss}`);
+    logEntry(`Start time: ${startdate}\r\nEnd time: ${date2}\r\nTotal processing time: ${hh}:${mm}:${ss}`);
 }
 
 /**
@@ -467,7 +496,7 @@ function getGdalInfo(file, searchtext) {
 
     let { stderr } = shell.exec(cmd, { silent: true })
     if (stderr) {
-        console.log(stderr);
+        logEntry(stderr);
     }
 
     let gdaldata = fs.readFileSync(gdalresults, { encoding: 'utf8', flag: 'r' });
@@ -499,6 +528,22 @@ function normalizeClipNames() {
         });
     }
     catch (err) {
-        console.log(err.message);
+        logEntry(err.message);
+    }
+}
+
+/**
+ * Logging
+ */
+function logEntry(entry)
+{
+    if (settings.logtofile) {
+        if (logfd == undefined) {
+            logfd = fs.openSync(`${__dirname}/debug.log`, 'w', 0o666);
+        }
+        fs.writeSync(logfd, `${entry}\r\n`);
+    }
+    else {
+        console.log(entry);
     }
 }
