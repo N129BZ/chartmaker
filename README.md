@@ -51,7 +51,7 @@ As of May 13 2023, the official chart release is for **04-20-2023. You can view 
 "tileimagequality" : 80   <- percentage (1-100) greatly affects processing speed and database size
 "zoomrange" : "0-11"      <- range of overviews to produce, higher takes longer and can make db huge
 ```   
-* *chartprocessindexes control which chart types to process, the array values correspond to their ordinal position in the faachartnames list*   
+* *chartprocessindexes control which chart types to process, the array values correspond to their ordinal position in the faachartnames list, note alias should not contain any spaces*   
 ```
 "chartprocessindexes": [0,1,2,3,4,5], <- charts represented by indexes 0-5 will be processed, in this order   
 "faachartnames": [   
