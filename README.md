@@ -21,10 +21,7 @@ The FAA publishes charts 20 days *before* the official chart date, and chartmake
   * The merge and/or pngquant work folders will be many gigabytes for the entire chart set and are not needed once processing is complete
 * To preserve the processed databases, you can set **renameworkarea** to true. This will rename the **workarea** folder to include the processed chart date so the next run will not overwrite the folder.
 
-#### Additional information
-The chart zip files are downloaded from the FAA digital raster chart repository and unzipped. After the unzipping process all of the the resultant GEOtiff image names (and their matching tfw world files) to be "normalized" to all lower-case filenames with underscores in place of dashes and spaces and any apostrophes removed. This simplifies the down-stream processing of these files since **GDAL** can interpret spaces as argument separators.     
-
-#### Setting values
+#### settings values
 * ***attribution*** is a database metadata value that many mapping applications use for acknowledgement of the database creator*   
 ```
 "attribution": "Aviation charts <a href='https://github.com/n129bz/chartmaker'>github.com/n129bz/chartmaker</a>"   
@@ -74,7 +71,9 @@ The chart zip files are downloaded from the FAA digital raster chart repository 
     "webp"   
 ]
 ```   
-    
+#### Additional information
+The chart zip files are downloaded from the FAA digital raster chart repository and unzipped. After the unzipping process all of the the resultant GEOtiff image names (and their matching tfw world files) to be "normalized" to all lower-case filenames with underscores in place of dashes and spaces and any apostrophes removed. This simplifies the down-stream processing of these files since **GDAL** can interpret spaces as argument separators.   
+
 ### ToDo:
 
 **Suggestions welcome!**
