@@ -1,4 +1,4 @@
-# chartmaker - Download FAA VFR and IFR digital raster charts and translate into mbtiles databases
+# chartmaker - Download FAA VFR and IFR digital raster charts and translate into mbtiles databases for other mapping applications
 
 ### Requirements: Python 3, Node.js, Perl, pngquant, and GDAL v3.6.2
 
