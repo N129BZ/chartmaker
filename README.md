@@ -11,10 +11,9 @@
 5.) Run the application in a terminal with the command **node make**                 
 6.) Go do something else... depending on the number of charts and image quality, the process can take several hours to complete.     
 
-### Settings.json
-
-Since the FAA publishes charts 20 days *before* the official chart date, this application will automatically select the nearest chart date from the list of official FAA chart dates in the chartdates.json file. (See "**setting values**" below.)                  
-
+#### chartdates.json
+The FAA publishes charts 20 days *before* the official chart date, and chartmaker will automatically select the nearest chart date from this file of official FAA chart 56-day release dates, all the way up to the year 2044. If the next chart date is more than 20 days out, it will get the current chart date.                   
+#### settings.json
 * Edit the values in **chartprocessindexes** with any ordinal index numbers from the **faachartnames** list for charts you want to process, in the order you want them processed. The default is all charts in the index list, in index order. The setting array **faachartnames** are the actual zip filenames the FAA uses and are for reference only. **Changes to the downloadtemplate or faachartnames, layertypes, and tiledrivers lists are not recommended!**    
 * The zoom range value can either be in the format **n-n**, or you can use a single zoom level **n**                
 * You can change the **tiledimagequality** percentage from ***1*** up to ***100*** and **tiledriverindex** index to ***2*** (webp) to reduce mbtiles file size. The smaller the percentage, the fuzzier the chart will be.   
@@ -23,14 +22,10 @@ Since the FAA publishes charts 20 days *before* the official chart date, this ap
   * The merge and/or pngquant work folders will be many gigabytes for the entire chart set and are not needed once processing is complete
 * To preserve the processed databases, you can set **renameworkarea** to true. This will rename the **workarea** folder to include the processed chart date so the next run will not overwrite the folder.
 
-### Additional information
-
+#### Additional information
 The chart zip files are downloaded from the FAA digital raster chart repository and unzipped. After the unzipping process all of the the resultant GEOtiff images and their matching tfw world file names will be "normalized" to all lower-case filenames with underscores in place of dashes and spaces and any apostrophes removed.     
 
-As of May 13 2023, the official chart release is for **04-20-2023. You can view the official FAA publish release dates up to the year 2044 in the chartdates.json file. Also note that FAA publishes these charts *20 days before* an official release date.**        
-
-**setting values:**
-
+#### Setting values
 * ***attribution** is whatever link or other info you want on the bottom right corner of a map*   
 ```
 "attribution": "Aviation charts <a href='https://github.com/n129bz/chartmaker'>github.com/n129bz/chartmaker</a>"   
