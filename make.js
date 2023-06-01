@@ -26,6 +26,7 @@ if (!fs.existsSync(chartcache)) fs.mkdirSync(chartcache);
 let imageformat = settings.tiledrivers[settings.tiledriverindex];
 let chartlayertype = "";
 let chartworkname = "";
+let chartname = "";
 let charturl = "";
 let clippedShapeFolder = "";
 let cmd = "";
@@ -36,7 +37,7 @@ let dir_3_clipped = "";
 let dir_4_tiled = "";
 let dir_5_merged = "";
 let dir_6_quantized = "";
-let isenroute = false;
+let isifrchart = false;
 
 /**
  * All chart processing begins here
@@ -44,17 +45,19 @@ let isenroute = false;
 settings.chartprocessindexes.forEach((index) => {
     chartworkname = settings.faachartnames[index][0];
     chartlayertype = settings.layertypes[settings.layertypeindex];
-    isenroute = settings.faachartnames[index][1] === "enroute";
-    if (isenroute) {
+    isifrchart = settings.faachartnames[index][1] === "ifr";
+    if (isifrchart) {
         // IFR chart
         charturl = settings.ifrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
         clippedShapeFolder = `${__dirname}/clipshapes/${settings.faachartnames[index][2].toLowerCase()}`;
-        chartfolder = `${workarea}/${settings.faachartnames[index][2]}`;
+        chartname = settings.faachartnames[index][2];
+        chartfolder = `${workarea}/${chartname}`;
     }
     else {
         // VFR chart
         charturl = settings.vfrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
         clippedShapeFolder = `${__dirname}/clipshapes/${chartworkname.toLowerCase()}`;
+        chartname = chartworkname;
         chartfolder = `${workarea}/${chartworkname}`;
     }
     
@@ -132,7 +135,7 @@ function unzipCharts() {
     cmd = `unzip -o ${chartzip} -x '*.htm' -d ${dir_1_unzipped}`;
     executeCommand(cmd);
 
-    if (isenroute) { // we now have a work area full of sub-zips!!
+    if (isifrchart) { // we now have a work area full of sub-zips!!
         let zipfiles = fs.readdirSync(dir_1_unzipped);
         zipfiles.forEach(zipfile => {
             if (zipfile.search("ENR_L") > -1) {
@@ -190,7 +193,7 @@ function processImages() {
         let clipped = `${dir_3_clipped}/${area}.vrt`;
         let tiled = `${dir_4_tiled}/${area}`
 
-        if (isenroute) { 
+        if (isifrchart) { 
             cmd = `gdal_translate -strict -of vrt -co TILED=YES -co GTIFF_SRS_SOURCE=EPSG ${sourcetif} ${expanded}`;
         }
         else {
@@ -279,19 +282,11 @@ function makeMbTiles() {
     if (zooms.length === 2) {
         maxzoom = zooms[1];
     }
-    // create a metadata.json file in the root of the tile directory,
-    // mbutil will use this to generate a metadata table in the database.  
-    let chartname = function() {
-        if (isenroute) {
-            return settings.faachartnames[index][2].replaceAll("_", " "); 
-        }
-        else {
-            return chartworkname.replaceAll("_", " ");
-        }
-    };
+    
+    let chartdesc = chartname.replaceAll("_", " ");
     let metajson = `{ 
         "name": "${chartname}",
-        "description": "${chartname} Charts",
+        "description": "${chartdesc} Charts",
         "version": "1.1",
         "type": "${chartlayertype}",
         "format": "${imageformat}",

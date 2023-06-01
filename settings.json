@@ -11,12 +11,12 @@
     "layertypeindex": 1,
     "tiledriverindex": 2,
     "faachartnames": [
-        ["Grand_Canyon", "visual"],
-        ["Helicopter", "visual"],
-        ["Caribbean", "visual"],
-        ["Terminal", "visual"],
-        ["Sectional", "visual"],
-        ["DDECUS", "enroute", "Enroute_Low"]
+        ["Grand_Canyon", "vfr"],
+        ["Helicopter", "vfr"],
+        ["Caribbean", "vfr"],
+        ["Terminal", "vfr"],
+        ["Sectional", "vfr"],
+        ["DDECUS", "ifr", "Enroute_Low"]
     ],
     "layertypes": [
         "baselayer", 
