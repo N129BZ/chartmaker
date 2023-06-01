@@ -78,6 +78,6 @@ The chart zip files are downloaded from the FAA digital raster chart repository 
     
 ### ToDo:
 
-Add IFR charts, etc.    
+**Suggestions welcome!**
 
 #### ***inspired by https://github.com/jlmcgraw/aviationCharts***
