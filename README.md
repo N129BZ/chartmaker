@@ -26,11 +26,11 @@ The FAA publishes charts 20 days *before* the official chart date, and chartmake
 The chart zip files are downloaded from the FAA digital raster chart repository and unzipped. After the unzipping process all of the the resultant GEOtiff images and their matching tfw world file names will be "normalized" to all lower-case filenames with underscores in place of dashes and spaces and any apostrophes removed.     
 
 #### Setting values
-* ***attribution** is whatever link or other info you want on the bottom right corner of a map*   
+* ***attribution*** is a database metadata value that many mapping applications use for acknowledgement of the database creator*   
 ```
 "attribution": "Aviation charts <a href='https://github.com/n129bz/chartmaker'>github.com/n129bz/chartmaker</a>"   
 ```   
-* ***wget download templates,** values inside brackets <> are replaced with values to match FAA's file names*       
+* ***wget download templates,*** values inside brackets <> are replaced with values to match FAA's file names*       
 ```
 "vfrdownloadtemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip"   
 "ifrdownloadtemplate": "https://aeronav.faa.gov/enroute/<chartdate>/<charttype>.zip"
@@ -41,12 +41,12 @@ The chart zip files are downloaded from the FAA digital raster chart repository 
 "logtofile": true             <- if true will produce a file "debug.log"  
 "cleanprocessfolders": false  <- if true then working folders are removed after processing
 ```     
-* ***tiled image processing values,** tileimagequality has a huge effect on png processing time, not quite as much with webp*    
+* ***tile image quality percentage,*** tileimagequality has a huge effect on png processing time, not quite as much with webp*    
 ```
 "tileimagequality" : 80   <- percentage (1-100) greatly affects processing speed and database size
 "zoomrange" : "0-11"      <- range of overviews to produce, higher takes longer and can make db huge
 ```   
-* ***chartprocessindexes** control which chart types to process, the array values correspond to their ordinal position in the faachartnames list, NOTE: any actual alias name should not contain any spaces*   
+* ***chartprocessindexes*** control which chart types to process, the array values correspond to their ordinal position in the faachartnames list, NOTE: any actual alias name should not contain any spaces*   
 ```
 "chartprocessindexes": [0,1,2,3,4,5], <- charts represented by indexes 0-5 will be processed, in this order   
 "faachartnames": [   
@@ -58,7 +58,7 @@ The chart zip files are downloaded from the FAA digital raster chart repository 
     ["DDECUS", "ifr", "Enroute_Low"]  <- alias for the file DDECUS (which means Digital Data Enroute Continental US)   
 ]
 ```       
-* ***layertypeindex** controls the layertype and therefore how it will be rendered on the map*   
+* ***layertypeindex*** controls the layertype and therefore how it will be rendered on the map*   
 ```
 "layertypeindex": 1,   
 "layertypes": [   
@@ -66,7 +66,7 @@ The chart zip files are downloaded from the FAA digital raster chart repository 
     "overlay"   
 ]
 ```      
-* ***tiledriverindex** determines the tiledriver type, for example webp produces the smallest image size but png produces the sharpest images*   
+* ***tiledriverindex*** determines the tiledriver type, for example webp produces the smallest image size but png produces the sharpest images*   
 ```
 "tiledriverindex": 2,   
 "tiledrivers": [   
