@@ -1,4 +1,4 @@
-# chartmaker - Download FAA digital raster charts and translate into mbtiles databases
+# chartmaker - Download FAA VFR and IFR digital raster charts and translate into mbtiles databases
 
 ### Requirements: Python 3, Node.js, Perl, pngquant, and GDAL v3.6.2
 
@@ -27,40 +27,60 @@ Since the FAA publishes charts 20 days *before* the official chart date, this ap
 
 The chart zip files are downloaded from the FAA digital raster chart repository and unzipped. The unzipping process will normalize the resultant GEOtiff images and their matching tfw world files to all lower-case filenames with underscores in place of dashes and spaces.     
 
-As of May 13 2023, the official chart release is for **04-20-2023. You can view those release dates up to the year 2044 in the chartdates.json file** or view the list at: https://aeronav.faa.gov/visual/10-07-2021/sectional-files. **Also note that the FAA publishes these chart files *20 days before* an official release date.**        
+As of May 13 2023, the official chart release is for **04-20-2023. You can view those release dates up to the year 2044 in the chartdates.json file. Also note that the FAA publishes these chart files *20 days before* an official release date.**        
 
-**settings.json:**                                                                                                              
+**Values in settings.json:**
 
+* *attribution is whatever link or other info you want on the bottom right corner of a map*   
 ```
-{
-    "attribution": "Aviation charts <a href='https://github.com/n129bz/chartmaker'>github.com/n129bz/chartmaker</a>",
-    "downloadtemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
-    "tileimagequality" : "80",
-    "renameworkarea": true,
-    "cleanprocessfolders": true,
-    "zoomrange" : "0-11",
-    "chartprocessindexlist": [0,1,2,3,4],
-    "layertypeindex": 1,
-    "tiledriverindex": 2,
-    "faachartnames": [
-        "Grand_Canyon",
-        "Helicopter",
-        "Caribbean",
-        "Terminal",
-        "Sectional"
-    ],
-    "layertypes": [
-        "baselayer", 
-        "overlay"
-    ],
-    "tiledrivers": [
-        "png",
-        "jpg",
-        "webp"
-    ]
-}
+"attribution": "Aviation charts <a href='https://github.com/n129bz/chartmaker'>github.com/n129bz/chartmaker</a>"   
+```   
+* *wget download templates, values inside brackets <> are replaced with values to match FAA's file names*       
 ```
-
+"vfrdownloadtemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip"   
+"ifrdownloadtemplate": "https://aeronav.faa.gov/enroute/<chartdate>/<charttype>.zip"
+```  
+* *application flags*   
+```
+"renameworkarea": false       <- if true, will append chart date to the working folder name  
+"logtofile": true             <- if true will produce a file "debug.log"  
+"cleanprocessfolders": false  <- if true then working folders are removed after processing
+```     
+* *tiled image processing values, tileimagequality has a huge effect on png processing time, not quite as much with webp*    
+```
+"tileimagequality" : 80   <- percentage (1-100) greatly affects processing speed and database size
+"zoomrange" : "0-11"      <- range of overviews to produce, higher takes longer and can make db huge
+```   
+* *chartprocessindexes control which chart types to process, the array values correspond to their ordinal position in the faachartnames list*   
+```
+"chartprocessindexes": [0,1,2,3,4,5], <- charts represented by indexes 0-5 will be processed, in this order   
+"faachartnames": [   
+    ["Grand_Canyon", "vfr", ""],      <- as in [FAA chart file name, type, no alias needed for vfr charts]   
+    ["Helicopter", "vfr", ""],   
+    ["Caribbean", "vfr", ""],   
+    ["Terminal", "vfr", ""],   
+    ["Sectional", "vfr", ""],   
+    ["DDECUS", "ifr", "Enroute_Low"]  <- alias for the file DDECUS (which means Digital Data Enroute Continental US)   
+]
+```       
+* *layertypeindex controls the layertype and therefore how it will be rendered on the map*   
+```
+"layertypeindex": 1,   
+"layertypes": [   
+    "baselayer",    
+    "overlay"   
+]
+```      
+* *tiledriverindex determines the tiledriver type, for example webp produces the smallest image size but png produces the sharpest images*   
+```
+"tiledriverindex": 2,   
+"tiledrivers": [   
+    "png",   
+    "jpg",   
+    "webp"   
+]
+```   
+    
 ### ToDo:
 
 Add IFR charts, etc.    
