@@ -4,7 +4,7 @@
     "ifrdownloadtemplate": "https://aeronav.faa.gov/enroute/<chartdate>/<charttype>.zip",
 
     "renameworkarea": false,
-    "logtofile": false,
+    "logtofile": true,
     "cleanprocessfolders": false,
 
     "tileimagequality" : 80,

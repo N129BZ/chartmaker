@@ -201,13 +201,16 @@ function processImages() {
         let expanded = `${dir_2_expanded}/${area}.vrt`;
         let clipped = `${dir_3_clipped}/${area}.vrt`;
         let tiled = `${dir_4_tiled}/${area}`
+        let expandopt = "";
 
-        if (isifrchart) { 
-            cmd = `gdal_translate -strict -of vrt -co TILED=YES --config GTIFF_SRS_SOURCE EPSG ${sourcetif} ${expanded}`;
+        // determine if RGB expansion is required
+        cmd = `gdalinfo -json ${sourcetif}`;
+        let infojson = JSON.parse(execSync(cmd));
+        if (infojson.bands.length === 1) {
+            expandopt = "-expand rgba";
         }
-        else {
-            cmd = `gdal_translate -strict -of vrt -co TILED=YES -expand rgba ${sourcetif} ${expanded}`;
-        }
+        
+        cmd = `gdal_translate -strict -of vrt -co TILED=YES ${expandopt} --config GTIFF_SRS_SOURCE EPSG ${sourcetif} ${expanded}`;
         executeCommand(cmd);
 
         cmd = `gdalwarp -t_srs EPSG:4326 -dstalpha -cblend 6 -cutline "${shapefile}" -crop_to_cutline ${expanded} ${clipped}`;
