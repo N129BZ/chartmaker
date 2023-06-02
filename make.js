@@ -51,7 +51,7 @@ let dir_6_quantized = "";
 let isifrchart = false;
 
 /**
- * All chart processing begins here
+ * Chart processing starts here
  */
 settings.chartprocessindexes.forEach((index) => {
     chartworkname = settings.faachartnames[index][0];
@@ -277,24 +277,22 @@ function quantizePngImages() {
 }
 
 /**
- * Create the .mbtiles chart database 
+ * Create the mbtiles database 
  */
 function makeMbTiles() {
-     logEntry(`>> creating mbtiles database`);
+
+    logEntry(`>> generating metadata json`);
     let sourcefolder = dir_5_merged;
     let zooms = settings.zoomrange.split("-");
-    let minzoom = zooms[0];
-    let maxzoom = zooms[0];
-
+    let minzoom = zooms[0];   
+    let maxzoom = zooms.length > 1 ? zooms[1] : zooms[0];
+    
+    // if png and any quality below 100%, use the quantized workarea folder
     if (imageformat === "png" && settings.tileimagequality < 100) {
         sourcefolder = dir_6_quantized;
     }
     
-    if (zooms.length === 2) {
-        maxzoom = zooms[1];
-    }
-    
-    let chartdesc = chartname.replaceAll("_", " ");
+    let chartdesc = chartname.replaceAll("_", " "); // normalize description
     let metajson = `{ 
         "name": "${chartname}",
         "description": "${chartdesc} Charts",
@@ -307,11 +305,14 @@ function makeMbTiles() {
         "attribution": "${settings.attribution}" 
     }`;
     let fpath = `${sourcefolder}/metadata.json`;
-    let fd = fs.openSync(fpath, 'w');
+    let fd = fs.openSync(fpath, 'w'); 
     fs.writeSync(fd, metajson);
     fs.closeSync(fd);
 
     let mbtiles = `${workarea}/${chartname}.db`;
+    fs.rmSync(mbtiles, { force: true });  
+    
+    logEntry(`>> creating database: ${mbtiles}`);
     cmd = `python3 ./mbutil/mb-util --image_format=${imageformat} --scheme=tms ${sourcefolder} ${mbtiles}`;
     executeCommand(cmd);
 }
@@ -425,32 +426,17 @@ function getBestChartDate() {
 }
 
 /**
- * Execute the passed in command and return success or failure code
+ * Execute the passed in command and log the result
  * @param {string} command 
- * @returns the return code of a processing command
  */
 function executeCommand(command) {
-    let retcode = 0;
-    let retry = false;
-
     try {
-        execSync(command, { stdio: 'inherit' });
+        var result = execSync(command).toString();
+        logEntry(result);
     }
     catch (error) {
-        retry = true;
+        logEntry(error.message);
     }
-
-    if (retry) {
-        try {
-            execSync(command, { stdio: 'inherit' });
-        }
-        catch (error) {
-            logEntry(error.message);
-            retcode = -1
-        }
-    }
-
-    return retcode;
 }
 
 /**
