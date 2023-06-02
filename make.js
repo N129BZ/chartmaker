@@ -3,28 +3,25 @@
 const fs = require('fs');
 const { execSync } = require('child_process');
 
-// logging
-let logfd = undefined;
-const logEntry = function(entry) {
-    if (settings.logtofile) {
-        if (logfd == undefined) {
-            logfd = fs.openSync(`${__dirname}/debug.log`, 'w', 0o666);
-        }
-        fs.writeSync(logfd, `${entry}\r\n`);
-    }
-    else {
-        console.log(entry);
-    }
-}
-
 // load settings
 const settings = JSON.parse(fs.readFileSync(`${__dirname}/settings.json`));
+
+// logging
+let logfd = undefined;
+const setupDebugLog = function(logfolder) {
+    if (settings.logtofile) {
+        logfd = fs.openSync(`${logfolder}/debug.log`, 'w', 0o666);
+    }
+}
+const logEntry = function(entry) {
+    settings.logtofile ? fs.writeSync(logfd, `${entry}\n`) : console.log(entry);
+}
 
 // Get the current chart date from the chartdates.json file
 const chartdate = getBestChartDate();
 
-// used for processing timing
-let startdate = new Date(new Date().toLocaleString());
+// used for process timing
+const startdate = new Date(new Date().toLocaleString());
 
 // make sure these "base" folders exist
 let workarea = `${__dirname}/workarea`;
@@ -79,7 +76,7 @@ settings.chartprocessindexes.forEach((index) => {
     dir_5_merged = `${chartfolder}/5_merged`;
     dir_6_quantized = `${chartfolder}/6_quantized`;
     
-    makeWorkingFolders();
+    setupEnvironment();
     downloadCharts();
     unzipCharts();
     normalizeChartNames();
@@ -104,8 +101,7 @@ process.exit();
 /**
  * Generate all of the working folders for image processing
  */
-function makeWorkingFolders() {
-    logEntry("Creating working area subfolders");
+function setupEnvironment() {
     if (!fs.existsSync(chartfolder)) fs.mkdirSync(chartfolder);
     if (!fs.existsSync(dir_1_unzipped)) fs.mkdirSync(dir_1_unzipped);
     if (!fs.existsSync(dir_2_expanded)) fs.mkdirSync(dir_2_expanded);
@@ -113,6 +109,8 @@ function makeWorkingFolders() {
     if (!fs.existsSync(dir_4_tiled)) fs.mkdirSync(dir_4_tiled);
     if (!fs.existsSync(dir_5_merged)) fs.mkdirSync(dir_5_merged);
     if (!fs.existsSync(dir_6_quantized)) fs.mkdirSync(dir_6_quantized);
+    if (settings.logtofile) setupDebugLog(chartfolder);
+    logEntry("Created working area subfolders");
 }
 
 /**
@@ -205,7 +203,7 @@ function processImages() {
         let tiled = `${dir_4_tiled}/${area}`
 
         if (isifrchart) { 
-            cmd = `gdal_translate -strict -of vrt -co TILED=YES -co GTIFF_SRS_SOURCE=EPSG ${sourcetif} ${expanded}`;
+            cmd = `gdal_translate -strict -of vrt -co TILED=YES --config GTIFF_SRS_SOURCE EPSG ${sourcetif} ${expanded}`;
         }
         else {
             cmd = `gdal_translate -strict -of vrt -co TILED=YES -expand rgba ${sourcetif} ${expanded}`;
