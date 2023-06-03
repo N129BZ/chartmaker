@@ -81,7 +81,7 @@ settings.chartprocessindexes.forEach((index) => {
     unzipCharts();
     normalizeChartNames();
     processImages();
-    mergeTiles();
+    mergeAndQuantize();
     makeMbTiles();
 });
 
@@ -231,7 +231,7 @@ function processImages() {
 /**
  * Merge all of the individual chart zoom folders into a single master chart folder 
  */
-function mergeTiles() {
+function mergeAndQuantize() {
     let areas = fs.readdirSync(dir_4_tiled);
     areas.forEach((area) => {
         let mergesource = `${dir_4_tiled}/${area}`;
