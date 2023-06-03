@@ -1,7 +1,7 @@
 'use strict';
 
 const fs = require('fs');
-const { execSync } = require('child_process');
+const { execSync, exec } = require('child_process');
 
 // load settings
 const settings = JSON.parse(fs.readFileSync(`${__dirname}/settings.json`));
@@ -436,12 +436,29 @@ function getBestChartDate() {
  */
 function executeCommand(command) {
     try {
-        var result = execSync(command).toString();
+        var result = execSync(command, {maxBuffer: 1024 * 500}).toString();
         logEntry(result);
     }
     catch (error) {
         logEntry(error.message);
     }
+}
+
+/**
+ * Executes a shell command and return it as a Promise.
+ * @param cmd {string}
+ * @return {Promise<string>}
+ */
+function execShellCommand(cmd) {
+    const exec = require('child_process').exec;
+    return new Promise((resolve, reject) => {
+        exec(cmd, (error, stdout, stderr) => {
+            if (error) {
+                console.warn(error);
+            }
+            resolve(stdout? stdout : stderr);
+        });
+    });
 }
 
 /**
@@ -468,17 +485,6 @@ function reportProcessingTime() {
     // diff = 28800000 => hh = 8, mm = 0, ss = 0, msec = 0
     logEntry(`Start time: ${startdate}\r\nEnd time: ${date2}\r\nTotal processing time: ${hh}:${mm}:${ss}`);
 }
-
-// /**
-//  * Replace 1-n instances of the search string with the replace string and return array of substrings
-//  * @param {string} original 
-//  * @param {string} search 
-//  * @param {string} replace 
-//  * @returns replaced string
-//  */
-// function replaceAll(original, search, replace) {
-//     return original.split(search).join(replace);
-// }
 
 /**
  * Utility to scan a tif and return the desired information 
