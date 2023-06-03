@@ -171,9 +171,9 @@ function unzipCharts() {
 function normalizeChartNames() {
     let files = fs.readdirSync(dir_1_unzipped);
     files.forEach((file) => {
-        let extension = file.substring(file.indexOf("."));
-        if (extension === ".tif" || extension === ".tfw" || extension === ".tfwx") {
-            let newfile = normalizeFileName(file.toLowerCase());
+        let newfile = file;
+        if (newfile.endsWith(".tif") || newfile.endsWith(".tfw") || newfile.endsWith(".tfwx")) {
+            newfile = normalizeFileName(newfile);
             fs.renameSync(`${dir_1_unzipped}/${file}`, `${dir_1_unzipped}/${newfile}`);
         }
     });
@@ -204,7 +204,7 @@ function processImages() {
         let expandopt = "";
 
         // determine if RGB expansion is required
-        cmd = `gdalinfo -json ${sourcetif}`;
+        cmd = `gdalinfo -json "${sourcetif}"`;
         let infojson = JSON.parse(execSync(cmd));
         if (infojson.bands.length === 1) {
             expandopt = "-expand rgba";
@@ -379,9 +379,13 @@ function buildQuantizingCommandArray() {
  * @returns string with underscores instead of spaces or dashes
  */
 function normalizeFileName(file) {
-    let newname = replaceAll(file, " ", "_").replace("'", "");
-    newname = newname.replace("-", "_").replace("_sec", "").toLowerCase();
-    return newname.replace("_tac", "");
+    return file.toLowerCase()
+               .replaceAll(" ", "_")
+               .replaceAll("'", "")
+               .replaceAll("-", "_")
+               .replaceAll("_sec", "")
+               .replaceAll("_tac", "")
+               .replaceAll("u.s.", "us");
 }
 
 /**
@@ -465,16 +469,16 @@ function reportProcessingTime() {
     logEntry(`Start time: ${startdate}\r\nEnd time: ${date2}\r\nTotal processing time: ${hh}:${mm}:${ss}`);
 }
 
-/**
- * Replace 1-n instances of the search string with the replace string and return array of substrings
- * @param {string} original 
- * @param {string} search 
- * @param {string} replace 
- * @returns array of substrings
- */
-function replaceAll(original, search, replace) {
-    return original.split(search).join(replace);
-}
+// /**
+//  * Replace 1-n instances of the search string with the replace string and return array of substrings
+//  * @param {string} original 
+//  * @param {string} search 
+//  * @param {string} replace 
+//  * @returns replaced string
+//  */
+// function replaceAll(original, search, replace) {
+//     return original.split(search).join(replace);
+// }
 
 /**
  * Utility to scan a tif and return the desired information 
