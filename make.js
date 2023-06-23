@@ -4,7 +4,8 @@ const fs = require('fs');
 const { execSync, exec } = require('child_process');
 
 // load settings
-const settings = JSON.parse(fs.readFileSync(`${__dirname}/settings.json`));
+const appdir = process.cwd();
+const settings = JSON.parse(fs.readFileSync(`${appdir}/settings.json`));
 
 // logging
 let logfd = undefined;
@@ -24,11 +25,11 @@ const chartdate = getBestChartDate();
 const startdate = new Date(new Date().toLocaleString());
 
 // make sure these "base" folders exist
-let workarea = `${__dirname}/workarea`;
+let workarea = `${appdir}/workarea`;
 if (settings.renameworkarea) workarea += `_${chartdate}`;
 if (!fs.existsSync(workarea)) fs.mkdirSync(workarea)
 
-let chartcache = `${__dirname}/chartcache`;
+let chartcache = `${appdir}/chartcache`;
 if (!fs.existsSync(chartcache)) fs.mkdirSync(chartcache);
 
 let imageformat = settings.tiledrivers[settings.tiledriverindex];
@@ -57,14 +58,14 @@ settings.chartprocessindexes.forEach((index) => {
     if (isifrchart) {
         // IFR chart
         charturl = settings.ifrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
-        clippedShapeFolder = `${__dirname}/clipshapes/${settings.faachartnames[index][2].toLowerCase()}`;
+        clippedShapeFolder = `${appdir}/clipshapes/${settings.faachartnames[index][2].toLowerCase()}`;
         chartname = settings.faachartnames[index][2]; // use alias value for IFR
         chartfolder = `${workarea}/${chartname}`;
     }
     else {
         // VFR chart
         charturl = settings.vfrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
-        clippedShapeFolder = `${__dirname}/clipshapes/${chartworkname.toLowerCase()}`;
+        clippedShapeFolder = `${appdir}/clipshapes/${chartworkname.toLowerCase()}`;
         chartname = chartworkname;
         chartfolder = `${workarea}/${chartworkname}`;
     }
@@ -131,7 +132,7 @@ function downloadCharts() {
             }
         }
         logEntry(`Downloading ${chartzip}`);
-        cmd = `wget ${charturl} --output-document=${chartzip}`;
+        cmd = `curl ${charturl} -o ${chartzip}`;
         executeCommand(cmd);
     }
 }
@@ -144,10 +145,11 @@ function unzipCharts() {
     cmd = `unzip -o ${chartzip} -x '*.htm' -d ${dir_1_unzipped}`;
     executeCommand(cmd);
 
-    if (isifrchart) { // we now have a work area full of sub-zips!!
+    if (isifrchart) { // we now have a work area full of IFR zips files
         let zipfiles = fs.readdirSync(dir_1_unzipped);
         zipfiles.forEach(zipfile => {
-            if (zipfile.search("ENR_L") > -1) {
+            let srchstr = chartname === "Enroute_High" ? "ENR_H" : "ENR_L" // only unzip the indicated type
+            if (zipfile.search(srchstr) > -1) {
                 cmd = `unzip -o ${dir_1_unzipped}/${zipfile} -d ${dir_1_unzipped}`;
                 executeCommand(cmd);
             }
@@ -209,13 +211,15 @@ function processImages() {
         if (infojson.bands.length === 1) {
             expandopt = "-expand rgba";
         }
-        
-        cmd = `gdal_translate -strict -of vrt -co TILED=YES ${expandopt} --config GTIFF_SRS_SOURCE EPSG ${sourcetif} ${expanded}`;
+        logEntry(">> gdal_translate ");
+        cmd = `gdal_translate -strict -of vrt -co TILED=YES ${expandopt} ${sourcetif} ${expanded}`;
         executeCommand(cmd);
 
+        logEntry(">> gdalwarp ");
         cmd = `gdalwarp -t_srs EPSG:4326 -dstalpha -cblend 6 -cutline "${shapefile}" -crop_to_cutline ${expanded} ${clipped}`;
         executeCommand(cmd);
 
+        logEntry(">> gdaladdo ");
         cmd = `gdaladdo --config GDAL_NUM_THREADS ALL_CPUS ${clipped}`;
         executeCommand(cmd);
 
@@ -223,6 +227,7 @@ function processImages() {
         if (imageformat == "webp") {
             formatargs = `--tiledriver=WEBP --webp-quality=${settings.tileimagequality}`
         }
+        logEntry(">> gdal2tiles ");
         cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=4 ${formatargs} --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
         executeCommand(cmd);
     });
@@ -398,7 +403,7 @@ function getBestChartDate() {
     let cdates = [];
     let found = false;
     let selectedDate = "";
-    let datedata = fs.readFileSync(`${__dirname}/chartdates.json`);
+    let datedata = fs.readFileSync(`${appdir}/chartdates.json`);
     let datelist = JSON.parse(datedata);
     datelist.ChartDates.forEach((cdate) => {
         cdates.push(new Date(cdate))
@@ -436,29 +441,11 @@ function getBestChartDate() {
  */
 function executeCommand(command) {
     try {
-        var result = execSync(command, {maxBuffer: 1024 * 500}).toString();
-        logEntry(result);
+        execSync(command, { stdio: 'ignore' });
     }
     catch (error) {
         logEntry(error.message);
     }
-}
-
-/**
- * Executes a shell command and return it as a Promise.
- * @param cmd {string}
- * @return {Promise<string>}
- */
-function execShellCommand(cmd) {
-    const exec = require('child_process').exec;
-    return new Promise((resolve, reject) => {
-        exec(cmd, (error, stdout, stderr) => {
-            if (error) {
-                console.warn(error);
-            }
-            resolve(stdout? stdout : stderr);
-        });
-    });
 }
 
 /**
@@ -493,7 +480,7 @@ function reportProcessingTime() {
  * @returns 
  */
 function getGdalInfo(file, searchtext) {
-    let gdalresults = `${__dirname}/gdal.txt`;
+    let gdalresults = `${appdir}/gdal.txt`;
 
     cmd = `gdalinfo ${file} -noct > ${gdalresults}`;
 
