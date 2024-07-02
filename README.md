@@ -51,7 +51,8 @@ The FAA publishes charts 20 days *before* the official chart date, and chartmake
     ["Caribbean", "vfr", ""],   
     ["Terminal", "vfr", ""],   
     ["Sectional", "vfr", ""],   
-    ["DDECUS", "ifr", "Enroute_Low"]  <- alias for the file DDECUS (which means Digital Data Enroute Continental US)   
+    ["DDECUS", "ifr", "Enroute_Low"]  <- alias for the file DDECUS (which means Digital Data Enroute Continental US)
+    ["DDECUS", "ifr", "Enroute_High"]
 ]
 ```       
 * ***layertypeindex*** controls the layertype and therefore how it will be rendered on the map*   
