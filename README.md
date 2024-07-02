@@ -26,7 +26,7 @@ The FAA publishes charts 20 days *before* the official chart date, and chartmake
 ```
 "attribution": "Aviation charts <a href='https://github.com/n129bz/chartmaker'>github.com/n129bz/chartmaker</a>"   
 ```   
-* ***wget download templates,*** values inside brackets <> are replaced with values to match FAA's file names*       
+* ***wget download templates,*** values inside brackets <> are programmatically replaced with values to match FAA's file names*       
 ```
 "vfrdownloadtemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip"   
 "ifrdownloadtemplate": "https://aeronav.faa.gov/enroute/<chartdate>/<charttype>.zip"
