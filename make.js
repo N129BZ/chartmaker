@@ -145,7 +145,7 @@ function unzipCharts() {
     cmd = `unzip -o ${chartzip} -x '*.htm' -d ${dir_1_unzipped}`;
     executeCommand(cmd);
 
-    if (isifrchart) { // we now have a work area full of IFR zips files
+    if (isifrchart) { // we now have a work area full of IFR zip files
         let zipfiles = fs.readdirSync(dir_1_unzipped);
         zipfiles.forEach(zipfile => {
             let srchstr = chartname === "Enroute_High" ? "ENR_H" : "ENR_L" // only unzip the indicated type
@@ -211,15 +211,15 @@ function processImages() {
         if (infojson.bands.length === 1) {
             expandopt = "-expand rgba";
         }
-        logEntry(">> gdal_translate ");
+        logEntry(`>> gdal_translate ${sourcetif}`);
         cmd = `gdal_translate -strict -of vrt -co TILED=YES ${expandopt} ${sourcetif} ${expanded}`;
         executeCommand(cmd);
 
-        logEntry(">> gdalwarp ");
+        logEntry(`>> gdalwarp warping ${clipped} using shapefile ${shapefile}`);
         cmd = `gdalwarp -t_srs EPSG:4326 -dstalpha -cblend 6 -cutline "${shapefile}" -crop_to_cutline ${expanded} ${clipped}`;
         executeCommand(cmd);
 
-        logEntry(">> gdaladdo ");
+        logEntry(`>> gdaladdo adding overviews to ${clipped}`);
         cmd = `gdaladdo --config GDAL_NUM_THREADS ALL_CPUS ${clipped}`;
         executeCommand(cmd);
 
@@ -227,7 +227,7 @@ function processImages() {
         if (imageformat == "webp") {
             formatargs = `--tiledriver=WEBP --webp-quality=${settings.tileimagequality}`
         }
-        logEntry(">> gdal2tiles ");
+        logEntry(`>> gdal2tiles tiling ${clipped} into ${tiled}`);
         cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=4 ${formatargs} --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
         executeCommand(cmd);
     });
@@ -240,6 +240,7 @@ function mergeAndQuantize() {
     let areas = fs.readdirSync(dir_4_tiled);
     areas.forEach((area) => {
         let mergesource = `${dir_4_tiled}/${area}`;
+        logEntry(`>> perl merging images into ${mergesource}`);
         let cmd = `perl ./mergetiles.pl ${mergesource} ${dir_5_merged}`;
         executeCommand(cmd);
     });
@@ -254,6 +255,7 @@ function mergeAndQuantize() {
  * Perform quantization of all .png images
  */
 function quantizePngImages() {
+    logEntry(`>> quantizing png images to ${settings.tileimagequality}`);
     let interimct = 0;
     let i;
     let qcmd = "";
@@ -287,7 +289,7 @@ function quantizePngImages() {
  */
 function makeMbTiles() {
 
-    logEntry(`>> generating metadata json`);
+    logEntry(`>> generating metadata json for ${chartname} database`);
     let sourcefolder = dir_5_merged;
     let zooms = settings.zoomrange.split("-");
     let minzoom = zooms[0];   
