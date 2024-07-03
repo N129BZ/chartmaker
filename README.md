@@ -58,7 +58,7 @@ NOTE: any actual alias name should not contain any spaces*
     ["DDECUS", "ifr", "Enroute_High"]
 ]
 ```       
-* ***layertypeindex*** controls the layertype and therefore how it will be rendered on the map*   
+* ***layertypeindex*** controls the layertype and therefore how it will be rendered on a map, for example If you will be overlaying an OSM map with your chartmaker map*   
 ```
 "layertypeindex": 1,   
 "layertypes": [   
