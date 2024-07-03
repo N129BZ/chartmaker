@@ -43,7 +43,9 @@ The FAA publishes charts 20 days *before* the official chart date, and chartmake
 "tileimagequality" : 80   <- percentage (1-100) greatly affects processing speed and database size
 "zoomrange" : "0-11"      <- range of overviews to produce, higher takes longer and can make db huge
 ```   
-* ***chartprocessindexes*** control which chart types to process, the array values correspond to their ordinal position in the faachartnames list, NOTE: any actual alias name should not contain any spaces*   
+* ***chartprocessindexes*** control which chart types to process. Each faachartname is an array with 3 values: FAA chart name,
+chart type, and an alias (not used for vfr charts.) The chartprocessindexes array values correspond to the ordinal position (zero-based) in the faachartnames list.
+NOTE: any actual alias name should not contain any spaces*   
 ```
 "chartprocessindexes": [0,1,2,3,4,5], <- charts represented by indexes 0-5 will be processed, in this order   
 "faachartnames": [   
@@ -73,7 +75,7 @@ The FAA publishes charts 20 days *before* the official chart date, and chartmake
     "webp"   
 ]
 ```   
-#### Additional information
+#### *Additional information
 The chart zip files are downloaded from the FAA digital raster chart repository and unzipped. After the unzipping process all of the the resultant GEOtiff image names (and their matching tfw world file names) are "normalized" to all lower-case filenames with underscores in place of dashes and spaces and any apostrophes removed. This simplifies the down-stream processing of these files since **GDAL** can interpret spaces as argument separators.   
 
 ### ToDo:
