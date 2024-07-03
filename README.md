@@ -1,4 +1,5 @@
 # chartmaker - Download FAA VFR and IFR digital raster charts and translate into mbtiles databases for other mapping applications
+### (Check out my map viewing application https://github.com/n129bz/aviation-charts - also shows Metars, Pireps, Weather, etc.)
 
 ### Requirements: Sqlite3 (tested with v3.40.1), Python (tested with 3.11.4) , Node v18.16.0 (minimum), Perl v5.36.0, pngquant 2.17.0, curl, and GDAL v3.6.2 (minimum)
 
