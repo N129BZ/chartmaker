@@ -1,14 +1,16 @@
 # chartmaker - Download FAA VFR and IFR digital raster charts and translate into mbtiles databases for other mapping applications
+### (Check out my map viewing application https://github.com/n129bz/aviation-charts - also shows Metars, Pireps, Weather, etc.)
 
-### Requirements: Python 3, Node.js, Perl, pngquant, curl, and GDAL v3.6.2
+### Requirements: Sqlite3 (tested with v3.40.1), Python (tested with 3.11.4) , Node v18.16.0 (minimum), Perl v5.36.0, pngquant 2.17.0, curl, and GDAL v3.6.2 (minimum)
 
 #### Installation:
-1.) This node.js application is designed to run on Linux, and also runs well on **WSL2** (Windows Subsystem for Linux)         
-2.) Clone the repository, change directory to **chartmaker**, open a terminal and enter **npm install**        
-3.) Give execute permissions to **perlsetup.sh** shell script and run it to install perl dependencies           
-4.) Install the **pngquant** png image compression utility: (deb example) **sudo apt install pngquant**      
-5.) Run the application in a terminal with the command **node make**                 
-6.) Go do something else... depending on the number of charts and image quality, the process can take several hours to complete.     
+1.) This node.js application is designed to run on Linux, and also runs well on **WSL** (Windows Subsystem for Linux)    
+2.) Install all required programs as referred to above  
+3.) Clone the repository, change directory to **chartmaker**, open a terminal and enter **npm install**        
+4.) Give execute permissions to **perlsetup.sh** shell script and run it to install perl dependencies           
+5.) Install the **pngquant** png image compression utility: (deb example) **sudo apt install pngquant**      
+6.) Run the application in a terminal with the command **node make**                 
+7.) Go do something else... depending on the number of charts and image quality, the process can take several hours to complete.     
 
 #### chartdates.json
 The FAA publishes charts 20 days *before* the official chart date, and chartmaker will automatically select the nearest chart date from this file of official FAA chart 56-day release dates, all the way up to the year 2044. If the next chart date is more than 20 days out, chartmaker will get the current chart date.                   
@@ -26,7 +28,7 @@ The FAA publishes charts 20 days *before* the official chart date, and chartmake
 ```
 "attribution": "Aviation charts <a href='https://github.com/n129bz/chartmaker'>github.com/n129bz/chartmaker</a>"   
 ```   
-* ***wget download templates,*** values inside brackets <> are replaced with values to match FAA's file names*       
+* ***wget download templates,*** values inside brackets <> are programmatically replaced with values to match FAA's file names*       
 ```
 "vfrdownloadtemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip"   
 "ifrdownloadtemplate": "https://aeronav.faa.gov/enroute/<chartdate>/<charttype>.zip"
@@ -42,7 +44,9 @@ The FAA publishes charts 20 days *before* the official chart date, and chartmake
 "tileimagequality" : 80   <- percentage (1-100) greatly affects processing speed and database size
 "zoomrange" : "0-11"      <- range of overviews to produce, higher takes longer and can make db huge
 ```   
-* ***chartprocessindexes*** control which chart types to process, the array values correspond to their ordinal position in the faachartnames list, NOTE: any actual alias name should not contain any spaces*   
+* ***chartprocessindexes*** control which chart types to process. Each faachartname is an array with 3 values: FAA chart name,
+chart type, and an alias (not used for vfr charts.) The chartprocessindexes array values correspond to the ordinal position (zero-based) in the faachartnames list.
+NOTE: any actual alias name should not contain any spaces*   
 ```
 "chartprocessindexes": [0,1,2,3,4,5], <- charts represented by indexes 0-5 will be processed, in this order   
 "faachartnames": [   
@@ -51,10 +55,11 @@ The FAA publishes charts 20 days *before* the official chart date, and chartmake
     ["Caribbean", "vfr", ""],   
     ["Terminal", "vfr", ""],   
     ["Sectional", "vfr", ""],   
-    ["DDECUS", "ifr", "Enroute_Low"]  <- alias for the file DDECUS (which means Digital Data Enroute Continental US)   
+    ["DDECUS", "ifr", "Enroute_Low"]  <- aliases for the file DDECUS (which means Digital Data Enroute Continental US)
+    ["DDECUS", "ifr", "Enroute_High"]
 ]
 ```       
-* ***layertypeindex*** controls the layertype and therefore how it will be rendered on the map*   
+* ***layertypeindex*** controls the layertype and therefore how it will be rendered on a map, for example If you will be overlaying an OSM map with your chartmaker map*   
 ```
 "layertypeindex": 1,   
 "layertypes": [   
@@ -71,7 +76,7 @@ The FAA publishes charts 20 days *before* the official chart date, and chartmake
     "webp"   
 ]
 ```   
-#### Additional information
+#### *Additional information
 The chart zip files are downloaded from the FAA digital raster chart repository and unzipped. After the unzipping process all of the the resultant GEOtiff image names (and their matching tfw world file names) are "normalized" to all lower-case filenames with underscores in place of dashes and spaces and any apostrophes removed. This simplifies the down-stream processing of these files since **GDAL** can interpret spaces as argument separators.   
 
 ### ToDo:
