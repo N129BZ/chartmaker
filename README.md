@@ -5,12 +5,11 @@
 #### Installation:
 1.) This node.js application is designed to run on Linux, and also runs well on **WSL** (Windows Subsystem for Linux)    
 2.) Install all required programs as referred to above  
-3.) Set the **perlsetup.sh** file executable attribute and launch it to install all of the perl utilities    
-4.) Clone the repository, change directory to **chartmaker**, open a terminal and enter **npm install**        
-5.) Give execute permissions to **perlsetup.sh** shell script and run it to install perl dependencies           
-6.) Install the **pngquant** png image compression utility: (deb example) **sudo apt install pngquant**      
-7.) Run the application in a terminal with the command **node make**                 
-8.) Go do something else... depending on the number of charts and image quality, the process can take several hours to complete.     
+3.) Clone the repository, change directory to **chartmaker**, open a terminal and enter **npm install**        
+4.) Give execute permissions to **perlsetup.sh** shell script and run it to install perl dependencies           
+5.) Install the **pngquant** png image compression utility: (deb example) **sudo apt install pngquant**      
+6.) Run the application in a terminal with the command **node make**                 
+7.) Go do something else... depending on the number of charts and image quality, the process can take several hours to complete.     
 
 #### chartdates.json
 The FAA publishes charts 20 days *before* the official chart date, and chartmaker will automatically select the nearest chart date from this file of official FAA chart 56-day release dates, all the way up to the year 2044. If the next chart date is more than 20 days out, chartmaker will get the current chart date.                   
