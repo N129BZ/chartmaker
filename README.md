@@ -1,6 +1,6 @@
 # chartmaker - Download FAA VFR and IFR digital raster charts and translate into mbtiles databases for other mapping applications
 
-### Requirements: Python 3, Node.js, Perl, pngquant, curl, and GDAL v3.6.2
+### Requirements: Sqlite3 (tested with v3.40.1), Python 3, Node.js, Perl, pngquant, curl, and GDAL v3.6.2
 
 #### Installation:
 1.) This node.js application is designed to run on Linux, and also runs well on **WSL2** (Windows Subsystem for Linux)         
