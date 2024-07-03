@@ -1,14 +1,15 @@
 # chartmaker - Download FAA VFR and IFR digital raster charts and translate into mbtiles databases for other mapping applications
 
-### Requirements: Sqlite3 (tested with v3.40.1), Python 3, Node.js, Perl, pngquant, curl, and GDAL v3.6.2
+### Requirements: Sqlite3 (tested with v3.40.1), Python (tested with 3.11.4) , Node v18.16.0 (minimum), Perl v5.36.0, pngquant 2.17.0, curl, and GDAL v3.6.2 (minimum)
 
 #### Installation:
-1.) This node.js application is designed to run on Linux, and also runs well on **WSL2** (Windows Subsystem for Linux)         
-2.) Clone the repository, change directory to **chartmaker**, open a terminal and enter **npm install**        
-3.) Give execute permissions to **perlsetup.sh** shell script and run it to install perl dependencies           
-4.) Install the **pngquant** png image compression utility: (deb example) **sudo apt install pngquant**      
-5.) Run the application in a terminal with the command **node make**                 
-6.) Go do something else... depending on the number of charts and image quality, the process can take several hours to complete.     
+1.) This node.js application is designed to run on Linux, and also runs well on **WSL2** (Windows Subsystem for Linux)    
+2.) Install all required programs as referred to above 
+3.) Clone the repository, change directory to **chartmaker**, open a terminal and enter **npm install**        
+4.) Give execute permissions to **perlsetup.sh** shell script and run it to install perl dependencies           
+5.) Install the **pngquant** png image compression utility: (deb example) **sudo apt install pngquant**      
+6.) Run the application in a terminal with the command **node make**                 
+7.) Go do something else... depending on the number of charts and image quality, the process can take several hours to complete.     
 
 #### chartdates.json
 The FAA publishes charts 20 days *before* the official chart date, and chartmaker will automatically select the nearest chart date from this file of official FAA chart 56-day release dates, all the way up to the year 2044. If the next chart date is more than 20 days out, chartmaker will get the current chart date.                   
