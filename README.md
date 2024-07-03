@@ -3,7 +3,7 @@
 ### Requirements: Sqlite3 (tested with v3.40.1), Python (tested with 3.11.4) , Node v18.16.0 (minimum), Perl v5.36.0, pngquant 2.17.0, curl, and GDAL v3.6.2 (minimum)
 
 #### Installation:
-1.) This node.js application is designed to run on Linux, and also runs well on **WSL2** (Windows Subsystem for Linux)    
+1.) This node.js application is designed to run on Linux, and also runs well on **WSL** (Windows Subsystem for Linux)    
 2.) Install all required programs as referred to above  
 3.) Clone the repository, change directory to **chartmaker**, open a terminal and enter **npm install**        
 4.) Give execute permissions to **perlsetup.sh** shell script and run it to install perl dependencies           
