@@ -8,7 +8,7 @@
     "cleanprocessfolders": false,
 
     "tileimagequality" : 50,
-    "zoomrange" : "0-11",
+    "zoomrange" : "0-12",
 
     "chartprocessindexes": [4],
     "faachartnames": [
@@ -27,7 +27,7 @@
         "overlay"
     ],
 
-    "tiledriverindex": 2,
+    "tiledriverindex": 0,
     "tiledrivers": [
         "png",
         "jpg",
