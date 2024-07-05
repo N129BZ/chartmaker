@@ -47,7 +47,7 @@ The FAA publishes charts 20 days *before* the official chart date, and chartmake
 ```   
 * ***chartprocessindexes*** control which chart types to process. Each faachartname is an array with 3 values: FAA chart name,
 chart type, and an alias (not used for vfr charts.) The chartprocessindexes array values correspond to the ordinal position (zero-based) in the faachartnames list.
-NOTE: any actual alias name should not contain any spaces*   
+NOTE: The alias names are only used for DDECUS charts and use underscores to replace spaces*   
 ```
 "chartprocessindexes": [0,1,2,3,4,5,6], <- charts represented by indexes 0-5 will be processed, in this order   
 "faachartnames": [   
