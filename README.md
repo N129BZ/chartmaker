@@ -8,9 +8,8 @@
 2.) Install all required programs as referred to in **Requirements** above  
 3.) Clone this repository, change directory to **chartmaker**, open a terminal and enter **npm install**        
 4.) Give execute permissions to **perlsetup.sh** shell script and run it to install perl dependencies           
-5.) Install the **pngquant** png image compression utility: (deb example) **sudo apt install pngquant**      
-6.) Run the application in a terminal with the command **node make**                 
-7.) Go do something else... depending on the number of charts and image quality, the process can take several hours to complete.     
+5.) Run the application in a terminal with the command **node make**                 
+6.) Go do something else... depending on the number of charts and image quality, the process can take several hours to complete.     
 
 #### chartdates.json
 The FAA publishes charts 20 days *before* the official chart date, and chartmaker will automatically select the nearest chart date from this file of official FAA chart 56-day release dates, all the way up to the year 2044. If the next chart date is more than 20 days out, chartmaker will get the current chart date.                   
