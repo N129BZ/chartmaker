@@ -6,7 +6,7 @@
 #### Installation:
 1.) This node.js application is designed to run on Linux, and also runs well on **WSL** (Windows Subsystem for Linux)    
 2.) Install all required programs as referred to in **Requirements** above  
-3.) Clone the repository, change directory to **chartmaker**, open a terminal and enter **npm install**        
+3.) Clone this repository, change directory to **chartmaker**, open a terminal and enter **npm install**        
 4.) Give execute permissions to **perlsetup.sh** shell script and run it to install perl dependencies           
 5.) Install the **pngquant** png image compression utility: (deb example) **sudo apt install pngquant**      
 6.) Run the application in a terminal with the command **node make**                 
