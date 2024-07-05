@@ -18,7 +18,7 @@ The FAA publishes charts 20 days *before* the official chart date, and chartmake
 #### settings.json
 * Edit the values in **chartprocessindexes** with any ordinal index numbers from the **faachartnames** list for charts you want to process, in the order you want them processed. The default is all charts in the index list, in index order. The setting array **faachartnames** are the actual zip filenames the FAA uses and are for reference only. **Changes to the downloadtemplate or faachartnames, layertypes, and tiledrivers lists is not recommended!**    
 * The zoom range value can either be in the format **n-n**, or you can use a single zoom level **n**                
-* You can change the **tileimagequality** percentage from ***1*** up to ***100*** and **tiledriverindex** index to ***2*** (webp) to reduce mbtiles file size. The smaller the percentage, the fuzzier the chart will be.   
+* You can change the **tileimagequality** percentage from ***1*** up to ***100*** and **tiledriverindex** index to ***2*** (webp) to reduce mbtiles file size. The smaller the percentage, the fuzzier the chart will be at high zoom levels.   
   * The tiledimagequality setting works for both **png** and **webp** images.  
 * To save disk space, you can set **cleanprocessfolders** to true. 
   * The merge and/or pngquant work folders will be many gigabytes for the entire chart set and are not needed once processing is complete
