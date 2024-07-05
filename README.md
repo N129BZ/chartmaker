@@ -48,7 +48,7 @@ The FAA publishes charts 20 days *before* the official chart date, and chartmake
 chart type, and an alias (not used for vfr charts.) The chartprocessindexes array values correspond to the ordinal position (zero-based) in the faachartnames list.
 NOTE: any actual alias name should not contain any spaces*   
 ```
-"chartprocessindexes": [0,1,2,3,4,5], <- charts represented by indexes 0-5 will be processed, in this order   
+"chartprocessindexes": [0,1,2,3,4,5,6], <- charts represented by indexes 0-5 will be processed, in this order   
 "faachartnames": [   
     ["Grand_Canyon", "vfr", ""],      <- as in [FAA chart file name, type, no alias needed for vfr charts]   
     ["Helicopter", "vfr", ""],   
@@ -69,7 +69,7 @@ NOTE: any actual alias name should not contain any spaces*
 ```      
 * ***tiledriverindex*** determines the tiledriver type, for example webp produces the smallest image size but png produces the sharpest images*   
 ```
-"tiledriverindex": 2,   
+"tiledriverindex": 0,   
 "tiledrivers": [   
     "png",   
     "jpg",   
