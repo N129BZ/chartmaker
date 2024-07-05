@@ -11,6 +11,8 @@
 5.) Run the application in a terminal with the command **node make**                 
 6.) Go do something else... depending on the number of charts and image quality, the process can take several hours to complete.     
 
+### Process Control Files
+
 #### chartdates.json
 The FAA publishes charts 20 days *before* the official chart date, and chartmaker will automatically select the nearest chart date from this file of official FAA chart 56-day release dates, all the way up to the year 2044. If the next chart date is more than 20 days out, chartmaker will get the current chart date.                   
 #### settings.json
@@ -22,7 +24,7 @@ The FAA publishes charts 20 days *before* the official chart date, and chartmake
   * The merge and/or pngquant work folders will be many gigabytes for the entire chart set and are not needed once processing is complete
 * To preserve the processed databases, you can set **renameworkarea** to true. This will rename the **workarea** folder to include the processed chart date so the next run will not overwrite the folder.
 
-#### settings values
+#### settings.json values
 * ***attribution*** is a database metadata value that many mapping applications use for acknowledgement of the database creator*   
 ```
 "attribution": "Aviation charts <a href='https://github.com/n129bz/chartmaker'>github.com/n129bz/chartmaker</a>"   
