@@ -11,6 +11,15 @@
 5.) Run the application in a terminal with the command **node make**                 
 6.) Go do something else... depending on the number of charts and image quality, the process can take several hours to complete.     
 
+#### Example installs
+apt install sqlite3 -y   
+apt install pngquant -y   
+apt install imagemagick -y   
+apt install curl -y   
+apt install unzip -y   
+apt install build-essential -y   
+apt install gdal-bin -y   
+
 ### Process Control Files
 
 #### chartdates.json
