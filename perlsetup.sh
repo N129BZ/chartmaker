@@ -1,9 +1,9 @@
 # install perl dependencies
-cpan strict
-cpan warnings
-cpan autodie
-cpan Carp
-cpan Modern::Perl
-cpan Params::Validate
-cpan File::Slurp
-cpan File::Copy
+cpan -i strict
+cpan -i warnings
+cpan -i autodie
+cpan -i Carp
+cpan -i Modern::Perl
+cpan -i Params::Validate
+cpan -i File::Slurp
+cpan -i File::Copy
