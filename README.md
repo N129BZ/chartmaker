@@ -1,7 +1,7 @@
 # chartmaker - Download FAA VFR and IFR digital raster charts and translate into mbtiles databases for other mapping applications
 ### (Check out my map viewing application https://github.com/n129bz/aviation-charts - also shows Metars, Pireps, Weather, etc.)
 
-### Requirements: Sqlite3 (tested with v3.40.1), Python (tested with 3.11.4) , Nodejs + npm, Perl v5.36.0, pngquant 2.17.0, imagemagick, curl, unzip, build-essential, GDAL v3.6.2 (minimum)
+### Requirements: Sqlite3 (tested with v3.40.1), Python (tested with 3.11.4) , Nodejs + npm, Perl v5.36.0, pngquant 2.17.0, imagemagick, curl, unzip, build-essential, cpanminus, GDAL v3.6.2 (minimum)
 
 #### Installation:
 1.) This node.js application is designed to run on Linux, and also runs well on **WSL** (Windows Subsystem for Linux)    
@@ -12,14 +12,18 @@
 6.) Go do something else... depending on the number of charts and image quality, the process can take several hours to complete.     
 
 #### Example installs
-apt install sqlite3   
-apt install pngquant     
-apt install imagemagick      
-apt install curl      
-apt install unzip      
-apt install build-essential      
-apt install gdal-bin      
-
+```
+sudo \   
+  apt install \   
+     sqlite3 \   
+     pngquant \        
+     imagemagick \         
+     curl \         
+     unzip \         
+     build-essential \    
+     cpanminus \   
+     gdal-bin      
+```
 ### Process Control Files
 
 #### chartdates.json
