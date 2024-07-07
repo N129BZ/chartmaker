@@ -11,7 +11,7 @@
 5.) Run the application in a terminal with the command **node make**                 
 6.) Go do something else... depending on the number of charts and image quality, the process can take several hours to complete.     
 
-#### Example installs
+#### Install requirements example
 ```
 sudo \   
   apt install \   
