@@ -14,7 +14,7 @@
 #### Install requirements example
 ```
 sudo \   
-  apt install \   
+  apt install -y \   
      sqlite3 \   
      pngquant \        
      imagemagick \         
