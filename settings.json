@@ -3,14 +3,14 @@
     "vfrdownloadtemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
     "ifrdownloadtemplate": "https://aeronav.faa.gov/enroute/<chartdate>/<charttype>.zip",
 
-    "renameworkarea": true,
+    "renameworkarea": false,
     "logtofile": false,
     "cleanprocessfolders": false,
 
     "tileimagequality" : 50,
     "zoomrange" : "1-12",
 
-    "chartprocessindexes": [0,1,2,3,4,5,6],
+    "chartprocessindexes": [4],
     "faachartnames": [
         ["Grand_Canyon", "vfr", ""],
         ["Helicopter", "vfr", ""],
