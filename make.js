@@ -255,7 +255,6 @@ function mergeAndQuantize() {
  * Perform quantization of all .png images
  */
 function quantizePngImages() {
-    logEntry(`>> quantizing png images to ${settings.tileimagequality}`);
     let interimct = 0;
     let i;
     let qcmd = "";
@@ -276,7 +275,7 @@ function quantizePngImages() {
             executeCommand(qcmd);
         }
         interimct++;
-        if (interimct >= 1000) {
+        if (interimct >= 100) {
             logEntry(`${i + 1} of ${cmds.length} images processed`);
             interimct = 0;
         }
