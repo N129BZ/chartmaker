@@ -275,7 +275,7 @@ function quantizePngImages() {
             executeCommand(qcmd);
         }
         interimct++;
-        if (interimct >= 100) {
+        if (interimct >= 1000) {
             logEntry(`${i + 1} of ${cmds.length} images processed`);
             interimct = 0;
         }
