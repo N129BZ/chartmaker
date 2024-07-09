@@ -7,7 +7,7 @@
     "logtofile": false,
     "cleanprocessfolders": false,
 
-    "tileimagequality" : 50,
+    "tileimagequality" : 40,
     "zoomrange" : "1-12",
 
     "chartprocessindexes": [4],
