@@ -1,9 +1,9 @@
-# install perl dependencies using cpanminus
-cpanm -i -f strict
-cpanm -i -f warnings
-cpanm -i -f autodie
-cpanm -i -f Carp
-cpanm -i -f Modern::Perl
-cpanm -i -f Params::Validate
-cpanm -i -f File::Slurp
-cpanm -i -f File::Copy
+# install perl dependencies
+perl -MCPAN -e "CPAN::Shell->notest('install', 'strict')"
+perl -MCPAN -e "CPAN::Shell->notest('install', 'warnings')"
+perl -MCPAN -e "CPAN::Shell->notest('install', 'autodie')"
+perl -MCPAN -e "CPAN::Shell->notest('install', 'Carp')"
+perl -MCPAN -e "CPAN::Shell->notest('install', 'Modern::Perl')"
+perl -MCPAN -e "CPAN::Shell->notest('install', 'Params::Validate')"
+perl -MCPAN -e "CPAN::Shell->notest('install', 'File::Slurp')"
+perl -MCPAN -e "CPAN::Shell->notest('install', 'File::Copy')"
