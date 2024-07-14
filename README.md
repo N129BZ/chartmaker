@@ -38,11 +38,11 @@ The FAA publishes charts 20 days ***before*** the official chart date, and chart
 * To preserve the processed databases, you can set **renameworkarea** to true. This will rename the **workarea** folder to include the processed chart date so the next run will not overwrite the folder.
 
 #### settings.json values
-* ***attribution*** is a database metadata value that many mapping applications use for acknowledgement of the database creator*   
+* ***attribution*** is a database metadata value that many mapping applications use for acknowledgement of the database creator      
 ```
 "attribution": "Aviation charts <a href='https://github.com/n129bz/chartmaker'>github.com/n129bz/chartmaker</a>"   
 ```   
-* ***curl download templates,*** values inside brackets <> are programmatically replaced with values to match FAA's file names*       
+* ***curl download templates,*** values inside brackets <> are programmatically replaced with values to match FAA's file names       
 ```
 "vfrdownloadtemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip"   
 "ifrdownloadtemplate": "https://aeronav.faa.gov/enroute/<chartdate>/<charttype>.zip"
@@ -73,7 +73,7 @@ chart type, and an alias (not used for vfr charts.) The chartprocessindexes arra
     ["DDECUS", "ifr", "Enroute_High"]
 ]
 ```       
-* ***layertypeindex*** controls the layertype and therefore how it will be rendered on a map, for example If you will be overlaying an OSM map with your chartmaker map*   
+* ***layertypeindex*** controls the layertype and therefore how it will be rendered on a map, for example If you will be overlaying an OSM map with your chartmaker map   
 ```
 "layertypeindex": 1,   
 "layertypes": [   
@@ -81,7 +81,7 @@ chart type, and an alias (not used for vfr charts.) The chartprocessindexes arra
     "overlay"   
 ]
 ```      
-* ***tiledriverindex*** determines the tiledriver type, for example webp produces the smallest image size but png produces the sharpest images*   
+* ***tiledriverindex*** determines the tiledriver type, for example webp produces the smallest image size but png produces the sharpest images   
 ```
 "tiledriverindex": 0,   
 "tiledrivers": [   
