@@ -53,7 +53,7 @@ The FAA publishes charts 20 days ***before*** the official chart date, and chart
 "logtofile": true             <- if true will produce a file "debug.log"  
 "cleanprocessfolders": false  <- if true then working folders are removed after processing
 ```     
-* ***tile image quality percentage,*** tileimagequality has a huge effect on png processing time, not quite as much with webp*    
+* ***tile image quality percentage,*** tileimagequality has a huge effect on png processing time, not quite as much with webp    
 ```
 "tileimagequality" : 80   <- percentage (1-100) greatly affects processing speed and database size
 "zoomrange" : "1-12"      <- range of overviews to produce, higher takes longer and can make db huge
