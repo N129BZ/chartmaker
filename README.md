@@ -64,11 +64,11 @@ chart type, and an alias (not used for vfr charts.) The chartprocessindexes arra
 ```
 "chartprocessindexes": [0,1,2,3,4,5,6], <- charts represented by indexes 0-5 will be processed, in this order   
 "faachartnames": [   
-    ["Grand_Canyon", "vfr", ""],      <- as in [FAA chart file name, type, no alias needed for vfr charts]   
-    ["Helicopter", "vfr", ""],   
-    ["Caribbean", "vfr", ""],   
+    ["Sectional", "vfr", ""],    <- as in [FAA chart name, chart type, alias] (NOTE no alias used for vfr charts)  
+    ["Caribbean", "vfr", ""],
+    ["Grand_Canyon", "vfr", ""],     
     ["Terminal", "vfr", ""],   
-    ["Sectional", "vfr", ""],   
+    ["Helicopter", "vfr", ""],   
     ["DDECUS", "ifr", "Enroute_Low"]  <- aliases for the file DDECUS (which means Digital Data Enroute Continental US)
     ["DDECUS", "ifr", "Enroute_High"]
 ]
