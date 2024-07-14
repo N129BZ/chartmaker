@@ -69,7 +69,7 @@ chart type, and an alias (not used for vfr charts.) The chartprocessindexes arra
     ["Grand_Canyon", "vfr", ""],     
     ["Terminal", "vfr", ""],   
     ["Helicopter", "vfr", ""],   
-    ["DDECUS", "ifr", "Enroute_Low"]  <- aliases for the file DDECUS (which means Digital Data Enroute Continental US)
+    ["DDECUS", "ifr", "Enroute_Low"]  <- aliases are required for DDECUS (which means Digital Data Enroute Continental US)
     ["DDECUS", "ifr", "Enroute_High"]
 ]
 ```       
