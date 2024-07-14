@@ -26,6 +26,8 @@ const startdate = new Date(new Date().toLocaleString());
 
 // make sure these "base" folders exist
 let workarea = `${appdir}/workarea`;
+let dbfolder = `${appdir}/charts`;
+
 if (settings.renameworkarea) workarea += `_${chartdate}`;
 if (!fs.existsSync(workarea)) fs.mkdirSync(workarea)
 
@@ -317,7 +319,7 @@ function makeMbTiles() {
     fs.writeSync(fd, metajson);
     fs.closeSync(fd);
 
-    let mbtiles = `${workarea}/${chartname}.db`;
+    let mbtiles = `${dbfolder}/${chartname}.db`;
     fs.rmSync(mbtiles, { force: true });  
     
     logEntry(`>> creating database: ${mbtiles}`);
