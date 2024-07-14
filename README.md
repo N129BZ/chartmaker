@@ -62,7 +62,7 @@ The FAA publishes charts 20 days *before* the official chart date, and chartmake
 chart type, and an alias (not used for vfr charts.) The chartprocessindexes array values correspond to the ordinal position (zero-based) in the faachartnames list.   
 **WARNING**: Editing of any of these faachartnames values will break the application.*   
 ```
-"chartprocessindexes": [0,1,2,3,4,5,6], <- charts represented by indexes 0-5 will be processed, in this order   
+"chartprocessindexes": [0,1,2,3,4,5,6], <- charts represented by indexes, default is all 6 will be processed, in this order (order can be changed or indexes removed) 
 "faachartnames": [   
     ["Sectional", "vfr", ""],    <- as in [FAA chart name, chart type, alias] (NOTE no alias used for vfr charts)  
     ["Caribbean", "vfr", ""],
