@@ -1,15 +1,14 @@
 # chartmaker - Download FAA VFR and IFR digital raster charts and translate into mbtiles databases for other mapping applications
 ### (Check out my chart viewing application https://github.com/n129bz/chartserver - also shows Metars, Pireps, Weather, etc.)
 
-### Requirements: sqlite3, python, nodejs + npm, perl, pngquant, imagemagick, curl, unzip, build-essential, libgdal-dev, gdal-bin (v3.6.2 minimum)
+### Requirements: nodejs + npm, sqlite3, python, perl, pngquant, imagemagick, curl, unzip, build-essential, libgdal-dev, libssl-dev, gdal-bin (v3.6.2 minimum)
 
 #### Installation:
-1.) This node.js application is designed to run on Linux, and also runs well on **WSL** (Windows Subsystem for Linux)    
-2.) Install all required programs as referred to in **Requirements** above  
-3.) Clone this repository, change directory to **chartmaker**, open a terminal and enter **npm install**        
-4.) Give execute permissions to **perlsetup.sh** shell script and run it to install perl dependencies           
-5.) Run the application in a terminal with the command **node make**                 
-6.) Go do something else... depending on the number of charts and image quality, the process can take several hours to complete.     
+1.) This node.js application is designed to run on Linux, and also runs well on **WSL** (Windows Subsystem for Linux) and assumes a pre-existing node js installation   
+2.) Clone this repository, change directory to **chartmaker**, open a terminal and enter **npm install**        
+3.) Give execute permissions to **appinstall.sh** shell script and run it to install all dependencies           
+4.) Run the application in a terminal with the command **node make**                 
+5.) Go do something else... depending on the number of charts and image quality, the process can take several hours to complete.     
 
 #### Install requirements example
 ```
