@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# install all required programs/utilities
-sudo apt install -y sqlite3 curl unzip pngquant imagemagick build-essential libgdal-dev libssl-dev gdal-bin
-
 # install perl dependencies
 perl -MCPAN -e "CPAN::Shell->notest('install', 'strict')"
 perl -MCPAN -e "CPAN::Shell->notest('install', 'warnings')"
