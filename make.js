@@ -1,11 +1,42 @@
 'use strict';
 
+class ChartProcessTime {
+    constructor(chartname) {
+        this.chartname = chartname;
+        this.startdate = new Date(new Date().toLocaleString());
+        this.totaltime = "";
+    }
+
+    calculateProcessingTime() {
+        let date2 = new Date(new Date().toLocaleString());
+
+        // the following is to handle cases where the times are on the opposite side of
+        // midnight e.g. when you want to get the difference between 9:00 PM and 5:00 AM
+
+        if (date2 < this.startdate) {
+            date2.setDate(date2.getDate() + 1);
+        }
+
+        let msec = date2 - this.startdate;
+        let hh = Math.floor(msec / 1000 / 60 / 60);
+        msec -= hh * 1000 * 60 * 60;
+        let mm = Math.floor(msec / 1000 / 60);
+        msec -= mm * 1000 * 60;
+        let ss = Math.floor(msec / 1000);
+        msec -= ss * 1000;
+
+        this.totaltime = `${chartname} processing time: ${hh}:${mm}:${ss}`;
+    }
+}
+
 const fs = require('fs');
 const { execSync, exec } = require('child_process');
 
 // load settings
 const appdir = process.cwd();
 const settings = JSON.parse(fs.readFileSync(`${appdir}/settings.json`));
+
+let timings = new Map();
 
 // logging
 let logfd = undefined;
@@ -72,6 +103,9 @@ settings.chartprocessindexes.forEach((index) => {
         chartfolder = `${workarea}/${chartworkname}`;
     }
     
+    let cpt = new ChartProcessTime(chartname);
+    timings.set(chartname, cpt);
+
     dir_1_unzipped = `${chartfolder}/1_unzipped`;
     dir_2_expanded = `${chartfolder}/2_expanded`;
     dir_3_clipped = `${chartfolder}/3_clipped`;
@@ -86,6 +120,10 @@ settings.chartprocessindexes.forEach((index) => {
     processImages();
     mergeAndQuantize();
     makeMbTiles();
+});
+
+timings.forEach((cpt, ckey) => {
+    console.log(`${cpt.totaltime}\n`);
 });
 
 if (settings.cleanprocessfolders) {
@@ -199,7 +237,6 @@ function processImages() {
     chartareas.forEach((area) => {
 
         logEntry(`* chart ${area}`);
-
         let shapefile = `${clippedShapeFolder}/${area}.shp`;
         let sourcetif = `${dir_1_unzipped}/${area}.tif`;
         let expanded = `${dir_2_expanded}/${area}.vrt`;
@@ -324,6 +361,9 @@ function makeMbTiles() {
     logEntry(`>> creating database: ${mbtiles}`);
     cmd = `python3 ./mbutil/mb-util --image_format=${imageformat} --scheme=tms ${sourcefolder} ${mbtiles}`;
     executeCommand(cmd);
+
+    let cpt = timings.get(chartname);
+    cpt.calculateProcessingTime();
 }
 
 /**
@@ -338,7 +378,8 @@ function buildChartNameArray() {
         if ((fname.endsWith(".tif")) &&
             (fname.search("fly") == -1) &&
             (fname.search("planning") == -1)) {
-            chartnames.push(fname.replace(".tif", ""));
+                let cname = fname.replace(".tif", "");
+                chartnames.push(cname);
         }
     });
     return chartnames;
@@ -474,6 +515,10 @@ function reportProcessingTime() {
     msec -= ss * 1000;
     // diff = 28800000 => hh = 8, mm = 0, ss = 0, msec = 0
     logEntry(`Start time: ${startdate}\r\nEnd time: ${date2}\r\nTotal processing time: ${hh}:${mm}:${ss}`);
+}
+
+function setChartProcessingTime() {
+
 }
 
 /**
