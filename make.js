@@ -55,15 +55,16 @@ const chartdate = getBestChartDate();
 // used for process timing
 const startdate = new Date(new Date().toLocaleString());
 
-// make sure these "base" folders exist
+// make sure these base level folders exist
 let workarea = `${appdir}/workarea`;
-let dbfolder = `${appdir}/charts`;
-
 if (settings.renameworkarea) workarea += `_${chartdate}`;
 if (!fs.existsSync(workarea)) fs.mkdirSync(workarea)
 
 let chartcache = `${appdir}/chartcache`;
 if (!fs.existsSync(chartcache)) fs.mkdirSync(chartcache);
+
+let dbfolder = `${appdir}/charts`;
+if (!fs.existsSync(dbfolder)) fs.mkdirSync(dbfolder);
 
 let imageformat = settings.tiledrivers[settings.tiledriverindex];
 let chartlayertype = "";
