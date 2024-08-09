@@ -86,7 +86,7 @@ let isifrchart = false;
 /**
  * Chart processing starts here
  */
-let resp = prompt("Enter 0 to process all charts in the chartprocessindexes array,\nEnter 1 to process a single VFR chart, or\nEnter * to process all 53 area charts individually: "); 
+let resp = prompt("Enter 0 to process all charts in the chartprocessindexes array, enter 1 to process a single VFR chart, or enter * to process all 53 area charts individually: "); 
 if (resp !== "0" ) {
     let parray = [];
     if (resp === "*") {
