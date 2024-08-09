@@ -86,46 +86,57 @@ let isifrchart = false;
 /**
  * Chart processing starts here
  */
-let resp = prompt("Enter 0 to process all charts in the chartprocessindexes array, or 1 to process a single VFR chart: "); 
-let nm = Number(resp);
-if (nm === 1) {
-    let lst = "\nSelect the chart number you want to process from this list\n\n";
-    for (var i = 0; i <  settings.vfrindividualcharts.length; i++) {
-        lst += `${settings.vfrindividualcharts[i][0]} ${settings.vfrindividualcharts[i][1]}\n`; 
-    }
-    lst += "\n";
-    resp = prompt(lst);
-    nm = Number(resp); 
-    if (nm >= 1 && nm <= 53) {
-        chartworkname = settings.vfrindividualcharts[nm - 1][1];
-        chartname = chartworkname;
-        clippedShapeFolder = `${appdir}/clipshapes/sectional`;
-        chartlayertype = settings.layertypes[settings.layertypeindex];
-        chartfolder = `${workarea}/${chartworkname}`;
-        charturl = `${settings.vfrindividualtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
-        console.log(charturl);
-
-        let cpt = new ChartProcessTime(chartname);
-        timings.set(chartname, cpt);
-
-        dir_1_unzipped = `${chartfolder}/1_unzipped`;
-        dir_2_expanded = `${chartfolder}/2_expanded`;
-        dir_3_clipped = `${chartfolder}/3_clipped`;
-        dir_4_tiled = `${chartfolder}/4_tiled`;
-        dir_5_merged = `${chartfolder}/5_merged`;
-        dir_6_quantized = `${chartfolder}/6_quantized`;
-        
-        setupEnvironment();
-        downloadSingleChart(charturl);
-        unzipCharts();
-        normalizeChartNames();
-        processImages();
-        mergeAndQuantize();
-        makeMbTiles();
+let resp = prompt("Enter 0 to process all charts in the chartprocessindexes array,\nEnter 1 to process a single VFR chart, or\nEnter * to process all area charts individually: "); 
+if (resp !== "0" ) {
+    let parray = [];
+    if (resp === "*") {
+        console.log("\nProcessing all 53 chart areas...\n");
+        for (var i = 0; i < 53; i++) {
+            parray.push(i);
+        }
     }
     else {
-        prompt("Invalid response, exiting!");
-        process.exit();
+        let lst = "\nSelect the chart number you want to process from this list\n\n";
+        for (var i = 0; i <  settings.vfrindividualcharts.length; i++) {
+            lst += `${settings.vfrindividualcharts[i][0]} ${settings.vfrindividualcharts[i][1]}\n`; 
+        }
+        lst += "\n";
+        resp = prompt(lst);
+        nm = Number(resp); 
+        if (nm >= 1 && nm <= 53) {
+            parray.push(nm - 1);
+        }
+        else {
+            prompt("Invalid response, exiting!");
+            process.exit();
+        }
+    }
+    for (var x = 0; x < parray.length; x++) {
+            chartworkname = settings.vfrindividualcharts[x][1];
+            chartname = chartworkname;
+            clippedShapeFolder = `${appdir}/clipshapes/sectional`;
+            chartlayertype = settings.layertypes[settings.layertypeindex];
+            chartfolder = `${workarea}/${chartworkname}`;
+            charturl = `${settings.vfrindividualtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
+            console.log(charturl);
+
+            let cpt = new ChartProcessTime(chartname);
+            timings.set(chartname, cpt);
+
+            dir_1_unzipped = `${chartfolder}/1_unzipped`;
+            dir_2_expanded = `${chartfolder}/2_expanded`;
+            dir_3_clipped = `${chartfolder}/3_clipped`;
+            dir_4_tiled = `${chartfolder}/4_tiled`;
+            dir_5_merged = `${chartfolder}/5_merged`;
+            dir_6_quantized = `${chartfolder}/6_quantized`;
+            
+            setupEnvironment();
+            downloadSingleChart(charturl);
+            unzipCharts();
+            normalizeChartNames();
+            processImages();
+            mergeAndQuantize();
+            makeMbTiles();
     }
 }
 else {
