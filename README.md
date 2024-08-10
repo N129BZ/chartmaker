@@ -61,7 +61,66 @@ chart type, and an alias (not used for vfr charts.) The chartprocessindexes arra
     ["DDECUS", "ifr", "Enroute_Low"]  <- aliases are required for DDECUS (which means Digital Data Enroute Continental US)
     ["DDECUS", "ifr", "Enroute_High"]
 ]
-```       
+```
+* ***vfrindividualcharts*** is a list of all 53 VFR area charts and is what the application uses for individual chart processing.    
+**WARNING: Editing any of these values will cause individual chart processing to fail.**
+```
+"vfrindividualcharts": [
+    [1, "Albuquerque"],
+    [2, "Anchorage"],
+    [3, "Atlanta"],
+    [4, "Bethel"],
+    [5, "Billings"],
+    [6, "Brownsville"],
+    [7, "Cape_Lisburne"],
+    [8, "Charlotte"],
+    [9, "Cheyenne"],
+    [10, "Chicago"],
+    [11, "Cincinnati"],
+    [12, "Cold_Bay"],
+    [13, "Dallas-Ft_Worth"],
+    [14, "Dawson"],
+    [15, "Denver"],
+    [16, "Detroit"],
+    [17, "Dutch_Harbor"],
+    [18, "El_Paso"],
+    [19, "Fairbanks"],
+    [20, "Great_Falls"],
+    [21, "Green_Bay"],
+    [22, "Halifax"],
+    [23, "Hawaiian_Islands"],
+    [24, "Houston"],
+    [25, "Jacksonville"],
+    [26, "Juneau"],
+    [27, "Kansas_City"],
+    [28, "Ketchikan"],
+    [29, "Klamath_Falls"],
+    [30, "Kodiak"],
+    [31, "Lake_Huron"],
+    [32, "Las_Vegas"],
+    [33, "Los_Angeles"],
+    [34, "McGrath"],
+    [35, "Memphis"],
+    [36, "Miami"],
+    [37, "Montreal"],
+    [38, "New_Orleans"],
+    [39, "New_York"],
+    [40, "Nome"],
+    [41, "Omaha"],
+    [42, "Phoenix"],
+    [43, "Point_Barrow"],
+    [44, "Salt_Lake_City"],
+    [45, "San_Antonio"],
+    [46, "San_Francisco"],
+    [47, "Seattle"],
+    [48, "Seward"],
+    [49, "St_Louis"],
+    [50, "Twin_Cities"],
+    [51, "Washington"],
+    [52, "Western_Aleutian_Islands"],
+    [53, "Wichita"] 
+]
+```    
 * ***layertypeindex*** controls the layertype and therefore how it will be rendered on a map, for example If you will be overlaying an OSM map with your chartmaker map   
 ```
 "layertypeindex": 1,   
