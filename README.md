@@ -36,6 +36,7 @@ The FAA publishes charts 20 days ***before*** the official chart date, and chart
 ```
 "vfrdownloadtemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip"   
 "ifrdownloadtemplate": "https://aeronav.faa.gov/enroute/<chartdate>/<charttype>.zip"
+"vfrindividualtemplate": "https://aeronav.faa.gov/visual/<chartdate>/sectional-files/<charttype>.zip"    
 ```  
 * ***application flags***   
 ```
@@ -48,8 +49,8 @@ The FAA publishes charts 20 days ***before*** the official chart date, and chart
 "tileimagequality" : 80   <- percentage (1-100) greatly affects processing speed and database size
 "zoomrange" : "1-12"      <- range of overviews to produce, higher takes longer and can make db huge
 ```   
-* ***chartprocessindexes*** control which chart types to process. Each faachartname is an array with 3 values: FAA chart name,
-chart type, and an alias (not used for vfr charts.) The chartprocessindexes array values correspond to the ordinal position (zero-based) in the faachartnames list.   
+* ***chartprocessindexes*** control which chart types to process if you do not pass a chart number argument and you respond to the subsequent prompt with a "0". In this case each faachartname index in the array will be processed.
+* ***faachartnames*** is an array with 3 values: FAA chart name, chart type, and an alias (not used for vfr charts.) The chartprocessindexes array values correspond to the ordinal position (zero-based) in the faachartnames list.   
 **WARNING: Editing of any of these faachartnames values will break the application.**   
 ```
 "chartprocessindexes": [0,1,2,3,4,5,6], <- charts represented by indexes, default is all 6 will be processed, in this order (order can be changed or indexes removed) 
