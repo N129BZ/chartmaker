@@ -86,9 +86,23 @@ let isifrchart = false;
 /**
  * Chart processing starts here
  */
-let resp = prompt("Enter 0 to process all charts in the chartprocessindexes array, enter 1 to process a single VFR chart, or enter * to process all 53 area charts individually: "); 
-if (resp !== "0" ) {
-    let parray = [];
+let passedarg = false;
+let resp = "";
+let parray = [];
+let nm = 0;
+
+if (process.argv.length === 3) {
+    passedarg = true;
+    nm = Number(process.argv[2]);
+    console.log(`Processing chart number ${nm}`);
+    resp = "1";
+    parray.push(nm - 1);
+}
+else {
+    resp = prompt("Enter 0 to process all charts in the chartprocessindexes array, enter 1 to process a single VFR chart, or enter * to process all 53 area charts individually: "); 
+}
+
+if (resp !== "0" ) {    
     if (resp === "*") {
         console.log("\nProcessing all 53 chart areas...\n");
         for (var i = 0; i < 53; i++) {
@@ -96,23 +110,27 @@ if (resp !== "0" ) {
         }
     }
     else {
-        let lst = "\nSelect the chart number you want to process from this list\n\n";
-        for (var i = 0; i <  settings.vfrindividualcharts.length; i++) {
-            lst += `${settings.vfrindividualcharts[i][0]} ${settings.vfrindividualcharts[i][1]}\n`; 
-        }
-        lst += "\n";
-        resp = prompt(lst);
-        nm = Number(resp); 
-        if (nm >= 1 && nm <= 53) {
-            parray.push(nm - 1);
-        }
-        else {
-            prompt("Invalid response, exiting!");
-            process.exit();
+        if (passedarg === false) {
+            let lst = "\nSelect the chart number you want to process from this list\n\n";
+            for (var i = 0; i <  settings.vfrindividualcharts.length; i++) {
+                lst += `${settings.vfrindividualcharts[i][0]} ${settings.vfrindividualcharts[i][1]}\n`; 
+            }
+            lst += "\n";
+            resp = prompt(lst);
+            nm = Number(resp); 
+
+            if (nm >= 1 && nm <= 53) {
+                parray.push(nm - 1);
+            }
+            else {
+                prompt("Invalid response, exiting!");
+                process.exit();
+            }
         }
     }
+
     for (var x = 0; x < parray.length; x++) {
-            chartworkname = settings.vfrindividualcharts[x][1];
+            chartworkname = settings.vfrindividualcharts[parray[x]][1];
             chartname = chartworkname;
             clippedShapeFolder = `${appdir}/clipshapes/sectional`;
             chartlayertype = settings.layertypes[settings.layertypeindex];
