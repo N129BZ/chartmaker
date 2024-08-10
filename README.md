@@ -10,8 +10,9 @@
 1.) This node.js application is designed to run on Linux, and also runs well on **WSL** (Windows Subsystem for Linux) and assumes a pre-existing node js installation   
 2.) After installing all requirements, clone this repository, change directory to **chartmaker**, open a terminal and enter **npm install**        
 3.) Give execute permissions to **perlinstall.sh** shell script and run it to install all the perl dependencies           
-4.) Run the application in a terminal with the command **node make**                 
-5.) Go do something else... depending on the number of charts and image quality, the process can take several hours to complete.     
+4.) Run the application in a terminal with the command **node make** or for an individual chart, **node make X** where X is a chart number   
+5.) Respond to prompt for what to process
+6.) Go do something else... depending on the number of charts and image quality, the process can take several hours to complete.     
 
 ### Process Control Files
 
