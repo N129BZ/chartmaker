@@ -101,7 +101,7 @@ if (arg.length >= 1) {
     parray.push(nm - 1);
 }
 else {
-    resp = prompt("Press Enter to process all charts in the chartprocessindexes array \n\rEnter 1 to process a single VFR chart \n\rEnter * to process all 53 area charts individually: "); 
+    resp = prompt("Press Enter to process all full charts in the chartprocessindexes array \n\rEnter 1 to process a single VFR chart \n\rEnter * to process all 53 area charts individually: "); 
 }
 
 if (resp.length > 0 && resp !== "0" ) {    
