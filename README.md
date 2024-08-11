@@ -3,7 +3,8 @@
 
 ### Docker image: ***docker pull n129bz/chartmaker:v1.34***
 ### To run the image: ***docker run -it n129bz/chartmaker:v1.34***
-### To launch chartmaker on the docker image: ***node /chartmaker/make.js***
+### To launch chartmaker on the docker image: ***node /chartmaker/make.js*** or, for a specific area chart: ***node /chartmaker/make.js X*** 
+(where X is a specific area chart number, see numbered list in ***settings.json***)
 
 ### Requirements: nodejs + npm, sqlite3, python, perl, pngquant, imagemagick, curl, unzip, build-essential, libgdal-dev, libssl-dev, gdal-bin (v3.6.2 minimum)
 
