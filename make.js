@@ -34,7 +34,7 @@ const { execSync, exec } = require('child_process');
 const prompt = require('prompt-sync')({sigint: true});
 
 // load settings
-const appdir = process.cwd();
+const appdir = __dirname;
 const settings = JSON.parse(fs.readFileSync(`${appdir}/settings.json`));
 
 let timings = new Map();
