@@ -86,7 +86,7 @@ let isifrchart = false;
 /**
  * Chart processing starts here
  */
-let passedargs = false;
+let passedarg = false;
 let resp = "";
 let parray = [];
 let nm = 0;
@@ -94,25 +94,30 @@ let nm = 0;
 let arg = process.argv.slice(2);
 
 if (arg.length >= 1) {
-    passedargs = true;
-    nm = Number(arg[0]);
-    console.log(`Processing chart number ${nm}`);
-    resp = "1";
-    parray.push(nm - 1);
+    passedarg = true;
+    if (arg[0] === "*") {
+        resp = arg[0];
+    }
+    else {
+        nm = Number(arg[0]);
+        console.log(`Processing chart number ${nm}`);
+        resp = "1";
+        parray.push(nm - 1);
+    }
 }
 else {
     resp = prompt("Press Enter to process all full charts in the chartprocessindexes array \n\rEnter 1 to process a single VFR chart \n\rEnter * to process all 53 area charts individually: "); 
 }
 
 if (resp.length > 0 && resp !== "0" ) {    
-    if (resp === "*") {
+    if (passedarg && resp === "*") {
         console.log("\nProcessing all 53 chart areas...\n");
         for (var i = 0; i < 53; i++) {
             parray.push(i);
         }
     }
     else {
-        if (passedargs === false) {
+        if (passedarg === false) {
             let lst = "\nSelect the chart number you want to process from this list\n\n";
             for (var i = 0; i <  settings.vfrindividualcharts.length; i++) {
                 lst += `${settings.vfrindividualcharts[i][0]} ${settings.vfrindividualcharts[i][1]}\n`; 
