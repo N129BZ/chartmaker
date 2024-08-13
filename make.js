@@ -94,11 +94,11 @@ let nm = 0;
 let arg = process.argv.slice(2);
 
 if (arg.length >= 1) {
-    passedarg = true;
     if (arg[0] === "*") {
         resp = arg[0];
     }
     else {
+        passedarg = true;
         nm = Number(arg[0]);
         console.log(`Processing chart number ${nm}`);
         resp = "1";
@@ -110,7 +110,7 @@ else {
 }
 
 if (resp.length > 0 && resp !== "0" ) {    
-    if (passedarg && resp === "*") {
+    if (resp === "*") {
         console.log("\nProcessing all 53 chart areas...\n");
         for (var i = 0; i < 53; i++) {
             parray.push(i);
