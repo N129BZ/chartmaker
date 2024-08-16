@@ -64,8 +64,11 @@ if (!fs.existsSync(workarea)) fs.mkdirSync(workarea)
 let chartcache = `${appdir}/chartcache`;
 if (!fs.existsSync(chartcache)) fs.mkdirSync(chartcache);
 
-let dbfolder = `${appdir}/charts`;
-if (!fs.existsSync(dbfolder)) fs.mkdirSync(dbfolder);
+let dbfolder = settings.dbfolder;
+if (dbfolder.length === 0) {
+    dbfolder = `${appdir}/charts`;
+    if (!fs.existsSync(dbfolder)) fs.mkdirSync(dbfolder);
+}
 
 let imageformat = settings.tiledrivers[settings.tiledriverindex];
 let chartlayertype = "";
