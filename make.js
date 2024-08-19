@@ -364,7 +364,7 @@ function processImages() {
             expandopt = "-expand rgba";
         }
         logEntry(`>> gdal_translate ${sourcetif}`);
-        cmd = `gdal_translate -strict -of vrt -co TILED=YES ${expandopt} ${sourcetif} ${expanded}`;
+        cmd = `gdal_translate -strict -of vrt -co TILED=YES -co BLOCKXSIZE=256 -co BLOCKYSIZE=256 ${expandopt} ${sourcetif} ${expanded}`;
         executeCommand(cmd);
 
         logEntry(`>> gdalwarp warping ${clipped} using shapefile ${shapefile}`);
