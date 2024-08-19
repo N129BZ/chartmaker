@@ -1,5 +1,9 @@
 'use strict';
 
+const fs = require('fs');
+const { execSync, exec } = require('child_process');
+const prompt = require('prompt-sync')({sigint: true});
+
 class ChartProcessTime {
     constructor(chartname) {
         this.chartname = chartname;
@@ -29,13 +33,14 @@ class ChartProcessTime {
     }
 }
 
-const fs = require('fs');
-const { execSync, exec } = require('child_process');
-const prompt = require('prompt-sync')({sigint: true});
-
 // load settings
-const appdir = __dirname;
-const settings = JSON.parse(fs.readFileSync(`${appdir}/settings.json`));
+const settings = JSON.parse(fs.readFileSync(`${__dirname}/settings.json`));
+
+// set the application folder
+let appdir = __dirname;
+if (settings.isrunningindocker) {
+    appdir = "/chartmaker";
+}
 
 let timings = new Map();
 
@@ -388,7 +393,7 @@ function mergeAndQuantize() {
     areas.forEach((area) => {
         let mergesource = `${dir_4_tiled}/${area}`;
         logEntry(`>> perl merging images into ${mergesource}`);
-        let cmd = `perl ./mergetiles.pl ${mergesource} ${dir_5_merged}`;
+        let cmd = `perl ${appdir}/mergetiles.pl ${mergesource} ${dir_5_merged}`;
         executeCommand(cmd);
     });
 
@@ -467,7 +472,7 @@ function makeMbTiles() {
     fs.rmSync(mbtiles, { force: true });  
     
     logEntry(`>> creating database: ${mbtiles}`);
-    cmd = `python3 ./mbutil/mb-util --image_format=${imageformat} --scheme=tms ${sourcefolder} ${mbtiles}`;
+    cmd = `python3 ${appdir}/mbutil/mb-util --image_format=${imageformat} --scheme=tms ${sourcefolder} ${mbtiles}`;
     executeCommand(cmd);
 
     let cpt = timings.get(chartname);
