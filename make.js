@@ -38,7 +38,7 @@ const settings = JSON.parse(fs.readFileSync(`${__dirname}/settings.json`));
 
 // set the application folder
 let appdir = __dirname;
-if (settings.isrunningindocker) {
+if (isDocker() === true) {
     appdir = "/chartmaker";
 }
 
@@ -630,8 +630,20 @@ function reportProcessingTime() {
     logEntry(`Start time: ${startdate}\r\nEnd time: ${date2}\r\nTotal processing time: ${hh}:${mm}:${ss}`);
 }
 
-function setChartProcessingTime() {
+/**
+ * Utility to see if we are in a docker container
+ */
+function isDocker() {
+    let dkresults = `${appdir}/isdocker.txt`;
+    let dcmd = `cat /proc/1/cgroup > ${dkresults}`;
+    
+    execSync(dcmd);
 
+    let txtresult = fs.readFileSync(dkresults, { encoding: 'utf8', flag: 'r' });
+    let retval = (txtresult.toString().search("/docker/") > -1)
+    fs.rmSync(dkresults);
+
+    return retval;
 }
 
 /**
