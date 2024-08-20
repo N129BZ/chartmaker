@@ -36,28 +36,29 @@ class ChartProcessTime {
 /**
  * Utility to see if we are in a docker container
  */
-const isDocker = () => {
-    let dkresults = `${appdir}/isdocker.txt`;
+function isRunningInDocker() {
+    let dkresults = `${__dirname}/isdocker.txt`;
     let dcmd = `cat /proc/1/cgroup > ${dkresults}`;
     
     execSync(dcmd);
 
     let txtresult = fs.readFileSync(dkresults, { encoding: 'utf8', flag: 'r' });
-    let retval = (txtresult.toString().search("/docker/") > -1)
+    let isdocker = (txtresult.toString().search("/docker/") > -1)
     fs.rmSync(dkresults);
 
-    return retval;
+    return isdocker;
 }
-
-// load settings
-const settings = JSON.parse(fs.readFileSync(`${__dirname}/settings.json`));
 
 // set the application folder
 let appdir = __dirname;
-if (isDocker === true) { 
+if (isRunningInDocker()) { 
     console.log("Running in docker!");
     appdir = "/chartmaker";
 }
+
+// load settings
+const settings = JSON.parse(fs.readFileSync(`${appdir}/settings.json`));
+
 
 let timings = new Map();
 
