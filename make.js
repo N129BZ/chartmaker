@@ -395,7 +395,7 @@ function processImages() {
         let configargs = "";
         if (imageformat == "webp") {
             formatargs = `--tiledriver=WEBP --webp-quality=${settings.tileimagequality}`    
-            configargs = `--config WEBP_LEVEL_OVERVIEW ${settings.tileimagequality}`
+            configargs = "--config WEBP_LOSSLESS_OVERVIEW YES"
         }
         cmd = `gdaladdo -r mode ${configargs} --config GDAL_NUM_THREADS ALL_CPUS ${clipped}`;
         executeCommand(cmd)
