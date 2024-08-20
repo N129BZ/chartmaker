@@ -9,7 +9,7 @@
     "cleanprocessfolders": false,
 
     "tileimagequality" : 80,
-    "zoomrange" : "1-15",
+    "zoomrange" : "1-13",
     "dbfolder": "",
 
     "chartprocessindexes": [0,1,2,3,4,5,6],

@@ -401,7 +401,7 @@ function processImages() {
         executeCommand(cmd)
 
         logEntry(`>> gdal2tiles tiling ${clipped} into ${tiled}`);
-        cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=4 ${formatargs} --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
+        cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --resampling=lanczos --processes=4 ${formatargs} --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
         executeCommand(cmd);
     });
 }
@@ -649,29 +649,6 @@ function reportProcessingTime() {
     msec -= ss * 1000;
     // diff = 28800000 => hh = 8, mm = 0, ss = 0, msec = 0
     logEntry(`Start time: ${startdate}\r\nEnd time: ${date2}\r\nTotal processing time: ${hh}:${mm}:${ss}`);
-}
-
-/**
- * Utility to scan a tif and return the desired information 
- * @param {string} file 
- * @param {string} searchtext 
- * @returns 
- */
-function getGdalInfo(file, searchtext) {
-    let gdalresults = `${appdir}/gdal.txt`;
-
-    cmd = `gdalinfo ${file} -noct > ${gdalresults}`;
-
-    let { stderr } = shell.exec(cmd, { silent: true })
-    if (stderr) {
-        logEntry(stderr);
-    }
-
-    let gdaldata = fs.readFileSync(gdalresults, { encoding: 'utf8', flag: 'r' });
-    let retval = (gdaldata.toString().search(searchtext) > -1)
-    fs.rmSync(gdalresults);
-
-    return retval;
 }
 
 /**
