@@ -8,7 +8,7 @@
     "logtofile": false,
     "cleanprocessfolders": false,
 
-    "tileimagequality" : 80,
+    "tileimagequality" : 100,
     "zoomrange" : "1-13",
     "dbfolder": "",
 
@@ -88,7 +88,7 @@
     "tiledriverindex": 2,
     "tiledrivers": [
         "png",
-        "jpg",
+        "jpeg",
         "webp"
     ]
 }
