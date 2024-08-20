@@ -8,8 +8,8 @@
     "logtofile": false,
     "cleanprocessfolders": false,
 
-    "tileimagequality" : 50,
-    "zoomrange" : "1-12",
+    "tileimagequality" : 100,
+    "zoomrange" : "1-17",
     "dbfolder": "",
 
     "chartprocessindexes": [0,1,2,3,4,5,6],
