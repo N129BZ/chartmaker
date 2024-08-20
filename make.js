@@ -379,29 +379,39 @@ function processImages() {
         cmd = `gdalinfo -json "${sourcetif}"`;
         let infojson = JSON.parse(execSync(cmd));
         if (infojson.bands.length === 1) {
-            expandopt = "-expand rgba";
+            expandopt = "-expand rgb";
         }
 
         logEntry(`>> gdal_translate ${sourcetif}`);
-        cmd = `gdal_translate -strict -of vrt -co TILED=YES ${expandopt} ${sourcetif} ${expanded}`;
+        cmd = `gdal_translate -strict -of vrt -ovr NONE -co "COMPRESS=LZW" -co "predictor=2" -co "TILED=YES" ${expandopt} ${sourcetif} ${expanded}`;
         executeCommand(cmd);
 
         logEntry(`>> gdalwarp warping ${clipped} using shapefile ${shapefile}`);
-        cmd = `gdalwarp -t_srs EPSG:4296 -r max -dstalpha -cblend 6 -cutline "${shapefile}" -crop_to_cutline ${expanded} ${clipped}`;
+        cmd = `gdalwarp -t_srs EPSG:3857 -dstalpha --config GDAL_CACHEMAX 256 -co SKIP_NOSOURCE=YES -multi -wo NUM_THREADS=ALL_CPUS -cblend 6 -cutline "${shapefile}" -crop_to_cutline ${expanded} ${clipped}`;
         executeCommand(cmd);
 
-        logEntry(`>> gdaladdo adding overviews to ${clipped}`);
-        let formatargs = "--tiledriver=PNG";
+        // setup formatting arguments for overviews        
+        let formatargs = `--tiledriver=${imageformat.toUpperCase()} `;
         let configargs = "";
-        if (imageformat == "webp") {
-            formatargs = `--tiledriver=WEBP --webp-quality=${settings.tileimagequality}`    
-            configargs = "--config WEBP_LOSSLESS_OVERVIEW YES"
+        switch (imageformat) {
+            case "webp":
+                configargs = `--config WEBP_LOSSLESS_OVERVIEW YES --config WEBP_LEVEL_OVERVIEW ${settings.tileimagequality}`;
+                formatargs += `--webp-quality=${settings.tileimagequality} --webp-lossless`;
+                break;
+            case "jpeg":
+                configargs = `--config JPEG_QUALITY_OVERVIEW ${settings.tileimagequality}`;
+                break;     
+            default:
+                // no adjustments for PNG images
+                break;
         }
-        cmd = `gdaladdo -r mode ${configargs} --config GDAL_NUM_THREADS ALL_CPUS ${clipped}`;
+
+        logEntry(`>> gdaladdo adding overviews to ${clipped}`);
+        cmd = `gdaladdo ${configargs} --config GDAL_NUM_THREADS ALL_CPUS ${clipped}`;
         executeCommand(cmd)
 
         logEntry(`>> gdal2tiles tiling ${clipped} into ${tiled}`);
-        cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --resampling=lanczos --processes=4 ${formatargs} --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
+        cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=4 ${formatargs} --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
         executeCommand(cmd);
     });
 }
