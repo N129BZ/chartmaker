@@ -363,24 +363,27 @@ function processImages() {
         if (infojson.bands.length === 1) {
             expandopt = "-expand rgba";
         }
+
         logEntry(`>> gdal_translate ${sourcetif}`);
-        cmd = `gdal_translate -strict -of vrt -co TILED=YES -co BLOCKXSIZE=256 -co BLOCKYSIZE=256 ${expandopt} ${sourcetif} ${expanded}`;
+        cmd = `gdal_translate -strict -of vrt -co TILED=YES ${expandopt} ${sourcetif} ${expanded}`;
         executeCommand(cmd);
 
         logEntry(`>> gdalwarp warping ${clipped} using shapefile ${shapefile}`);
-        cmd = `gdalwarp -t_srs EPSG:4326 -dstalpha -cblend 6 -cutline "${shapefile}" -crop_to_cutline ${expanded} ${clipped}`;
+        cmd = `gdalwarp -t_srs EPSG:4296 -r max -dstalpha -cblend 6 -cutline "${shapefile}" -crop_to_cutline ${expanded} ${clipped}`;
         executeCommand(cmd);
 
         logEntry(`>> gdaladdo adding overviews to ${clipped}`);
-        cmd = `gdaladdo --config GDAL_NUM_THREADS ALL_CPUS ${clipped}`;
-        executeCommand(cmd);
-
         let formatargs = "--tiledriver=PNG";
+        let configargs = "";
         if (imageformat == "webp") {
-            formatargs = `--tiledriver=WEBP --webp-quality=${settings.tileimagequality}`
+            formatargs = `--tiledriver=WEBP --webp-quality=${settings.tileimagequality}`    
+            configargs = `--config WEBP_LEVEL_OVERVIEW ${settings.tileimagequality}`
         }
+        cmd = `gdaladdo -r mode ${configargs} --config GDAL_NUM_THREADS ALL_CPUS ${clipped}`;
+        executeCommand(cmd)
+
         logEntry(`>> gdal2tiles tiling ${clipped} into ${tiled}`);
-        cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=4 ${formatargs} --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
+        cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=4 --profile=raster ${formatargs} --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
         executeCommand(cmd);
     });
 }
