@@ -54,7 +54,7 @@ const settings = JSON.parse(fs.readFileSync(`${__dirname}/settings.json`));
 
 // set the application folder
 let appdir = __dirname;
-if (isDocker === true) 
+if (isDocker === true) { 
     console.log("Running in docker!");
     appdir = "/chartmaker";
 }
