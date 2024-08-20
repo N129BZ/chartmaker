@@ -33,12 +33,29 @@ class ChartProcessTime {
     }
 }
 
+/**
+ * Utility to see if we are in a docker container
+ */
+const isDocker = () => {
+    let dkresults = `${appdir}/isdocker.txt`;
+    let dcmd = `cat /proc/1/cgroup > ${dkresults}`;
+    
+    execSync(dcmd);
+
+    let txtresult = fs.readFileSync(dkresults, { encoding: 'utf8', flag: 'r' });
+    let retval = (txtresult.toString().search("/docker/") > -1)
+    fs.rmSync(dkresults);
+
+    return retval;
+}
+
 // load settings
 const settings = JSON.parse(fs.readFileSync(`${__dirname}/settings.json`));
 
 // set the application folder
 let appdir = __dirname;
-if (isDocker() === true) {
+if (isDocker === true) 
+    console.log("Running in docker!");
     appdir = "/chartmaker";
 }
 
@@ -631,22 +648,6 @@ function reportProcessingTime() {
     msec -= ss * 1000;
     // diff = 28800000 => hh = 8, mm = 0, ss = 0, msec = 0
     logEntry(`Start time: ${startdate}\r\nEnd time: ${date2}\r\nTotal processing time: ${hh}:${mm}:${ss}`);
-}
-
-/**
- * Utility to see if we are in a docker container
- */
-function isDocker() {
-    let dkresults = `${appdir}/isdocker.txt`;
-    let dcmd = `cat /proc/1/cgroup > ${dkresults}`;
-    
-    execSync(dcmd);
-
-    let txtresult = fs.readFileSync(dkresults, { encoding: 'utf8', flag: 'r' });
-    let retval = (txtresult.toString().search("/docker/") > -1)
-    fs.rmSync(dkresults);
-
-    return retval;
 }
 
 /**
