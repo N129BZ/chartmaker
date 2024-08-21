@@ -118,51 +118,73 @@ let parray = [];
 let jsonarray = settings.vfrindividualcharts;
 let nm = 0;
 
-let arg = process.argv.slice(2);
+let arg = process.argv.slice(2).toUpperCase();
 
 if (arg.length >= 1) {
-    if (arg[0] === "0") {
+    if (arg[0] === "ALL") {
         resp = "0";
     }
-    else {
-        passedarg = true;
-        nm = Number(arg[0]);
-        console.log(`Processing chart number ${nm}`);
-        resp = "1";
-        parray.push(nm);
+    else if (arg[0] === "FULL") {
+        processFull();
+    }
+    else if (arg[0].search("SINGLE") > -1) {
+        try {
+            nm = Number(arg[0].split("=")[1]);
+            console.log(`Processing chart number ${nm}`);
+            parray.push(nm);
+            passedarg = true;
+            processSingles(parray);
+        }
+        catch(error) {
+            console.log("Expected numeric argument, exiting!");
+            process.exit();
+        }
     }
 }
 else {
-    resp = prompt("Enter 0 to process all 53 area charts individually, Enter 1 to process a single VFR chart, or Press Enter to process all of the full charts in the chartprocessindexes array: "); 
+    resp = prompt("Enter 0 to process all 53 area charts individually, Enter 1 to process a single VFR chart, or Press 2 to process all of the full charts in the chartprocessindexes array: "); 
+    switch (resp) {
+        case "0":
+            processAll();
+            break;
+        case "1":
+            processOne();
+            break;
+        case "2":
+            processFull();
+            break;
+    }
 }
 
-if (resp.length > 0) {    
-    if (resp === "0") {
-        console.log("\nProcessing all 53 chart areas...\n");
-        for (var i = 0; i < 53; i++) {
-            parray.push(i);
-        }
+
+function processAll() {    
+    console.log("\nProcessing all 53 chart areas...\n");
+    for (var i = 0; i < 53; i++) {
+        parray.push(i);
+    }
+    processSingles(parray);
+}
+
+function processOne() {
+    let lst = "\nSelect the chart number you want to process from this list\n\n";
+    for (var i = 0; i <  53; i++) {
+        lst += `${i} ${jsonarray[i][1]}\n`; 
+    }
+    lst += "\n";
+    resp = prompt(lst);
+    nm = Number(resp); 
+
+    if (nm >= 0 && nm < 53) {
+        parray.push(nm);
+        processSingles(parray);
     }
     else {
-        if (passedarg === false) {
-            let lst = "\nSelect the chart number you want to process from this list\n\n";
-            for (var i = 0; i <  53; i++) {
-                lst += `${i} ${jsonarray[i][1]}\n`; 
-            }
-            lst += "\n";
-            resp = prompt(lst);
-            nm = Number(resp); 
-
-            if (nm >= 0 && nm < 53) {
-                parray.push(nm);
-            }
-            else {
-                prompt("Invalid response, exiting!");
-                process.exit();
-            }
-        }
+        prompt("Invalid response, exiting!");
+        process.exit();
     }
+}
 
+function processSingles(parray) {
     for (var x = 0; x < parray.length; x++) {
             chartworkname = jsonarray[parray[x]][1];
             chartname = chartworkname;
@@ -191,7 +213,8 @@ if (resp.length > 0) {
             makeMbTiles();
     }
 }
-else {
+
+function processFull() {
     settings.chartprocessindexes.forEach((index) => {
         chartworkname = settings.faachartnames[index][0];
         chartlayertype = settings.layertypes[settings.layertypeindex];
