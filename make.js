@@ -118,16 +118,17 @@ let parray = [];
 let jsonarray = settings.vfrindividualcharts;
 let nm = 0;
 
-let arg = process.argv.slice(2).toUpperCase();
+let arg = process.argv.slice(2);
 
 if (arg.length >= 1) {
-    if (arg[0] === "ALL") {
+    let sarg = arg[0].toUpperCase();
+    if (sarg === "ALL") {
         resp = "0";
     }
-    else if (arg[0] === "FULL") {
+    else if (sarg === "FULL") {
         processFull();
     }
-    else if (arg[0].search("SINGLE") > -1) {
+    else if (sarg.search("SINGLE") > -1) {
         try {
             nm = Number(arg[0].split("=")[1]);
             console.log(`Processing chart number ${nm}`);
