@@ -196,6 +196,7 @@ function processSingles(parray) {
         let cpt = new ChartProcessTime(chartname);
         timings.set(chartname, cpt);
         runProcessing();
+        console.log(`${cpt.totaltime}\n`);
     }
 }
 
@@ -222,6 +223,7 @@ function processFull() {
         let cpt = new ChartProcessTime(chartname);
         timings.set(chartname, cpt);
         runProcessing();
+        console.log(`${cpt.totaltime}\n`);
     });
 }
 
@@ -242,9 +244,9 @@ function runProcessing() {
     makeMbTiles();
 }
 
-timings.forEach((cpt, ckey) => {
-    console.log(`${cpt.totaltime}\n`);
-});
+// timings.forEach((cpt, ckey) => {
+//     console.log(`${cpt.totaltime}\n`);
+// });
 
 if (settings.cleanprocessfolders) {
     let workfiles = fs.readdirSync(workarea)
