@@ -115,6 +115,7 @@ let isifrchart = false;
 let passedarg = false;
 let resp = "";
 let parray = [];
+let jsonarray = settings.vfrindividualcharts;
 let nm = 0;
 
 let arg = process.argv.slice(2);
@@ -136,7 +137,7 @@ else {
 }
 
 if (resp.length > 0 && resp !== "0" ) {    
-    if (resp === "*") {
+    if (resp == "*") {
         console.log("\nProcessing all 53 chart areas...\n");
         for (var i = 0; i < 53; i++) {
             parray.push(i);
@@ -146,7 +147,7 @@ if (resp.length > 0 && resp !== "0" ) {
         if (passedarg === false) {
             let lst = "\nSelect the chart number you want to process from this list\n\n";
             for (var i = 0; i <  53; i++) {
-                lst += `${i} ${settings.vfrindividualcharts[i][1]}\n`; 
+                lst += `${i} ${jsonarray[i][1]}\n`; 
             }
             lst += "\n";
             resp = prompt(lst);
@@ -163,7 +164,7 @@ if (resp.length > 0 && resp !== "0" ) {
     }
 
     for (var x = 0; x < parray.length; x++) {
-            chartworkname = settings.vfrindividualcharts[parray[x]][1];
+            chartworkname = jsonarray[parray[x]][1];
             chartname = chartworkname;
             clippedShapeFolder = `${appdir}/clipshapes/sectional`;
             chartlayertype = settings.layertypes[settings.layertypeindex];
