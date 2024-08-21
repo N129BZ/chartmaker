@@ -123,7 +123,7 @@ let arg = process.argv.slice(2);
 if (arg.length >= 1) {
     let sarg = arg[0].toUpperCase();
     if (sarg === "ALL") {
-        resp = "0";
+       processAll();
     }
     else if (sarg === "FULL") {
         processFull();
