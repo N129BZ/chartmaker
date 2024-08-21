@@ -119,11 +119,10 @@ let jsonarray = settings.vfrindividualcharts;
 let nm = 0;
 
 let arg = process.argv.slice(2);
-console.log("Args:", process.argv);
 
 if (arg.length >= 1) {
-    if (arg[0] == "*") {
-        resp = "*";
+    if (arg[0] === "0") {
+        resp = "0";
     }
     else {
         passedarg = true;
@@ -134,11 +133,11 @@ if (arg.length >= 1) {
     }
 }
 else {
-    resp = prompt("Press Enter to process all full charts in the chartprocessindexes array, enter 1 to process a single VFR chart, or enter * to process all 53 area charts individually: "); 
+    resp = prompt("Enter 0 to process all 53 area charts individually, Enter 1 to process a single VFR chart, or Press Enter to process all of the full charts in the chartprocessindexes array: "); 
 }
 
-if (resp.length > 0 && resp !== "0" ) {    
-    if (resp == "*") {
+if (resp.length > 0) {    
+    if (resp === "0") {
         console.log("\nProcessing all 53 chart areas...\n");
         for (var i = 0; i < 53; i++) {
             parray.push(i);
