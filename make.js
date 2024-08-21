@@ -121,14 +121,14 @@ let arg = process.argv.slice(2);
 
 if (arg.length >= 1) {
     if (arg[0] === "*") {
-        resp = arg[0];
+        resp = "*";
     }
     else {
         passedarg = true;
         nm = Number(arg[0]);
         console.log(`Processing chart number ${nm}`);
         resp = "1";
-        parray.push(nm - 1);
+        parray.push(nm);
     }
 }
 else {
@@ -145,15 +145,15 @@ if (resp.length > 0 && resp !== "0" ) {
     else {
         if (passedarg === false) {
             let lst = "\nSelect the chart number you want to process from this list\n\n";
-            for (var i = 0; i <  settings.vfrindividualcharts.length; i++) {
-                lst += `${settings.vfrindividualcharts[i][0]} ${settings.vfrindividualcharts[i][1]}\n`; 
+            for (var i = 0; i <  53; i++) {
+                lst += `${i} ${settings.vfrindividualcharts[i][1]}\n`; 
             }
             lst += "\n";
             resp = prompt(lst);
             nm = Number(resp); 
 
-            if (nm >= 1 && nm <= 53) {
-                parray.push(nm - 1);
+            if (nm >= 0 && nm < 53) {
+                parray.push(nm);
             }
             else {
                 prompt("Invalid response, exiting!");
