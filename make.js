@@ -112,7 +112,6 @@ let isifrchart = false;
 /**
  * Chart processing starts here
  */
-let passedarg = false;
 let resp = "";
 let parray = [];
 let jsonarray = settings.vfrindividualcharts;
@@ -137,7 +136,7 @@ if (arg.length >= 1) {
             processSingles(parray);
         }
         catch(error) {
-            console.log("Expected numeric argument, exiting!");
+            console.log("Error in numeric argument, format is: SINGLE=X where X is a valid vfr chart index number (see settings.json.) Exiting chartmaker!");
             process.exit();
         }
     }
@@ -187,31 +186,16 @@ function processOne() {
 
 function processSingles(parray) {
     for (var x = 0; x < parray.length; x++) {
-            chartworkname = jsonarray[parray[x]][1];
-            chartname = chartworkname;
-            clippedShapeFolder = `${appdir}/clipshapes/sectional`;
-            chartlayertype = settings.layertypes[settings.layertypeindex];
-            chartfolder = `${workarea}/${chartworkname}`;
-            charturl = `${settings.vfrindividualtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
-            console.log(charturl);
-
-            let cpt = new ChartProcessTime(chartname);
-            timings.set(chartname, cpt);
-
-            dir_1_unzipped = `${chartfolder}/1_unzipped`;
-            dir_2_expanded = `${chartfolder}/2_expanded`;
-            dir_3_clipped = `${chartfolder}/3_clipped`;
-            dir_4_tiled = `${chartfolder}/4_tiled`;
-            dir_5_merged = `${chartfolder}/5_merged`;
-            dir_6_quantized = `${chartfolder}/6_quantized`;
-            
-            setupEnvironment();
-            downloadSingleChart(charturl);
-            unzipCharts();
-            normalizeChartNames();
-            processImages();
-            mergeAndQuantize();
-            makeMbTiles();
+        chartworkname = jsonarray[parray[x]][1];
+        chartname = chartworkname;
+        clippedShapeFolder = `${appdir}/clipshapes/sectional`;
+        chartlayertype = settings.layertypes[settings.layertypeindex];
+        chartfolder = `${workarea}/${chartworkname}`;
+        charturl = `${settings.vfrindividualtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
+        console.log(charturl);
+        let cpt = new ChartProcessTime(chartname);
+        timings.set(chartname, cpt);
+        runProcessing();
     }
 }
 
@@ -237,22 +221,25 @@ function processFull() {
         
         let cpt = new ChartProcessTime(chartname);
         timings.set(chartname, cpt);
-
-        dir_1_unzipped = `${chartfolder}/1_unzipped`;
-        dir_2_expanded = `${chartfolder}/2_expanded`;
-        dir_3_clipped = `${chartfolder}/3_clipped`;
-        dir_4_tiled = `${chartfolder}/4_tiled`;
-        dir_5_merged = `${chartfolder}/5_merged`;
-        dir_6_quantized = `${chartfolder}/6_quantized`;
-        
-        setupEnvironment();
-        downloadCharts();
-        unzipCharts();
-        normalizeChartNames();
-        processImages();
-        mergeAndQuantize();
-        makeMbTiles();
+        runProcessing();
     });
+}
+
+function runProcessing() {
+    dir_1_unzipped = `${chartfolder}/1_unzipped`;
+    dir_2_expanded = `${chartfolder}/2_expanded`;
+    dir_3_clipped = `${chartfolder}/3_clipped`;
+    dir_4_tiled = `${chartfolder}/4_tiled`;
+    dir_5_merged = `${chartfolder}/5_merged`;
+    dir_6_quantized = `${chartfolder}/6_quantized`;
+    
+    setupEnvironment();
+    downloadCharts();
+    unzipCharts();
+    normalizeChartNames();
+    processImages();
+    mergeAndQuantize();
+    makeMbTiles();
 }
 
 timings.forEach((cpt, ckey) => {
