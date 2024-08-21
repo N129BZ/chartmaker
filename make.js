@@ -121,7 +121,7 @@ let nm = 0;
 let arg = process.argv.slice(2);
 
 if (arg.length >= 1) {
-    if (arg[0] === "*") {
+    if (arg[0] == "*") {
         resp = "*";
     }
     else {
