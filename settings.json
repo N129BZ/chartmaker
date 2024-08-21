@@ -9,10 +9,10 @@
     "cleanprocessfolders": false,
 
     "tileimagequality" : 100,
-    "zoomrange" : "1-13",
+    "zoomrange" : "1-12",
     "dbfolder": "",
 
-    "chartprocessindexes": [0,1,2,3,4,5,6],
+    "chartprocessindexes": [0],
     "faachartnames": [
         ["Sectional", "vfr", ""],
         ["Caribbean", "vfr", ""],

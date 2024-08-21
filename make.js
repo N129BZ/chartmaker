@@ -204,16 +204,14 @@ function processFull() {
     settings.chartprocessindexes.forEach((index) => {
         chartworkname = settings.faachartnames[index][0];
         chartlayertype = settings.layertypes[settings.layertypeindex];
-        isifrchart = settings.faachartnames[index][1] === "ifr";
-        if (isifrchart) {
-            // IFR chart
+        let ctype = settings.faachartnames[index][1];
+        if (ctype === "ifr") {
             charturl = settings.ifrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
             clippedShapeFolder = `${appdir}/clipshapes/${settings.faachartnames[index][2].toLowerCase()}`;
             chartname = settings.faachartnames[index][2]; // use alias value for IFR
             chartfolder = `${workarea}/${chartname}`;
         }
-        else {
-            // VFR chart
+        else { // vfr
             charturl = settings.vfrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
             clippedShapeFolder = `${appdir}/clipshapes/${chartworkname.toLowerCase()}`;
             chartname = chartworkname;
@@ -329,29 +327,6 @@ function unzipCharts() {
     executeCommand(cmd);
 }
 
-/**
- * Get the single chart zip file from the FAA's digital sources URL
- */
-function downloadSingleChart(singlecharturl) {
-    let chartzip = `${chartcache}/${chartworkname}-${chartdate}.zip`;
-    if (fs.existsSync(chartzip)) {
-        logEntry(`Using cached ${chartzip}`);
-        return;
-    }
-    else {
-        let oldfiles = fs.readdirSync(chartcache);
-        for (var i = 0; i < oldfiles.length; i++) {
-            if (oldfiles[i].startsWith(chartworkname)) {
-                fs.rmSync(`${chartcache}/${oldfiles[i]}`);
-                break;
-            }
-        }
-        logEntry(`Downloading ${chartzip}`);
-        cmd = `curl ${singlecharturl} -o ${chartzip}`;
-        executeCommand(cmd);
-    }
-}
-
 /** 
  * Clean up chart tif names by converting spaces and dashes to underscores
  */
@@ -437,7 +412,7 @@ function mergeAndQuantize() {
     let areas = fs.readdirSync(dir_4_tiled);
     areas.forEach((area) => {
         let mergesource = `${dir_4_tiled}/${area}`;
-        logEntry(`>> perl merging images into ${mergesource}`);
+        logEntry(`>> perl merging images from ${mergesource} into dir_5_merged`);
         let cmd = `perl ${appdir}/mergetiles.pl ${mergesource} ${dir_5_merged}`;
         executeCommand(cmd);
     });
