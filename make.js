@@ -119,11 +119,10 @@ let jsonarray = settings.vfrindividualcharts;
 let nm = 0;
 
 let arg = process.argv.slice(2);
-console.log(arg);
+console.log("Args:", process.argv);
 
 if (arg.length >= 1) {
     if (arg[0] == "*") {
-
         resp = "*";
     }
     else {
