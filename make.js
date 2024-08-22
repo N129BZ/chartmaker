@@ -242,10 +242,6 @@ function runProcessing() {
     makeMbTiles();
 }
 
-// timings.forEach((cpt, ckey) => {
-//     console.log(`${cpt.totaltime}\n`);
-// });
-
 if (settings.cleanprocessfolders) {
     let workfiles = fs.readdirSync(workarea)
     workfiles.forEach(file => {
