@@ -3,16 +3,18 @@
     "vfrdownloadtemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
     "vfrindividualtemplate": "https://aeronav.faa.gov/visual/<chartdate>/sectional-files/<charttype>.zip",
     "ifrdownloadtemplate": "https://aeronav.faa.gov/enroute/<chartdate>/<charttype>.zip",
+    "usvfrwallplanningtemplate": "https://aeronav.faa.gov/visual/<chartdate>/Planning/US_WallPlan.zip",
 
     "renameworkarea": false,
     "logtofile": false,
     "cleanprocessfolders": false,
 
-    "tileimagequality" : 100,
-    "zoomrange" : "1-12",
-    "dbfolder": "",
-
-    "chartprocessindexes": [0],
+    "tileimagequality" : 50,
+    "zoomrange" : "0-11",
+    "dbfolder": "/home/bro/charts",
+    "addoverviews": true,
+    
+    "chartprocessindexes": [3],
     "faachartnames": [
         ["Sectional", "vfr", ""],
         ["Caribbean", "vfr", ""],
@@ -76,7 +78,8 @@
         [49, "Twin_Cities"],
         [50, "Washington"],
         [51, "Western_Aleutian_Islands"],
-        [52, "Wichita"] 
+        [52, "Wichita"],
+        [53, "US_VFR_Wall_Planning"] 
     ],
 
     "layertypeindex": 1,   
