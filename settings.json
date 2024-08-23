@@ -11,7 +11,7 @@
 
     "tileimagequality" : 50,
     "zoomrange" : "0-11",
-    "dbfolder": "/home/bro/charts",
+    "dbfolder": "",
     "addoverviews": true,
     
     "chartprocessindexes": [3],
