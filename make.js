@@ -35,32 +35,38 @@ class ChartProcessTime {
 
 /**
  * Utility to see if we are in a docker container
+ * @returns boolean
  */
 function isRunningInDocker() {
-    let dkresults = `${__dirname}/isdocker.txt`;
-    let dcmd = `cat /proc/1/cgroup > ${dkresults}`;
-    
-    execSync(dcmd);
-
-    let txtresult = fs.readFileSync(dkresults, { encoding: 'utf8', flag: 'r' });
-    let isdocker = (txtresult.toString().search("/docker/") > -1)
-    fs.rmSync(dkresults);
-
+    let r = execSync(`cat /proc/1/cgroup`, {encoding: "utf8"});
+    let isdocker = (r.search("/docker/") > -1)
     return isdocker;
 }
 
 // set the application folder
 let appdir = __dirname;
+
+/**
+ * Set the application directory if running in docker
+ */
 if (isRunningInDocker()) { 
     console.log("Running in docker!");
     appdir = "/chartmaker";
 }
 
-// load settings
+const timings = new Map();
 const settings = JSON.parse(fs.readFileSync(`${appdir}/settings.json`));
 
 
-let timings = new Map();
+/**
+ * Get the number of available processes
+ * @returns string integer
+ */
+function getProcessCount() {
+    let r = execSync(`grep -c "^processor" /proc/cpuinfo`, { encoding: 'utf8'});
+    let nm = Number(r.replace('\n', ""));
+    return nm;
+}
 
 // logging
 let logfd = undefined;
@@ -70,7 +76,12 @@ const setupDebugLog = function(logfolder) {
     }
 }
 const logEntry = function(entry) {
-    settings.logtofile ? fs.writeSync(logfd, `${entry}\n`) : console.log(entry);
+    if (settings.logtofile) {
+        fs.writeSync(logfd, `${entry}\n`)
+    }
+    else {
+        console.log(entry);
+    }
 }
 
 // Get the current chart date from the chartdates.json file
@@ -167,14 +178,14 @@ function processAll() {
 
 function processOne() {
     let lst = "\nSelect the chart number you want to process from this list\n\n";
-    for (var i = 0; i <  53; i++) {
+    for (var i = 0; i <  jsonarray.length; i++) {
         lst += `${i} ${jsonarray[i][1]}\n`; 
     }
     lst += "\n";
     resp = prompt(lst);
     nm = Number(resp); 
 
-    if (nm >= 0 && nm < 53) {
+    if (nm >= 0 && nm < jsonarray.length) {
         parray.push(nm);
         processSingles(parray);
     }
@@ -188,10 +199,17 @@ function processSingles(parray) {
     for (var x = 0; x < parray.length; x++) {
         chartworkname = jsonarray[parray[x]][1];
         chartname = chartworkname;
-        clippedShapeFolder = `${appdir}/clipshapes/sectional`;
+        let lccname =  chartname.toLowerCase();
+        clippedShapeFolder = `${appdir}/clipshapes/${lccname}`;
         chartlayertype = settings.layertypes[settings.layertypeindex];
         chartfolder = `${workarea}/${chartworkname}`;
-        charturl = `${settings.vfrindividualtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
+
+        if (lccname === "us_vfr_wall_planning") {
+            charturl = `${settings.usvfrwallplanningtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
+        }
+        else {
+            charturl = `${settings.vfrindividualtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
+        }
         console.log(charturl);
         let cpt = new ChartProcessTime(chartname);
         timings.set(chartname, cpt);
@@ -349,16 +367,17 @@ function processImages() {
     -------------------------------------------------------------------------*/
 
     let chartareas = buildChartNameArray();
+    let numprocesses = getProcessCount();
 
     chartareas.forEach((area) => {
-
         logEntry(`* chart ${area}`);
         let shapefile = `${clippedShapeFolder}/${area}.shp`;
-        let sourcetif = `${dir_1_unzipped}/${area}.tif`;
-        let expanded = `${dir_2_expanded}/${area}.vrt`;
         let clipped = `${dir_3_clipped}/${area}.vrt`;
+        let sourcetif = `${dir_1_unzipped}/${area}.tif`;
+        let expanded = `${dir_2_expanded}/${area}.vrt`
         let tiled = `${dir_4_tiled}/${area}`
         let expandopt = "";
+        let pcount = getProcessCount();
 
         // determine if RGB expansion is required
         cmd = `gdalinfo -json "${sourcetif}"`;
@@ -371,8 +390,8 @@ function processImages() {
         cmd = `gdal_translate -strict -of vrt -ovr NONE -co "COMPRESS=LZW" -co "predictor=2" -co "TILED=YES" ${expandopt} ${sourcetif} ${expanded}`;
         executeCommand(cmd);
 
-        logEntry(`>> gdalwarp warping ${clipped} using shapefile ${shapefile}`);
-        cmd = `gdalwarp -t_srs EPSG:3857 -dstalpha --config GDAL_CACHEMAX 256 -co SKIP_NOSOURCE=YES -multi -wo NUM_THREADS=ALL_CPUS -cblend 6 -cutline "${shapefile}" -crop_to_cutline ${expanded} ${clipped}`;
+        logEntry(`>> gdalwarp warping and clipping ${clipped} using shapefile ${shapefile}`);
+        cmd = `gdalwarp -t_srs EPSG:3857 -dstalpha --config GDAL_CACHEMAX 256 -co SKIP_NOSOURCE=YES -multi -wo NUM_THREADS=${pcount} -cblend 6 -cutline "${shapefile}" -crop_to_cutline ${expanded} ${clipped}`;
         executeCommand(cmd);
 
         // setup formatting arguments for overviews        
@@ -391,12 +410,14 @@ function processImages() {
                 break;
         }
 
-        logEntry(`>> gdaladdo adding overviews to ${clipped}`);
-        cmd = `gdaladdo ${configargs} --config GDAL_NUM_THREADS ALL_CPUS ${clipped}`;
-        executeCommand(cmd)
+        if (settings.addoverviews) {
+            logEntry(`>> gdaladdo adding overviews to ${clipped}`);
+            cmd = `gdaladdo ${configargs} --config GDAL_NUM_THREADS ALL_CPUS ${clipped}`;
+            executeCommand(cmd)
+        }
 
         logEntry(`>> gdal2tiles tiling ${clipped} into ${tiled}`);
-        cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=4 ${formatargs} --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
+        cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=${pcount} ${formatargs} --tmscompatible --webviewer=none ${clipped} ${tiled}`;
         executeCommand(cmd);
     });
 }
@@ -505,8 +526,7 @@ function buildChartNameArray() {
     files.forEach((file) => {
         let fname = file.toLowerCase();
         if ((fname.endsWith(".tif")) &&
-            (fname.search("fly") == -1) &&
-            (fname.search("planning") == -1)) {
+            (fname.search("fly") == -1)) {
                 let cname = fname.replace(".tif", "");
                 chartnames.push(cname);
         }
@@ -563,6 +583,7 @@ function normalizeFileName(file) {
                .replaceAll("-", "_")
                .replaceAll("_sec", "")
                .replaceAll("_tac", "")
+               .replaceAll("_chart", "")
                .replaceAll("u.s.", "us");
 }
 
