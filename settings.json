@@ -15,7 +15,7 @@
     "addoverviews": true,
     
     "chartprocessindexes": [0,1,2,3,4,5,6,7],
-    "faachartnames": [
+    "fullchartlist": [
         ["Sectional", "vfr", ""],
         ["Caribbean", "vfr", ""],
         ["Grand_Canyon", "vfr", ""],
@@ -26,7 +26,7 @@
         ["US_VFR_Wall_Planning", "vfr", ""]
     ],
     
-    "vfrindividualcharts": [
+    "individualchartlist": [
         [0, "Albuquerque"],
         [1, "Anchorage"],
         [2, "Atlanta"],

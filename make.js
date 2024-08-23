@@ -125,7 +125,7 @@ let isifrchart = false;
  */
 let resp = "";
 let parray = [];
-let jsonarray = settings.vfrindividualcharts;
+let jsonarray = settings.individualchartlist;
 let nm = 0;
 
 let arg = process.argv.slice(2);
@@ -153,7 +153,7 @@ if (arg.length >= 1) {
     }
 }
 else {
-    resp = prompt("Enter 0 to process all 53 area charts individually, Enter 1 to process a single VFR chart, or Press 2 to process all of the full charts in the chartprocessindexes array: "); 
+    resp = prompt("Enter 0 to process all 52 area VFR charts individually, Enter 1 to process a single area VFR chart, or Press 2 to process all of the full charts in the chartprocessindexes array: "); 
     switch (resp) {
         case "0":
             processAll();
@@ -199,17 +199,11 @@ function processSingles(parray) {
     for (var x = 0; x < parray.length; x++) {
         chartworkname = jsonarray[parray[x]][1];
         chartname = chartworkname;
-        let lccname =  chartname.toLowerCase();
-        clippedShapeFolder = `${appdir}/clipshapes/${lccname}`;
+        let lcname =  chartname.toLowerCase();
+        clippedShapeFolder = `${appdir}/clipshapes/sectional`;
         chartlayertype = settings.layertypes[settings.layertypeindex];
         chartfolder = `${workarea}/${chartworkname}`;
-
-        if (lccname === "us_vfr_wall_planning") {
-            charturl = `${settings.usvfrwallplanningtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
-        }
-        else {
-            charturl = `${settings.vfrindividualtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
-        }
+        charturl = `${settings.vfrindividualtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
         console.log(charturl);
         let cpt = new ChartProcessTime(chartname);
         timings.set(chartname, cpt);
@@ -220,18 +214,25 @@ function processSingles(parray) {
 
 function processFull() {
     settings.chartprocessindexes.forEach((index) => {
-        chartworkname = settings.faachartnames[index][0];
+        chartworkname = settings.fullchartlist[index][0];
         chartlayertype = settings.layertypes[settings.layertypeindex];
-        let ctype = settings.faachartnames[index][1];
+        let lcname = settings.fullchartlist[index][2].toLowerCase();
+        let ctype = settings.fullchartlist[index][1];
+
         if (ctype === "ifr") {
             charturl = settings.ifrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
-            clippedShapeFolder = `${appdir}/clipshapes/${settings.faachartnames[index][2].toLowerCase()}`;
-            chartname = settings.faachartnames[index][2]; // use alias value for IFR
+            clippedShapeFolder = `${appdir}/clipshapes/${lcname}`;
+            chartname = settings.fullchartlist[index][2]; // use alias value for IFR
             chartfolder = `${workarea}/${chartname}`;
         }
         else { // vfr
-            charturl = settings.vfrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
-            clippedShapeFolder = `${appdir}/clipshapes/${chartworkname.toLowerCase()}`;
+            if (lcname === "us_vfr_wall_planning") {
+                charturl = `${settings.usvfrwallplanningtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
+            }
+            else {
+                charturl = settings.vfrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
+            }
+            clippedShapeFolder = `${appdir}/clipshapes/${lcname}`;
             chartname = chartworkname;
             chartfolder = `${workarea}/${chartworkname}`;
         }
