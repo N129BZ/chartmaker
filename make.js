@@ -367,7 +367,7 @@ function processImages() {
     -------------------------------------------------------------------------*/
 
     let chartareas = buildChartNameArray();
-    let numprocesses = getProcessCount();
+    let processes = getProcessCount();
 
     chartareas.forEach((area) => {
         logEntry(`* chart ${area}`);
@@ -377,8 +377,7 @@ function processImages() {
         let expanded = `${dir_2_expanded}/${area}.vrt`
         let tiled = `${dir_4_tiled}/${area}`
         let expandopt = "";
-        let pcount = getProcessCount();
-
+        
         // determine if RGB expansion is required
         cmd = `gdalinfo -json "${sourcetif}"`;
         let infojson = JSON.parse(execSync(cmd));
@@ -391,7 +390,7 @@ function processImages() {
         executeCommand(cmd);
 
         logEntry(`>> gdalwarp warping and clipping ${clipped} using shapefile ${shapefile}`);
-        cmd = `gdalwarp -t_srs EPSG:3857 -dstalpha --config GDAL_CACHEMAX 256 -co SKIP_NOSOURCE=YES -multi -wo NUM_THREADS=${pcount} -cblend 6 -cutline "${shapefile}" -crop_to_cutline ${expanded} ${clipped}`;
+        cmd = `gdalwarp -t_srs EPSG:3857 -dstalpha --config GDAL_CACHEMAX 256 -co SKIP_NOSOURCE=YES -multi -cblend 6 -cutline "${shapefile}" -crop_to_cutline ${expanded} ${clipped}`;
         executeCommand(cmd);
 
         // setup formatting arguments for overviews        
@@ -417,7 +416,7 @@ function processImages() {
         }
 
         logEntry(`>> gdal2tiles tiling ${clipped} into ${tiled}`);
-        cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=${pcount} ${formatargs} --tmscompatible --webviewer=none ${clipped} ${tiled}`;
+        cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=${processes} ${formatargs} --tmscompatible --webviewer=none ${clipped} ${tiled}`;
         executeCommand(cmd);
     });
 }
