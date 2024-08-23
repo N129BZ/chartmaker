@@ -14,7 +14,7 @@
     "dbfolder": "",
     "addoverviews": true,
     
-    "chartprocessindexes": [0,1,2,3,4,5,6],
+    "chartprocessindexes": [0,1,2,3,4,5,6,7],
     "faachartnames": [
         ["Sectional", "vfr", ""],
         ["Caribbean", "vfr", ""],
@@ -22,7 +22,8 @@
         ["Terminal", "vfr", ""],
         ["Helicopter", "vfr", ""],
         ["DDECUS", "ifr", "Enroute_Low"],
-        ["DDECUS", "ifr", "Enroute_High"]
+        ["DDECUS", "ifr", "Enroute_High"],
+        ["US_VFR_Wall_Planning", "vfr", ""]
     ],
     
     "vfrindividualcharts": [
@@ -78,8 +79,7 @@
         [49, "Twin_Cities"],
         [50, "Washington"],
         [51, "Western_Aleutian_Islands"],
-        [52, "Wichita"],
-        [53, "US_VFR_Wall_Planning"] 
+        [52, "Wichita"]
     ],
 
     "layertypeindex": 1,   
