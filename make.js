@@ -186,7 +186,7 @@ else {
                                  "----------------------------------------------------------------\r\n" +
                                  "1 = Process a single area VFR chart\r\n" +
                                  "2 = Process all 52 area VFR charts individually\r\n" +
-                                 "3 = Process one of the full charts from the full chart list\r\n" +
+                                 "3 = Process a single full chart from the full chart list\r\n" +
                                  "4 = Process all of the full charts in the full chart list\r\n" +
                                  "----------------------------------------------------------------\r\n" +
                                  "Your selection: "); 
