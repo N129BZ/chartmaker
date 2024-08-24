@@ -82,16 +82,6 @@
         [52, "Wichita"]
     ],
 
-    "insetchartlist": [
-        [9, "Milwaukee"],
-        [24, "Jacksonville"],
-        [24, "Tampa"],
-        [32, "Los_Angeles_Basin"],
-        [48, "Indianapolis"],
-        [49, "Lake_of_the_Woods"],
-        [50, "Norfolk"]
-    ],
-
     "layertypeindex": 1,   
     "layertypes": [
         "baselayer", 
