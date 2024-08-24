@@ -6,7 +6,7 @@
   "dependencies": {
     "child_process": "^1.0.2",
     "fs": "0.0.1-security",
-    "prompt-sync": "^4.2.0"
+    "readline-sync": "^1.4.10"
   },
   "author": "Brian A. Manlove",
   "license": "BSD-3-Clause"
