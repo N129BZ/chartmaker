@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const { execSync, exec } = require('child_process');
-const prompt = require('prompt-sync')({sigint: true});
+const readlineSync = require('readline-sync');
 
 class ChartProcessTime {
     constructor(chartname) {
@@ -56,6 +56,13 @@ let appdir = __dirname;
 if (isRunningInDocker()) { 
     console.log("Running in docker!");
     appdir = "/chartmaker";
+}
+
+/**
+ * Handle all prompting for input
+ */
+function processPrompt(message) {
+    return readlineSync.question(message); 
 }
 
 const timings = new Map();
@@ -131,7 +138,6 @@ let isifrchart = false;
 /**
  * Chart processing starts here
  */
-let resp = "";
 let parray = [];
 let jsonarray = settings.individualchartlist;
 let nm = 0;
@@ -141,10 +147,10 @@ let arg = process.argv.slice(2);
 if (arg.length >= 1) {
     let sarg = arg[0].toUpperCase();
     if (sarg === "ALL") {
-       processAll();
+       processAllAreas();
     }
     else if (sarg === "FULL") {
-        processFull();
+        processAllFull();
     }
     else if (sarg.search("SINGLE") > -1) {
         try {
@@ -161,46 +167,59 @@ if (arg.length >= 1) {
     }
 }
 else {
-    resp = prompt("Enter 0 to process all 52 area VFR charts individually, Enter 1 to process a single area VFR chart, or Press 2 to process all of the full charts in the chartprocessindexes array: "); 
-    switch (resp) {
-        case "0":
-            processAll();
-            break;
+    let response = processPrompt("Select:\r\n" +
+                                 "----------------------------------------------------------------\r\n" +
+                                 "1 = Process a single area VFR chart\r\n" +
+                                 "2 = Process all 52 area VFR charts individually\r\n" +
+                                 "3 = Process one of the full charts from the full chart list\r\n" +
+                                 "4 = Process all of the full charts in the full chart list\r\n" +
+                                 "----------------------------------------------------------------\r\n" +
+                                 "Your selection: "); 
+    switch (response) {
         case "1":
-            processOne();
+            processOneArea();
             break;
         case "2":
-            processFull();
+            processAllAreas();
+            break;
+        case "3":
+            processOneFull();
+            break;
+        case "4":
+            parray = settings.chartprocessindexes;
+            processFulls(parray);
+            break;
+        default:
+            console.log("Invalid response - exiting chartmaker!");
             break;
     }
 }
 
-
-function processAll() {    
-    console.log("\nProcessing all 53 chart areas...\n");
-    for (var i = 0; i < 53; i++) {
-        parray.push(i);
-    }
-    processSingles(parray);
-}
-
-function processOne() {
-    let lst = "\nSelect the chart number you want to process from this list\n\n";
+function processOneArea() {
+    let lst = "\nSelect the chart number you want to process from this list\r\n\r\n";
     for (var i = 0; i <  jsonarray.length; i++) {
-        lst += `${i} ${jsonarray[i][1]}\n`; 
+        lst += `${i} ${jsonarray[i][1].replaceAll("_", " ")}\r\n`; 
     }
-    lst += "\n";
-    resp = prompt(lst);
-    nm = Number(resp); 
+    lst += "--------------------------------------------\r\nYour selection: ";
+    let response = processPrompt(lst);
+    nm = Number(response);
 
     if (nm >= 0 && nm < jsonarray.length) {
         parray.push(nm);
         processSingles(parray);
     }
     else {
-        prompt("Invalid response, exiting!");
+        console.log("Invalid response, exiting chartmaker!");
         process.exit();
     }
+}
+
+function processAllAreas() {    
+    console.log("\r\nProcessing all 53 chart areas...\r\n");
+    for (var i = 0; i < 53; i++) {
+        parray.push(i);
+    }
+    processSingles(parray);
 }
 
 function processSingles(parray) {
@@ -216,16 +235,40 @@ function processSingles(parray) {
         let cpt = new ChartProcessTime(chartname);
         timings.set(chartname, cpt);
         runProcessing();
-        console.log(`${cpt.totaltime}\n`);
+        console.log(`${cpt.totaltime}\r\n`);
     }
 }
 
-function processFull() {
-    settings.chartprocessindexes.forEach((index) => {
-        chartworkname = settings.fullchartlist[index][0];
+function processOneFull() {
+    let lst = "\nSelect the full chart number you want to process from this list\r\n\r\n";
+    let i = 0;
+    settings.fullchartlist.forEach((fullchart) => {
+        let cname = fullchart[0] === "DDECUS" ? fullchart[2] : fullchart[0];
+        lst += `${i} ${cname.replaceAll("_", " ")}\r\n\r\n`;
+        i++;
+    });
+    lst += "Your selection: ";
+    let response = processPrompt(lst);
+    nm = Number(response); 
+
+    if (nm >= 0 && nm < settings.fullchartlist.length) {
+        parray.push(nm);
+    }
+    else {
+        console.log("Invalid response, exiting!");
+        process.exit();
+    }
+    processFulls(parray);
+}
+
+function processFulls() {
+    parray.forEach((index) => {
+        let chart = settings.fullchartlist[index]; //processindexes.find((element) => element === cnum); //forEach((index) => {
+            
+        chartworkname = chart[0]; //settings.fullchartlist[index][0];
         chartlayertype = settings.layertypes[settings.layertypeindex];
-        let lcname = settings.fullchartlist[index][2].toLowerCase();
-        let ctype = settings.fullchartlist[index][1];
+        let lcname = chart[2].toLowerCase(); //settings.fullchartlist[index][2].toLowerCase();
+        let ctype = chart[1]; //settings.fullchartlist[index][1];
 
         if (ctype === "ifr") {
             charturl = settings.ifrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
@@ -425,7 +468,7 @@ function processImages() {
         }
 
         logEntry(`>> gdal2tiles tiling ${clipped} into ${tiled}`);
-        cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=${processes} ${formatargs} --tmscompatible --webviewer=none ${clipped} ${tiled}`;
+        cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=${processes} ${formatargs} --tmscompatible --webviewer=openlayers ${clipped} ${tiled}`;
         executeCommand(cmd);
     });
 }
