@@ -247,7 +247,7 @@ function processOneFull() {
         lst += `${i} ${cname.replaceAll("_", " ")}\r\n`;
         i++;
     });
-    lst += "Your selection: ";
+    lst += "--------------------------------------------\r\nYour selection: ";
     let response = processPrompt(lst);
     nm = Number(response); 
 
@@ -263,27 +263,27 @@ function processOneFull() {
 
 function processFulls() {
     parray.forEach((index) => {
-        let chart = settings.fullchartlist[index]; //processindexes.find((element) => element === cnum); //forEach((index) => {
-            
-        chartworkname = chart[0]; //settings.fullchartlist[index][0];
-        chartlayertype = settings.layertypes[settings.layertypeindex];
-        let lcname = chart[2].toLowerCase(); //settings.fullchartlist[index][2].toLowerCase();
-        let ctype = chart[1]; //settings.fullchartlist[index][1];
+        let chart = settings.fullchartlist[index]; 
+        let lcasename = chart[2].toLowerCase(); 
+        let charttype = chart[1];
 
-        if (ctype === "ifr") {
+        chartworkname = chart[0]; 
+        chartlayertype = settings.layertypes[settings.layertypeindex];
+
+        if (charttype === "ifr") {
             charturl = settings.ifrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
-            clippedShapeFolder = `${appdir}/clipshapes/${lcname}`;
+            clippedShapeFolder = `${appdir}/clipshapes/${lcasename}`;
             chartname = settings.fullchartlist[index][2]; // use alias value for IFR
             chartfolder = `${workarea}/${chartname}`;
         }
         else { // vfr
-            if (lcname === "us_vfr_wall_planning") {
+            if (lcasename === "us_vfr_wall_planning") {
                 charturl = `${settings.usvfrwallplanningtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
             }
             else {
                 charturl = settings.vfrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
             }
-            clippedShapeFolder = `${appdir}/clipshapes/${lcname}`;
+            clippedShapeFolder = `${appdir}/clipshapes/${lcasename}`;
             chartname = chartworkname;
             chartfolder = `${workarea}/${chartworkname}`;
         }
