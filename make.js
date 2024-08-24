@@ -1,7 +1,7 @@
 'use strict';
 
 const fs = require('fs');
-const { execSync, exec } = require('child_process');
+const { execSync } = require('child_process');
 const readlineSync = require('readline-sync');
 
 class ChartProcessTime {
@@ -244,7 +244,7 @@ function processOneFull() {
     let i = 0;
     settings.fullchartlist.forEach((fullchart) => {
         let cname = fullchart[0] === "DDECUS" ? fullchart[2] : fullchart[0];
-        lst += `${i} ${cname.replaceAll("_", " ")}\r\n\r\n`;
+        lst += `${i} ${cname.replaceAll("_", " ")}\r\n`;
         i++;
     });
     lst += "Your selection: ";
