@@ -145,23 +145,38 @@ let nm = 0;
 let arg = process.argv.slice(2);
 
 if (arg.length >= 1) {
-    let sarg = arg[0].toUpperCase();
-    if (sarg === "ALL") {
+    let sarg = arg[0].toLowerCase();
+    let chart = "";
+    if (sarg === "area-all") {
        processAllAreas();
     }
-    else if (sarg === "FULL") {
+    else if (sarg === "full-all") {
         processAllFull();
     }
-    else if (sarg.search("SINGLE") > -1) {
+    else if (sarg.search("area-single") > -1) {
         try {
             nm = Number(arg[0].split("=")[1]);
-            console.log(`Processing chart number ${nm}`);
+            chart = settings.individualchartlist[nm][1].replace("_", " ");
+            console.log(`Processing area chart: ${chart}`);
             parray.push(nm);
-            passedarg = true;
             processSingles(parray);
         }
-        catch(error) {
-            console.log("Error in numeric argument, format is: SINGLE=X where X is a valid vfr chart index number (see settings.json.) Exiting chartmaker!");
+        catch {
+            console.log("Index error in argument, format is: area-single=X where X is a valid vfr chart index number (see settings.json.) Exiting chartmaker!");
+            process.exit();
+        }
+    }
+    else if (sarg.search("full-single") > -1) {
+        try {
+            nm = Number(arg[0].split("=")[1]);
+            chart = settings.fullchartlist[nm][0].replace("_", " ");
+            if (chart === "DDECUS") chart = settings.fullchartlist[nm][2].replace("_", " ");
+            console.log(`Processing full chart: ${chart}`);
+            parray.push(nm);
+            processFulls(parray);
+        }
+        catch {
+            console.log("Index error in argument, format is: full-single=X where X is a valid full chart index number (see settings.json.) Exiting chartmaker!");
             process.exit();
         }
     }
@@ -226,7 +241,6 @@ function processSingles(parray) {
     for (var x = 0; x < parray.length; x++) {
         chartworkname = jsonarray[parray[x]][1];
         chartname = chartworkname;
-        let lcname =  chartname.toLowerCase();
         clippedShapeFolder = `${appdir}/clipshapes/sectional`;
         chartlayertype = settings.layertypes[settings.layertypeindex];
         chartfolder = `${workarea}/${chartworkname}`;
