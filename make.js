@@ -38,8 +38,12 @@ class ChartProcessTime {
  * @returns boolean
  */
 function isRunningInDocker() {
-    let r = execSync(`cat /proc/1/cgroup`, {encoding: "utf8"});
-    let isdocker = (r.search("/docker/") > -1)
+    let isdocker = false;
+    try {
+        let r = execSync(`cat /proc/1/cgroup`, {encoding: "utf8"});
+        isdocker = (r.search("/docker/") > -1);
+    }
+    catch {}
     return isdocker;
 }
 
@@ -63,8 +67,12 @@ const settings = JSON.parse(fs.readFileSync(`${appdir}/settings.json`));
  * @returns string integer
  */
 function getProcessCount() {
-    let r = execSync(`grep -c "^processor" /proc/cpuinfo`, { encoding: 'utf8'});
-    let nm = Number(r.replace('\n', ""));
+    let nm = 4;
+    try {
+        let r = execSync(`grep -c "^processor" /proc/cpuinfo`, { encoding: 'utf8'});
+        nm = Number(r.replace('\n', ""));
+    }
+    catch {}
     return nm;
 }
 
@@ -541,7 +549,6 @@ function buildChartNameArray() {
 function buildQuantizingCommandArray() {
     let mergedfolders = fs.readdirSync(dir_5_merged);
     let cmdarray = [];
-    let subarray = [];
     mergedfolders.forEach((zoomlevel) => {
         let zoomfolder = `${dir_5_merged}/${zoomlevel}`;
         if (fs.statSync(zoomfolder).isDirectory()) {
