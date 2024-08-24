@@ -285,6 +285,7 @@ function processFulls() {
         chartlayertype = settings.layertypes[settings.layertypeindex];
 
         if (charttype === "ifr") {
+            isifrchart = true;
             charturl = settings.ifrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
             clippedShapeFolder = `${appdir}/clipshapes/${lcasename}`;
             chartname = settings.fullchartlist[index][2]; // use alias value for IFR
