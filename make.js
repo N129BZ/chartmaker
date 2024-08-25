@@ -37,8 +37,8 @@ class ChartProcessTime {
  * Utility to see if we are in a docker container
  * @returns boolean
  */
+let isdocker = false;
 function isRunningInDocker() {
-    let isdocker = false;
     try {
         let r = execSync(`cat /proc/1/cgroup`, {encoding: "utf8"});
         isdocker = (r.search("/docker/") > -1);
