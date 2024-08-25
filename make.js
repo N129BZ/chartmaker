@@ -152,10 +152,23 @@ let nm = 0;
 let arg = process.argv.slice(2);
 
 if (arg.length >= 1) {
-    let sarg = arg[0].toLowerCase();
     let chart = "";
-    if (sarg === "area-all") {
-       processAllAreas();
+    let sarg = arg[0].toLowerCase();
+    
+    if (sarg.includes("-h")) {
+        console.log("Command line arguments:\r\n" +
+                    "----------------------------------------------------------------------------------\r\n" +
+                    "-h, --help      Show this help\r\n" +
+                    "----------------------------------------------------------------------------------\r\n" +
+                    "area-single=X   Process one area chart where X is the index in the area chart list\r\n" +
+                    "area-all        Process all 52 area VFR charts individually\r\n" +
+                    "full-single=X   Process one full chart where X is an index in the full chart list\r\n" +
+                    "full-all        Process all of the full charts in the full chart list\r\n" +
+                    "----------------------------------------------------------------------------------\r\n");
+                    process.exit();
+    }
+    else if (sarg === "area-all") {
+        processAllAreas();
     }
     else if (sarg === "full-all") {
         processAllFull();
