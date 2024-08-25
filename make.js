@@ -115,6 +115,13 @@ if (!fs.existsSync(chartcache)) fs.mkdirSync(chartcache);
 
 let dbfolder = settings.dbfolder;
 if (dbfolder.length === 0) {
+    if (isdocker) {
+        //see if we have an external chart folder volume
+        if (fs.existsSync(`${appdir}/externalcharts`)) {
+            dbfolder = `${appdir}/externalcharts`;
+            return;
+        }
+    }
     dbfolder = `${appdir}/charts`;
     if (!fs.existsSync(dbfolder)) fs.mkdirSync(dbfolder);
 }
