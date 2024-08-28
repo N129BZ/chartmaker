@@ -33,29 +33,26 @@ class ChartProcessTime {
     }
 }
 
+// set the base application folder, this will change if running in docker
+let appdir = __dirname;
+
 /**
  * Utility to see if we are in a docker container
  * @returns boolean
  */
-let isdocker = false;
+let isdocker = isRunningInDocker();
 function isRunningInDocker() {
+    let indocker = false;
     try {
         let r = execSync(`cat /proc/1/cgroup`, {encoding: "utf8"});
-        isdocker = (r.search("/docker/") > -1);
+        indocker = (r.search("/docker/") > -1);
     }
     catch {}
-    return isdocker;
-}
-
-// set the application folder
-let appdir = __dirname;
-
-/**
- * Set the application directory if running in docker
- */
-if (isRunningInDocker()) { 
-    console.log("Running in docker!");
-    appdir = "/chartmaker";
+    if (indocker) {
+        console.log("Running in docker!");
+        appdir = "/chartmaker";
+    }
+    return indocker;
 }
 
 /**
