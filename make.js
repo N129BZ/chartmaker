@@ -3,6 +3,7 @@
 const fs = require('fs');
 const { execSync } = require('child_process');
 const readlineSync = require('readline-sync');
+const path = require('path');
 
 class ChartProcessTime {
     constructor(chartname) {
@@ -103,23 +104,24 @@ const chartdate = getBestChartDate();
 const startdate = new Date(new Date().toLocaleString());
 
 // make sure these base level folders exist
-let workarea = `${appdir}/workarea`;
+let workarea = path.join(appdir, "workarea");
 if (settings.renameworkarea) workarea += `_${chartdate}`;
 if (!fs.existsSync(workarea)) fs.mkdirSync(workarea)
 
-let chartcache = `${appdir}/chartcache`;
+let chartcache = path.join(appdir, "chartcache");
 if (!fs.existsSync(chartcache)) fs.mkdirSync(chartcache);
 
 let dbfolder = settings.dbfolder;
 if (dbfolder.length === 0) {
     if (isdocker) {
         //see if we have an external chart folder volume
-        if (fs.existsSync(`${appdir}/externalcharts`)) {
-            dbfolder = `${appdir}/externalcharts`;
+        let extcharts = path.join(appdir, "externalcharts");
+        if (fs.existsSync(extcharts)) {
+            dbfolder = extcharts;
             return;
         }
     }
-    dbfolder = `${appdir}/charts`;
+    dbfolder = path.join(appdir, "charts");
     if (!fs.existsSync(dbfolder)) fs.mkdirSync(dbfolder);
 }
 
@@ -258,7 +260,7 @@ function processSingles(parray) {
     for (var x = 0; x < parray.length; x++) {
         chartworkname = jsonarray[parray[x]][1];
         chartname = chartworkname;
-        clippedShapeFolder = `${appdir}/clipshapes/sectional`;
+        clippedShapeFolder = path.join(appdir, "clipshapes", "sectional");
         chartlayertype = settings.layertypes[settings.layertypeindex];
         chartfolder = `${workarea}/${chartworkname}`;
         charturl = `${settings.vfrindividualtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
@@ -295,7 +297,7 @@ function processOneFull() {
 function processFulls() {
     parray.forEach((index) => {
         let chart = settings.fullchartlist[index]; 
-        let lcasename = chart[2].toLowerCase(); 
+        let lcasename = chart[index].toLowerCase(); 
         let charttype = chart[1];
 
         chartworkname = chart[0]; 
@@ -304,9 +306,9 @@ function processFulls() {
         if (charttype === "ifr") {
             isifrchart = true;
             charturl = settings.ifrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
-            clippedShapeFolder = `${appdir}/clipshapes/${lcasename}`;
+            clippedShapeFolder = path.join(appdir, "clipshapes", lcasename);
             chartname = settings.fullchartlist[index][2]; // use alias value for IFR
-            chartfolder = `${workarea}/${chartname}`;
+            chartfolder = path.join(workarea, chartname);
         }
         else { // vfr
             if (lcasename === "us_vfr_wall_planning") {
@@ -315,7 +317,7 @@ function processFulls() {
             else {
                 charturl = settings.vfrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
             }
-            clippedShapeFolder = `${appdir}/clipshapes/${lcasename}`;
+            clippedShapeFolder = path.join(appdir, "clipshapes", lcasename);
             chartname = chartworkname;
             chartfolder = `${workarea}/${chartworkname}`;
         }
@@ -328,17 +330,17 @@ function processFulls() {
 }
 
 function runProcessing() {
-    dir_1_unzipped = `${chartfolder}/1_unzipped`;
-    dir_2_expanded = `${chartfolder}/2_expanded`;
-    dir_3_clipped = `${chartfolder}/3_clipped`;
-    dir_4_tiled = `${chartfolder}/4_tiled`;
-    dir_5_merged = `${chartfolder}/5_merged`;
-    dir_6_quantized = `${chartfolder}/6_quantized`;
+    dir_1_unzipped = path.join(chartfolder, "1_unzipped");
+    dir_2_expanded = path.join(chartfolder, "2_expanded");
+    dir_3_clipped = path.join(chartfolder, "3_clipped");
+    dir_4_tiled = path.join(chartfolder, "4_tiled");
+    dir_5_merged = path.join(chartfolder, "5_merged");
+    dir_6_quantized = path.join(chartfolder, "6_quantized");
     
-    setupEnvironment();
-    downloadCharts();
-    unzipCharts();
-    normalizeChartNames();
+    //setupEnvironment();
+    //downloadCharts();
+    //unzipCharts();
+    //normalizeChartNames();
     processImages();
     mergeAndQuantize();
     makeMbTiles();
@@ -434,7 +436,7 @@ function normalizeChartNames() {
         let newfile = file;
         if (newfile.endsWith(".tif") || newfile.endsWith(".tfw") || newfile.endsWith(".tfwx")) {
             newfile = normalizeFileName(newfile);
-            fs.renameSync(`${dir_1_unzipped}/${file}`, `${dir_1_unzipped}/${newfile}`);
+            fs.renameSync(path.join(dir_1_unzipped, file), path.join(dir_1_unzipped, newfile));
         }
     });
 }
@@ -474,7 +476,7 @@ function processImages() {
         executeCommand(cmd);
 
         logEntry(`>> gdalwarp warping and clipping ${clipped} using shapefile ${shapefile}`);
-        cmd = `gdalwarp -t_srs EPSG:3857 -dstalpha --config GDAL_CACHEMAX 256 -co SKIP_NOSOURCE=YES -multi -cblend 6 -cutline "${shapefile}" -crop_to_cutline ${expanded} ${clipped}`;
+        cmd = `gdalwarp -t_srs EPSG:3857 -dstalpha --config GDAL_CACHEMAX 256 -co SKIP_NOSOURCE=YES -multi -cblend 8 -cutline ${shapefile} -crop_to_cutline ${expanded} ${clipped}`;
         executeCommand(cmd);
 
         // setup formatting arguments for overviews        
@@ -511,9 +513,10 @@ function processImages() {
 function mergeAndQuantize() {
     let areas = fs.readdirSync(dir_4_tiled);
     areas.forEach((area) => {
-        let mergesource = `${dir_4_tiled}/${area}`;
+        let mergesource = path.join(dir_4_tiled, area);
         logEntry(`>> perl merging images from ${mergesource} into dir_5_merged`);
-        let cmd = `perl ${appdir}/mergetiles.pl ${mergesource} ${dir_5_merged}`;
+        let loc = path.join(appdir, "mergetiles.pl");
+        let cmd = `perl ${loc} ${mergesource} ${dir_5_merged}`;
         executeCommand(cmd);
     });
 
@@ -583,7 +586,7 @@ function makeMbTiles() {
         "maxzoom": "${maxzoom}",
         "attribution": "${settings.attribution}" 
     }`;
-    let fpath = `${sourcefolder}/metadata.json`;
+    let fpath = path.join(sourcefolder, "metadata.json");
     let fd = fs.openSync(fpath, 'w'); 
     fs.writeSync(fd, metajson);
     fs.closeSync(fd);
@@ -625,25 +628,25 @@ function buildQuantizingCommandArray() {
     let mergedfolders = fs.readdirSync(dir_5_merged);
     let cmdarray = [];
     mergedfolders.forEach((zoomlevel) => {
-        let zoomfolder = `${dir_5_merged}/${zoomlevel}`;
+        let zoomfolder = path.join(dir_5_merged, zoomlevel);
         if (fs.statSync(zoomfolder).isDirectory()) {
-            let quantzoomfolder = `${dir_6_quantized}/${zoomlevel}`;
+            let quantzoomfolder = path.join(dir_6_quantized, zoomlevel);
             if (!fs.existsSync(quantzoomfolder)) {
                 fs.mkdirSync(quantzoomfolder);
             }
             let xfolders = fs.readdirSync(zoomfolder);
             xfolders.forEach((x) => {
-                let y = `${zoomfolder}/${x}`;
-                let quantizedfolders = `${quantzoomfolder}/${x}`;
+                let y = path.join(zoomfolder, x);
+                let quantizedfolders = path.join(quantzoomfolder, x);
                 if (!fs.existsSync(quantizedfolders)) {
                     fs.mkdirSync(quantizedfolders);
                 }
-                let images = fs.readdirSync(y);
 
                 // build an array of chart names
+                let images = fs.readdirSync(y);
                 images.forEach((image) => {
-                    let imgpath = `${y}/${image}`;
-                    let outpath = `${quantizedfolders}/${image}`;
+                    let imgpath = path.join(y, image);
+                    let outpath = path.join(quantizedfolders, image);
                     let subarray = new Array(imgpath, outpath);
                     cmdarray.push(subarray);
                 });
@@ -679,7 +682,7 @@ function getBestChartDate() {
     let cdates = [];
     let found = false;
     let selectedDate = "";
-    let datedata = fs.readFileSync(`${appdir}/chartdates.json`);
+    let datedata = fs.readFileSync(path.join(appdir, "chartdates.json"));
     let datelist = JSON.parse(datedata);
     datelist.ChartDates.forEach((cdate) => {
         cdates.push(new Date(cdate))
@@ -765,7 +768,7 @@ function normalizeClipNames() {
     let files = fs.readdirSync(clippedShapeFolder);
     try {
         files.forEach((file) => {
-            let oldname = `${clippedShapeFolder}/${file}`;
+            let oldname = path.join(clippedShapeFolder, file);
             let newname = oldname.toLowerCase();
             fs.renameSync(oldname, newname);
         });

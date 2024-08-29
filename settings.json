@@ -10,7 +10,7 @@
     "cleanprocessfolders": false,
 
     "tileimagequality" : 90,
-    "zoomrange" : "0-12",
+    "zoomrange" : "1-12",
     "dbfolder": "",
     "addoverviews": true,
     
