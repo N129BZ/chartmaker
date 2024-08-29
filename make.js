@@ -337,10 +337,10 @@ function runProcessing() {
     dir_5_merged = path.join(chartfolder, "5_merged");
     dir_6_quantized = path.join(chartfolder, "6_quantized");
     
-    //setupEnvironment();
-    //downloadCharts();
-    //unzipCharts();
-    //normalizeChartNames();
+    setupEnvironment();
+    downloadCharts();
+    unzipCharts();
+    normalizeChartNames();
     processImages();
     mergeAndQuantize();
     makeMbTiles();
