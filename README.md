@@ -1,8 +1,8 @@
 # chartmaker - Download FAA VFR and IFR digital raster charts and translate into mbtiles databases for other mapping applications
 ### (Check out my chart viewing application https://github.com/n129bz/chartserver - also shows Metars, Pireps, Weather, etc.)
 
-### Docker image: ***docker pull n129bz/chartmaker:v1.42***
-### To run the image: ***docker run -it n129bz/chartmaker:v1.42***
+### Docker image: ***docker pull n129bz/chartmaker:latest***
+### To run the image: ***docker run -it n129bz/chartmaker:latest***
 ### To launch chartmaker on the docker image: ***node /chartmaker/main*** or, for a specific chart: ***see Wiki for a complete list of possible arguments***
 
 ### Requirements: nodejs + npm, sqlite3, python, perl, cpanminus, pngquant, imagemagick, curl, unzip, build-essential, libgdal-dev, libssl-dev, gdal-bin (v3.6.2 minimum)
