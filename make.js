@@ -153,11 +153,20 @@ let arg = process.argv.slice(2);
 if (arg.length >= 1) {
     let chart = "";
     let sarg = arg[0].toLowerCase();
-    
-    if (sarg.includes("-h")) {
-        console.log("Command line arguments:\r\n" +
+    if (sarg.includes("-s")) {
+        // output settings.json
+        
+        console.log("\r\n\r\n----------------------------------------------------------------------------------\r\n" +
+                    "Settings.json\r\n" +
+                    "----------------------------------------------------------------------------------\r\n");
+        console.log(settings);
+        console.log("\r\n\r\n\r\n");
+    }
+    else if (sarg.includes("-h")) {
+        console.log("Command line options:\r\n" +
                     "----------------------------------------------------------------------------------\r\n" +
                     "-h, --help      Show this help\r\n" +
+                    "-s, --settings  Show all values in settings.json\r\n" +
                     "----------------------------------------------------------------------------------\r\n" +
                     "area-single=X   Process one area chart where X is the index in the area chart list\r\n" +
                     "area-all        Process all 52 area VFR charts individually\r\n" +
