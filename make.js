@@ -161,6 +161,7 @@ if (arg.length >= 1) {
                     "----------------------------------------------------------------------------------\r\n");
         console.log(settings);
         console.log("\r\n\r\n\r\n");
+        process.exit();
     }
     else if (sarg.includes("-h")) {
         console.log("Command line options:\r\n" +
