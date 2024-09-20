@@ -56,7 +56,7 @@ The FAA publishes charts 20 days ***before*** the official chart date, and chart
 ```
 "chartprocessindexes": [0,1,2,3,4,5,6], <- charts represented by indexes, default is all 6 will be processed, in this order (order can be changed or indexes removed) 
 "faachartnames": [   
-    ["Sectional", "vfr", ""],    <- as in [FAA chart name, chart type, alias] (NOTE no alias used for vfr charts)  
+    ["Sectional", "vfr", ""],    <- Entire USA+ Alaska + Hawaii (NOTE no alias used for vfr charts)  
     ["Caribbean", "vfr", ""],
     ["Grand_Canyon", "vfr", ""],     
     ["Terminal", "vfr", ""],   
