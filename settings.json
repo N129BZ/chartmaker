@@ -9,8 +9,9 @@
     "logtofile": false,
     "cleanprocessfolders": false,
 
-    "tileimagequality" : 90,
-    "zoomrange" : "1-12",
+    "tileimagequality" : 60,
+    "cutlineblendpixels" : 20,
+    "zoomrange" : "0-11",
     "dbfolder": "",
     "addoverviews": true,
     
