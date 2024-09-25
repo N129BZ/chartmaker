@@ -464,7 +464,7 @@ function processImages() {
 
     let chartareas = buildChartNameArray();
     let processes = getProcessCount();
-    let cblend = settings.cutlineblendpixels;
+    let cblend = settings.blendpixels;
 
     chartareas.forEach((area) => {
         logEntry(`* chart ${area}`);
@@ -474,7 +474,7 @@ function processImages() {
         let expanded = `${dir_2_expanded}/${area}.vrt`
         let tiled = `${dir_4_tiled}/${area}`
         let expandopt = "";
-        
+
         // determine if RGB expansion is required
         cmd = `gdalinfo -json "${sourcetif}"`;
         let infojson = JSON.parse(execSync(cmd));
