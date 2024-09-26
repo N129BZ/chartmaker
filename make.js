@@ -111,18 +111,21 @@ if (!fs.existsSync(workarea)) fs.mkdirSync(workarea)
 let chartcache = path.join(appdir, "chartcache");
 if (!fs.existsSync(chartcache)) fs.mkdirSync(chartcache);
 
-let dbfolder = settings.dbfolder;
-if (dbfolder.length === 0) {
-    if (isdocker) {
-        //see if we have an external chart folder volume
-        let extcharts = path.join(appdir, "externalcharts");
-        if (fs.existsSync(extcharts)) {
-            dbfolder = extcharts;
-            return;
-        }
+let dbfolder = path.join(appdir, "charts");
+
+if (isdocker) {
+    //see if we have an external chart folder volume
+    let extcharts = path.join(appdir, "externalcharts");
+    if (fs.existsSync(extcharts)) {
+        dbfolder = extcharts;
+        return;
     }
-    dbfolder = path.join(appdir, "charts");
-    if (!fs.existsSync(dbfolder)) fs.mkdirSync(dbfolder);
+}
+else {
+    let dbf = settings.externaldbfolder;
+    if ((dbf.length > 0) && (fs.existsSync(dbf))) {
+        dbfolder = dbf;
+    }
 }
 
 let imageformat = settings.tiledrivers[settings.tiledriverindex];
@@ -602,7 +605,7 @@ function makeMbTiles() {
     fs.writeSync(fd, metajson);
     fs.closeSync(fd);
 
-    let mbtiles = `${dbfolder}/${chartname}.db`;
+    let mbtiles = `${dbfolder}/${chartname}.${settings.dbextension}`;
     fs.rmSync(mbtiles, { force: true });  
     
     logEntry(`>> creating database: ${mbtiles}`);
