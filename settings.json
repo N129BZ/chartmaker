@@ -12,8 +12,9 @@
     "tileimagequality" : 40,
     "blendpixels" : 30,
     "zoomrange" : "0-11",
+    "centerzoomlevel": "7",
     "dbextension": "mbtiles",
-    "externaldbfolder": "/home/bro/charts",
+    "externaldbfolder": "",
     "addoverviews": true,
     
     "chartprocessindexes": [0,1,2,3,4,5,6,7],

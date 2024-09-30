@@ -145,6 +145,7 @@ let dir_6_quantized = "";
 let isifrchart = false;
 let wgsbounds = [];
 let metabounds = [];
+let addmetabounds = false;
 
 /**
  * Chart processing starts here
@@ -272,6 +273,7 @@ function processAllAreas() {
 }
 
 function processSingles(parray) {
+    addmetabounds = true;   
     for (var x = 0; x < parray.length; x++) {
         chartworkname = jsonarray[parray[x]][1];
         chartname = chartworkname;
@@ -593,20 +595,26 @@ function makeMbTiles() {
         sourcefolder = dir_6_quantized;
     }
     
-    let metabounds = calculateBounds();
-
     let chartdesc = chartname.replaceAll("_", " "); // normalize description
+
+    let addedbounds = "";
+    if (addmetabounds) {
+        addedbounds = `"bounds": "${metabounds[0]},${metabounds[1]},${metabounds[2]},${metabounds[3]}",
+                       "center": "${metabounds[4][0]},${metabounds[4][1]},${settings.centerzoomlevel}",`
+    }
     let metajson = `{ 
         "name": "${chartname}",
         "description": "${chartdesc} Charts",
         "version": "1.1",
+        ${addedbounds}
         "type": "${chartlayertype}",
         "format": "${imageformat}",
         "quality": ${settings.tileimagequality},
-        "minzoom": "${minzoom}", 
-        "maxzoom": "${maxzoom}",
+        "minzoom": ${minzoom}, 
+        "maxzoom": ${maxzoom},
         "attribution": "${settings.attribution}" 
     }`;
+    
     let fpath = path.join(sourcefolder, "metadata.json");
     let fd = fs.openSync(fpath, 'w'); 
     fs.writeSync(fd, metajson);
@@ -623,6 +631,9 @@ function makeMbTiles() {
     cpt.calculateProcessingTime();
 }
 
+/**
+ * Get the bounds of the processed GEOTIFF for database metadata
+ */
 function calculateBounds() {
     let lngdiff = (Math.abs(wgsbounds[0][0]) - Math.abs(wgsbounds[2][0])) / 2;
     let latdiff =(Math.abs(wgsbounds[0][1]) - Math.abs(wgsbounds[2][1])) / 2;
