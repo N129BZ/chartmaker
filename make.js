@@ -112,7 +112,8 @@ let chartcache = path.join(appdir, "chartcache");
 if (!fs.existsSync(chartcache)) fs.mkdirSync(chartcache);
 
 let dbfolder = path.join(appdir, "charts");
-
+if (!fs.existsSync(dbfolder)) fs.mkdirSync(dbfolder)
+    
 if (isdocker) {
     //see if we have an external chart folder volume
     let extcharts = path.join(appdir, "externalcharts");
@@ -599,10 +600,10 @@ function makeMbTiles() {
 
     let addedbounds = "";
     if (addmetabounds) {
-        addedbounds = `"bounds": "${metabounds[0]},${metabounds[1]},${metabounds[2]},${metabounds[3]}",
-                       "center": "${metabounds[4][0]},${metabounds[4][1]},${settings.centerzoomlevel}",`
+        addedbounds = `"bounds": "${metabounds[0]},${metabounds[1]},${metabounds[2]},${metabounds[3]}",` +
+                      `"center": "${metabounds[4][0]},${metabounds[4][1]},${settings.centerzoomlevel}",`
     }
-    let metajson = `{ 
+    let metajson = `{
         "name": "${chartname}",
         "description": "${chartdesc} Chart",
         "version": "1.1",
@@ -610,9 +611,9 @@ function makeMbTiles() {
         "type": "${chartlayertype}",
         "format": "${imageformat}",
         "quality": ${settings.tileimagequality},
-        "minzoom": ${minzoom}, 
+        "minzoom": ${minzoom},
         "maxzoom": ${maxzoom},
-        "attribution": "${settings.attribution}" 
+        "attribution": "${settings.attribution}"
     }`;
     
     let fpath = path.join(sourcefolder, "metadata.json");
