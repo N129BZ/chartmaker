@@ -143,6 +143,8 @@ let dir_4_tiled = "";
 let dir_5_merged = "";
 let dir_6_quantized = "";
 let isifrchart = false;
+let wgsbounds = [];
+let metabounds = [];
 
 /**
  * Chart processing starts here
@@ -485,6 +487,9 @@ function processImages() {
             expandopt = "-expand rgb";
         }
 
+        wgsbounds = infojson.wgs84Extent.coordinates[0];
+        metabounds = calculateBounds();
+
         logEntry(`>> gdal_translate ${sourcetif}`);
         cmd = `gdal_translate -strict -of vrt -ovr NONE -co "COMPRESS=LZW" -co "predictor=2" -co "TILED=YES" ${expandopt} ${sourcetif} ${expanded}`;
         executeCommand(cmd);
@@ -588,6 +593,8 @@ function makeMbTiles() {
         sourcefolder = dir_6_quantized;
     }
     
+    let metabounds = calculateBounds();
+
     let chartdesc = chartname.replaceAll("_", " "); // normalize description
     let metajson = `{ 
         "name": "${chartname}",
@@ -614,6 +621,13 @@ function makeMbTiles() {
 
     let cpt = timings.get(chartname);
     cpt.calculateProcessingTime();
+}
+
+function calculateBounds() {
+    let lngdiff = (Math.abs(wgsbounds[0][0]) - Math.abs(wgsbounds[2][0])) / 2;
+    let latdiff =(Math.abs(wgsbounds[0][1]) - Math.abs(wgsbounds[2][1])) / 2;
+    let center = [wgsbounds[0][0] + lngdiff, wgsbounds[0][1] - latdiff];
+    return [wgsbounds[0][0], wgsbounds[0][1], wgsbounds[2][0], wgsbounds[2][1], center ];
 }
 
 /**
