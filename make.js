@@ -119,6 +119,8 @@ if (isdocker) {
     let extcharts = path.join(appdir, "externalcharts");
     if (fs.existsSync(extcharts)) {
         dbfolder = extcharts;
+        let cmcmd = `chmod +rw ${dbfolder}`;
+        executeCommand(cmcmd);
         return;
     }
 }
