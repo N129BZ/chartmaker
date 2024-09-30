@@ -604,7 +604,7 @@ function makeMbTiles() {
     }
     let metajson = `{ 
         "name": "${chartname}",
-        "description": "${chartdesc} Charts",
+        "description": "${chartdesc} Chart",
         "version": "1.1",
         ${addedbounds}
         "type": "${chartlayertype}",
