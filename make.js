@@ -145,7 +145,6 @@ let dir_5_merged = "";
 let dir_6_quantized = "";
 let isifrchart = false;
 let wgsbounds = [];
-let metabounds = [];
 let addmetabounds = false;
 
 /**
@@ -491,7 +490,6 @@ function processImages() {
         }
 
         wgsbounds = infojson.wgs84Extent.coordinates[0];
-        metabounds = calculateBounds();
 
         logEntry(`>> gdal_translate ${sourcetif}`);
         cmd = `gdal_translate -strict -of vrt -ovr NONE -co "COMPRESS=LZW" -co "predictor=2" -co "TILED=YES" ${expandopt} ${sourcetif} ${expanded}`;
@@ -597,6 +595,8 @@ function makeMbTiles() {
     }
     
     let chartdesc = chartname.replaceAll("_", " "); // normalize description
+    
+    let metabounds = calculateBounds();
 
     let addedbounds = "";
     if (addmetabounds) {
