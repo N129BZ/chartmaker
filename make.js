@@ -493,7 +493,7 @@ function processImages() {
         wgsbounds = infojson.wgs84Extent.coordinates[0];
 
         logEntry(`>> gdal_translate ${sourcetif}`);
-        cmd = `gdal_translate -strict -of vrt -co "COMPRESS=LZW" -co "predictor=2" -co "TILED=YES" ${expandopt} ${sourcetif} ${expanded}`;
+        cmd = `gdal_translate -strict -of vrt -ovr NONE -co "COMPRESS=LZW" -co "predictor=2" -co "TILED=YES" ${expandopt} ${sourcetif} ${expanded}`;
         executeCommand(cmd);
 
         logEntry(`>> gdalwarp warping and clipping ${clipped} using shapefile ${shapefile}`);
