@@ -314,7 +314,7 @@ function processOneFull() {
 function processFulls() {
     parray.forEach((index) => {
         let chart = settings.fullchartlist[index]; 
-        let lcasename = chart[index].toLowerCase(); 
+        let lcasename = chart[0].toLowerCase();
         let charttype = chart[1];
 
         chartworkname = chart[0]; 
@@ -322,6 +322,7 @@ function processFulls() {
 
         if (charttype === "ifr") {
             isifrchart = true;
+            lcasename = chart[2].toLowerCase();
             charturl = settings.ifrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
             clippedShapeFolder = path.join(appdir, "clipshapes", lcasename);
             chartname = settings.fullchartlist[index][2]; // use alias value for IFR
@@ -492,7 +493,7 @@ function processImages() {
         wgsbounds = infojson.wgs84Extent.coordinates[0];
 
         logEntry(`>> gdal_translate ${sourcetif}`);
-        cmd = `gdal_translate -strict -of vrt -ovr NONE -co "COMPRESS=LZW" -co "predictor=2" -co "TILED=YES" ${expandopt} ${sourcetif} ${expanded}`;
+        cmd = `gdal_translate -strict -of vrt -co "COMPRESS=LZW" -co "predictor=2" -co "TILED=YES" ${expandopt} ${sourcetif} ${expanded}`;
         executeCommand(cmd);
 
         logEntry(`>> gdalwarp warping and clipping ${clipped} using shapefile ${shapefile}`);
