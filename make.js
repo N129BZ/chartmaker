@@ -98,6 +98,7 @@ const logEntry = function(entry) {
 }
 
 // Get the current chart date from the chartdates.json file
+let expiredate = "";
 const chartdate = getBestChartDate();
 
 // used for process timing
@@ -156,93 +157,99 @@ let nm = 0;
 
 let arg = process.argv.slice(2);
 
-if (arg.length >= 1) {
-    let chart = "";
-    let sarg = arg[0].toLowerCase();
-    if (sarg.includes("-s")) {
-        // output settings.json
-        
-        console.log("\r\n\r\n----------------------------------------------------------------------------------\r\n" +
-                    "Settings.json\r\n" +
-                    "----------------------------------------------------------------------------------\r\n");
-        console.log(settings);
-        console.log("\r\n\r\n\r\n");
-        process.exit();
-    }
-    else if (sarg.includes("-h")) {
-        console.log("Command line options:\r\n" +
-                    "----------------------------------------------------------------------------------\r\n" +
-                    "-h, --help      Show this help\r\n" +
-                    "-s, --settings  Show all values in settings.json\r\n" +
-                    "----------------------------------------------------------------------------------\r\n" +
-                    "area-single=X   Process one area chart where X is the index in the area chart list\r\n" +
-                    "area-all        Process all 53 area VFR charts individually\r\n" +
-                    "full-single=X   Process one full chart where X is an index in the full chart list\r\n" +
-                    "full-all        Process all of the full charts in the full chart list\r\n" +
-                    "----------------------------------------------------------------------------------\r\n");
-                    process.exit();
-    }
-    else if (sarg === "area-all") {
-        processAllAreas();
-    }
-    else if (sarg === "full-all") {
-        processAllFull();
-    }
-    else if (sarg.search("area-single") > -1) {
-        try {
-            nm = Number(arg[0].split("=")[1]);
-            chart = settings.individualchartlist[nm][1].replace("_", " ");
-            console.log(`Processing area chart: ${chart}`);
-            parray.push(nm);
-            processSingles(parray);
-        }
-        catch {
-            console.log("Index error in argument, format is: area-single=X where X is a valid vfr chart index number (see settings.json.) Exiting chartmaker!");
+if (settings.usecommandline) {
+    if (arg.length >= 1) {
+        let chart = "";
+        let sarg = arg[0].toLowerCase();
+        if (sarg === "-s") {
+            // output settings.json
+            
+            console.log("\r\n\r\n----------------------------------------------------------------------------------\r\n" +
+                        "Settings.json\r\n" +
+                        "----------------------------------------------------------------------------------\r\n");
+            console.log(settings);
+            console.log("\r\n\r\n\r\n");
             process.exit();
         }
-    }
-    else if (sarg.search("full-single") > -1) {
-        try {
-            nm = Number(arg[0].split("=")[1]);
-            chart = settings.fullchartlist[nm][0].replace("_", " ");
-            if (chart === "DDECUS") chart = settings.fullchartlist[nm][2].replace("_", " ");
-            console.log(`Processing full chart: ${chart}`);
-            parray.push(nm);
-            processFulls(parray);
+        else if (sarg === "-h") {
+            console.log("Command line options:\r\n" +
+                        "----------------------------------------------------------------------------------\r\n" +
+                        "-h, --help      Show this help\r\n" +
+                        "-s, --settings  Show all values in settings.json\r\n" +
+                        "----------------------------------------------------------------------------------\r\n" +
+                        "area-single=X   Process one area chart where X is the index in the area chart list\r\n" +
+                        "area-all        Process all 53 area VFR charts individually\r\n" +
+                        "full-single=X   Process one full chart where X is an index in the full chart list\r\n" +
+                        "full-all        Process all of the full charts in the full chart list\r\n" +
+                        "----------------------------------------------------------------------------------\r\n");
+                        process.exit();
         }
-        catch {
-            console.log("Index error in argument, format is: full-single=X where X is a valid full chart index number (see settings.json.) Exiting chartmaker!");
-            process.exit();
+        else if (sarg === "area-all") {
+            processAllAreas();
+        }
+        else if (sarg === "full-all") {
+            processAllFull();
+        }
+        else if (sarg.search("area-single") > -1) {
+            try {
+                nm = Number(arg[0].split("=")[1]);
+                chart = settings.individualchartlist[nm][1].replace("_", " ");
+                console.log(`Processing area chart: ${chart}`);
+                parray.push(nm);
+                processSingles(parray);
+            }
+            catch {
+                console.log("Index error in argument, format is: area-single=X where X is a valid vfr chart index number (see settings.json.) Exiting chartmaker!");
+                process.exit();
+            }
+        }
+        else if (sarg.search("full-single") > -1) {
+            try {
+                nm = Number(arg[0].split("=")[1]);
+                chart = settings.fullchartlist[nm][0].replace("_", " ");
+                if (chart === "DDECUS") chart = settings.fullchartlist[nm][2].replace("_", " ");
+                console.log(`Processing full chart: ${chart}`);
+                parray.push(nm);
+                processFulls(parray);
+            }
+            catch {
+                console.log("Index error in argument, format is: full-single=X where X is a valid full chart index number (see settings.json.) Exiting chartmaker!");
+                process.exit();
+            }
+        }
+    }
+    else {
+        let response = processPrompt("Select:\r\n" +
+                                    "----------------------------------------------------------------\r\n" +
+                                    "1 = Process a single area VFR chart\r\n" +
+                                    "2 = Process all 52 area VFR charts individually\r\n" +
+                                    "3 = Process a single full chart from the full chart list\r\n" +
+                                    "4 = Process all of the full charts in the full chart list\r\n" +
+                                    "----------------------------------------------------------------\r\n" +
+                                    "Your selection: "); 
+        switch (response) {
+            case "1":
+                processOneArea();
+                break;
+            case "2":
+                processAllAreas();
+                break;
+            case "3":
+                processOneFull();
+                break;
+            case "4":
+                parray = settings.chartprocessindexes;
+                processFulls(parray);
+                break;
+            default:
+                console.log("Invalid response - exiting chartmaker!");
+                break;
         }
     }
 }
 else {
-    let response = processPrompt("Select:\r\n" +
-                                 "----------------------------------------------------------------\r\n" +
-                                 "1 = Process a single area VFR chart\r\n" +
-                                 "2 = Process all 52 area VFR charts individually\r\n" +
-                                 "3 = Process a single full chart from the full chart list\r\n" +
-                                 "4 = Process all of the full charts in the full chart list\r\n" +
-                                 "----------------------------------------------------------------\r\n" +
-                                 "Your selection: "); 
-    switch (response) {
-        case "1":
-            processOneArea();
-            break;
-        case "2":
-            processAllAreas();
-            break;
-        case "3":
-            processOneFull();
-            break;
-        case "4":
-            parray = settings.chartprocessindexes;
-            processFulls(parray);
-            break;
-        default:
-            console.log("Invalid response - exiting chartmaker!");
-            break;
-    }
+    parray = settings.chartprocessindexes;
+    processFulls(parray);
 }
 
 function processOneArea() {
@@ -451,9 +458,8 @@ function unzipCharts() {
 function normalizeChartNames() {
     let files = fs.readdirSync(dir_1_unzipped);
     files.forEach((file) => {
-        let newfile = file;
-        if (newfile.endsWith(".tif") || newfile.endsWith(".tfw") || newfile.endsWith(".tfwx")) {
-            newfile = normalizeFileName(newfile);
+        if (file.endsWith(".tif") || file.endsWith(".tfw") || file.endsWith(".tfwx")) {
+            let newfile = normalizeFileName(file);
             fs.renameSync(path.join(dir_1_unzipped, file), path.join(dir_1_unzipped, newfile));
         }
     });
@@ -614,7 +620,10 @@ function makeMbTiles() {
         "quality": ${settings.tileimagequality},
         "minzoom": ${minzoom},
         "maxzoom": ${maxzoom},
-        "attribution": "${settings.attribution}"
+        "attribution": "${settings.attribution}",
+        "scheme": "tms",
+        "valid": "${chartdate}",
+        "expires": "${expiredate}"
     }`;
     
     let fpath = path.join(sourcefolder, "metadata.json");
@@ -651,11 +660,13 @@ function buildChartNameArray() {
     let files = fs.readdirSync(dir_1_unzipped);
     let chartnames = [];
     files.forEach((file) => {
-        let fname = file.toLowerCase();
-        if ((fname.endsWith(".tif")) &&
-            (fname.search("fly") == -1)) {
-                let cname = fname.replace(".tif", "");
-                chartnames.push(cname);
+        if (file.search("new_york_vfr_plannings_.tif") === -1) {
+            let fname = file.toLowerCase();
+            if ((fname.endsWith(".tif")) &&
+                (fname.search("fly") === -1)) {
+                    let cname = fname.replace(".tif", "");
+                    chartnames.push(cname);
+            }
         }
     });
     return chartnames;
@@ -743,6 +754,14 @@ function getBestChartDate() {
                 let y = dateobj.getFullYear();
                 selectedDate = `${m}-${d}-${y}`;
                 found = true;
+            }
+        }
+        else {
+            if (expiredate === "") {
+                let m = pad2(dateobj.getMonth() + 1); // months (0-11)
+                let d = pad2(dateobj.getDate());    // day (1-31)
+                let y = dateobj.getFullYear();
+                expiredate = `${m}-${d}-${y}`;
             }
         }
     });
