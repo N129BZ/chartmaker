@@ -225,6 +225,7 @@ if (settings.usecommandline) {
                                     "2 = Process all 53 area VFR charts individually\r\n" +
                                     "3 = Process a single full chart from the full chart list\r\n" +
                                     "4 = Process all of the full charts in the full chart list\r\n" +
+                                    "5 = Generate a GeoTIFF from a mbtiles database\r\n" +
                                     "----------------------------------------------------------------\r\n" +
                                     "Your selection: "); 
         switch (response) {
@@ -240,6 +241,9 @@ if (settings.usecommandline) {
             case "4":
                 parray = settings.chartprocessindexes;
                 processFulls(parray);
+                break;
+            case "5":
+                generateGeoTIFF();
                 break;
             default:
                 console.log("Invalid response - exiting chartmaker!");
@@ -352,6 +356,20 @@ function processFulls() {
         runProcessing();
         console.log(`${cpt.totaltime}\n`);
     });
+}
+
+function generateGeoTIFF() {
+    let question = "Enter the full path and filename of your mbtiles file: ";
+    let mbtilesfile = processPrompt(question);
+    if (fs.existsSync(mbtilesfile)) {
+        question = "Enter the full path and filename of the geoTIFF that will be created: "
+        let geotiff = processPrompt(question);
+        cmd = `gdal_translate -of GTiff -co BIGTIFF=YES ${mbtilesfile} ${geotiff}`;
+        executeCommand(cmd);
+    }
+    else {
+        console.log("ERROR: The specified mbtiles file does not exist, exiting chartmaker!");
+    }
 }
 
 function runProcessing() {
