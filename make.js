@@ -538,14 +538,10 @@ function processImages() {
  * Merge all of the individual chart zoom folders into a single master chart folder 
  */
 function mergeAndQuantize() {
-    let areas = fs.readdirSync(dir_4_tiled);
-    areas.forEach((area) => {
-        let mergesource = path.join(dir_4_tiled, area);
-        logEntry(`>> perl merging images from ${mergesource} into dir_5_merged`);
-        let loc = path.join(appdir, "mergetiles.pl");
-        let cmd = `perl ${loc} ${mergesource} ${dir_5_merged}`;
-        executeCommand(cmd);
-    });
+
+    let loc = path.join(appdir, "mergetiles.pl");
+    let cmd = `perl ${loc} ${settings.mergethreads} ${dir_4_tiled} ${dir_5_merged}`;
+    executeCommand(cmd);
 
     // Only quantize png images, webp images are quantized via tiling option...
     if (imageformat === "png" && settings.tileimagequality < 100) {

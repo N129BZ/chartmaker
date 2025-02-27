@@ -33,17 +33,20 @@ use Modern::Perl '2014';
 use Params::Validate qw(:all);
 use File::Slurp;
 use File::Copy;
+use Parallel::ForkManager;
 
 #Call the main routine and exit with its return code
 exit main(@ARGV);
 
 sub main {
+    # maximum number of parallel processing threads
+    my $MAX_PROCESSES = 6;
 
     # Number of arguments supplied on command line
     my $num_args = $#ARGV + 1;
 
-    if ( $num_args != 2 ) {
-        say "Usage: $0 <overlay_tile_set_dir> <base_tile_set_dir> ";
+    if ( $num_args != 3 ) {
+        say "Usage: $0 <source_tiles_dir> <base_tile_set_dir> ";
         say "   Tiles are saved in <base_tile_set_dir>";
         say
           "   <base_tile_set_dir> doesn't have to exist yet, any tiles that overlap will be blended together";
@@ -51,13 +54,14 @@ sub main {
     }
 
     # Get the base directory from command line
-    my $overlay_tiles_directory = $ARGV[0];
-    my $base_tiles_directory    = $ARGV[1];
+    my $max_processes = $ARGV[0];
+    my $source_tiles_directory = $ARGV[1];
+    my $base_tiles_directory    = $ARGV[2];
 
     # Make the base directory if it doesn't already exist
-    unless ( -e "$overlay_tiles_directory" ) {
+    unless ( -e "$source_tiles_directory" ) {
         say STDERR
-          "overlay tile source: $overlay_tiles_directory does not exist";
+          "overlay tile source: $source_tiles_directory does not exist";
         exit(1);
     }
 
@@ -66,52 +70,63 @@ sub main {
         mkdir "$base_tiles_directory";
     }
 
-    # Get all of the directories (zoom levels) in $overlay_tiles_directory
-    my @overlay_tiles_zoom_levels = read_dir($overlay_tiles_directory);
+    my $pm = Parallel::ForkManager->new($max_processes);
+    my @areas = read_dir($source_tiles_directory);
 
-    foreach my $zoomlevel (@overlay_tiles_zoom_levels) {
+    foreach my $area (@areas) {
+        my $overlay_tiles_directory = "$source_tiles_directory/$area"; 
+        
+        # Get all of the directories (zoom levels) in $overlay_tiles_directory
+        my @overlay_tiles_zoom_levels = read_dir($overlay_tiles_directory);
 
-        if ( -d "$overlay_tiles_directory/$zoomlevel" ) {
+        # Begin parallel processing of the zoom levels
+ ZOOM_LEVEL:       
+        foreach my $zoomlevel (@overlay_tiles_zoom_levels) {
 
-            # Make the base/destination directory if it doesn't exist
-            unless ( -e "$base_tiles_directory/$zoomlevel" ) {
-                mkdir "$base_tiles_directory/$zoomlevel";
-            }
-
-            # For each column...
-            my @overlay_tiles_x_levels =
-              read_dir("$overlay_tiles_directory/$zoomlevel");
-
-            foreach my $x (@overlay_tiles_x_levels) {
+            my $pid = $pm->start and next ZOOM_LEVEL;
+            
+            if ( -d "$overlay_tiles_directory/$zoomlevel" ) {
 
                 # Make the base/destination directory if it doesn't exist
-                if ( -d "$overlay_tiles_directory/$zoomlevel/$x" ) {
-                    unless ( -e "$base_tiles_directory/$zoomlevel/$x" ) {
-                        mkdir "$base_tiles_directory/$zoomlevel/$x";
-                    }
+                unless ( -e "$base_tiles_directory/$zoomlevel" ) {
+                    mkdir "$base_tiles_directory/$zoomlevel";
+                }
 
-                    # For each tile...
-                    my @overlay_tiles_y_tiles =
-                      read_dir("$overlay_tiles_directory/$zoomlevel/$x");
+                # For each column...
+                my @overlay_tiles_x_levels =
+                read_dir("$overlay_tiles_directory/$zoomlevel");
 
-                    foreach my $y (@overlay_tiles_y_tiles) {
+                foreach my $x (@overlay_tiles_x_levels) {
 
-                        # If both base and overlay tiles exist then composite them together with "convert"
-                        if ( -e "$base_tiles_directory/$zoomlevel/$x/$y" ) {
-                            print " * merging: /$zoomlevel/$x/$y       \r";
-                            qx(convert "$base_tiles_directory/$zoomlevel/$x/$y" "$overlay_tiles_directory/$zoomlevel/$x/$y" -composite "$base_tiles_directory/$zoomlevel/$x/$y");
+                    # Make the base/destination directory if it doesn't exist
+                    if ( -d "$overlay_tiles_directory/$zoomlevel/$x" ) {
+                        unless ( -e "$base_tiles_directory/$zoomlevel/$x" ) {
+                            mkdir "$base_tiles_directory/$zoomlevel/$x";
                         }
-                        # Otherwise do a regular copy from overlay tile to base directory
-                        else {
-                            print " * copying: /$zoomlevel/$x/$y       \r";  
-                            copy(
-                                "$overlay_tiles_directory/$zoomlevel/$x/$y",
-                                "$base_tiles_directory/$zoomlevel/$x/$y"
-                            );
+
+                        # For each tile...
+                        my @overlay_tiles_y_tiles =
+                        read_dir("$overlay_tiles_directory/$zoomlevel/$x");
+
+                        foreach my $y (@overlay_tiles_y_tiles) {
+
+                            # If both base and overlay tiles exist then composite them together with "convert"
+                            if ( -e "$base_tiles_directory/$zoomlevel/$x/$y" ) {
+                                qx(convert "$base_tiles_directory/$zoomlevel/$x/$y" "$overlay_tiles_directory/$zoomlevel/$x/$y" -composite "$base_tiles_directory/$zoomlevel/$x/$y");
+                            }
+                            # Otherwise do a regular copy from overlay tile to base directory
+                            else {
+                                copy(
+                                    "$overlay_tiles_directory/$zoomlevel/$x/$y",
+                                    "$base_tiles_directory/$zoomlevel/$x/$y"
+                                );
+                            }
                         }
                     }
                 }
             }
+            $pm->finish; # Terminate the child process
         }
+        $pm->wait_all_children; # Ensure all processes have exited
     }
 }
