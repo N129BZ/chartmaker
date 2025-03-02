@@ -70,8 +70,8 @@ sub main {
         mkdir "$base_tiles_directory";
     }
 
-    my $pm = Parallel::ForkManager->new($max_processes);
     my @areas = read_dir($source_tiles_directory);
+    my $pm = Parallel::ForkManager->new($max_processes);
 
     foreach my $area (@areas) {
         my $overlay_tiles_directory = "$source_tiles_directory/$area"; 
