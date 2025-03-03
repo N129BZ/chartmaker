@@ -9,7 +9,7 @@
     "logtofile": false,
     "cleanprocessfolders": false,
 
-    "tileimagequality" : 60,
+    "tileimagequality" : 40,
     "blendpixels" : 30,
     "zoomrange" : "0-11",
     "centerzoomlevel": "7",

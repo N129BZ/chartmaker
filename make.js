@@ -556,7 +556,7 @@ function processImages() {
  * Merge all of the individual chart zoom folders into a single master chart folder 
  */
 function mergeAndQuantize() {
-
+    logEntry(`Executing Perl script to merge tiles into ${dir_5_merged}`);
     let loc = path.join(appdir, "mergetiles.pl");
     let cmd = `perl ${loc} ${settings.mergethreads} ${dir_4_tiled} ${dir_5_merged}`;
     executeCommand(cmd);
