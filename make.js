@@ -5,14 +5,14 @@ const { execSync } = require('child_process');
 const readlineSync = require('readline-sync');
 const path = require('path');
 
-class ChartProcessTime {
-    constructor(chartname) {
-        this.chartname = chartname;
+class ProcessTime {
+    constructor(processName) {
+        this.processname = processName;
         this.startdate = new Date(new Date().toLocaleString());
         this.totaltime = "";
     }
 
-    calculateProcessingTime() {
+    calculateProcessTime() {
         let date2 = new Date(new Date().toLocaleString());
 
         // the following is to handle cases where the times are on the opposite side of
@@ -30,7 +30,7 @@ class ChartProcessTime {
         let ss = Math.floor(msec / 1000);
         msec -= ss * 1000;
 
-        this.totaltime = `${chartname} processing time: ${hh}:${mm}:${ss}`;
+        this.totaltime = `${this.processname} processing time: ${hh}:${mm}:${ss}`;
     }
 }
 
@@ -293,7 +293,7 @@ function processSingles(parray) {
         chartfolder = `${workarea}/${chartworkname}`;
         charturl = `${settings.vfrindividualtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
         console.log(charturl);
-        let cpt = new ChartProcessTime(chartname);
+        let cpt = new ProcessTime(chartname);
         timings.set(chartname, cpt);
         runProcessing();
         console.log(`${cpt.totaltime}\r\n`);
@@ -351,7 +351,7 @@ function processFulls() {
             chartfolder = `${workarea}/${chartworkname}`;
         }
         
-        let cpt = new ChartProcessTime(chartname);
+        let cpt = new ProcessTime(chartname);
         timings.set(chartname, cpt);
         runProcessing();
         console.log(`${cpt.totaltime}\n`);
@@ -556,10 +556,14 @@ function processImages() {
  * Merge all of the individual chart zoom folders into a single master chart folder 
  */
 function mergeAndQuantize() {
-    logEntry(`Executing Perl script to merge tiles into ${dir_5_merged}`);
+    let ptm = new ProcessTime("mergetiles.pl");
+    logEntry(`Executing mergetiles.pl Perl script to merge tiles into ${dir_5_merged}`);
     let loc = path.join(appdir, "mergetiles.pl");
     let cmd = `perl ${loc} ${settings.mergethreads} ${dir_4_tiled} ${dir_5_merged}`;
     executeCommand(cmd);
+    ptm.calculateProcessTime();
+    logEntry(ptm.totaltime)
+    ptm = null;
 
     // Only quantize png images, webp images are quantized via tiling option...
     if (imageformat === "png" && settings.tileimagequality < 100) {
@@ -653,7 +657,7 @@ function makeMbTiles() {
     executeCommand(cmd);
 
     let cpt = timings.get(chartname);
-    cpt.calculateProcessingTime();
+    cpt.calculateProcessTime();
 }
 
 /**
