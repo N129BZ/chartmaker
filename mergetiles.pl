@@ -78,16 +78,16 @@ sub main {
     my $pm = Parallel::ForkManager->new($max_processes);
 
     foreach my $area (@areas) {
-
-        # start a new thread (until all $max_processes have been assigned)
-        my $pid = $pm->start and next; 
-        
         my $overlay_tiles_directory = "$source_tiles_directory/$area"; 
         
         # Get all of the directories (zoom levels) in $overlay_tiles_directory
         my @overlay_tiles_zoom_levels = read_dir($overlay_tiles_directory);
 
+        ZOOM_LEVEL:       
         foreach my $zoomlevel (@overlay_tiles_zoom_levels) {
+            
+            # start a new thread (until all $max_processes have been assigned)
+            my $pid = $pm->start and next ZOOM_LEVEL;
 
             if ( -d "$overlay_tiles_directory/$zoomlevel" ) {
 
@@ -129,8 +129,8 @@ sub main {
                     }
                 }
             }
+            $pm->finish; # Terminate the child process 
         }
-        $pm->finish; # Terminate the child process    
+        $pm->wait_all_children; # Ensure all processes have exited
     }
-    $pm->wait_all_children; # Ensure all processes have exited
 }
