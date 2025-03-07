@@ -662,8 +662,15 @@ function makeMbTiles() {
     fs.rmSync(mbtiles, { force: true });  
     
     logEntry(`>> creating database: ${mbtiles}`);
+    // we don't want to log stdout for this operation, way too much overkill
+    let lso = settings.logstdout;
+    settings.logstdout = false;
+    
     cmd = `python3 ${appdir}/mbutil/mb-util --image_format=${imageformat} --scheme=tms ${sourcefolder} ${mbtiles}`;
     executeCommand(cmd);
+
+    // return logstdout to whatever it originally was...
+    settings.logstdout = lso;
 
     let cpt = timings.get(chartname);
     cpt.calculateProcessTime();
