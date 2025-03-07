@@ -812,7 +812,7 @@ function getBestChartDate() {
 function executeCommand(command, logstdout = null) {
     try {
         if (logstdout == null) {
-            logstdout = settings.logstdout;
+            logstdout = settings.debug;
         }
         const stdout = execSync(command).toString();
         if (logstdout) {
