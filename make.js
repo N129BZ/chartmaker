@@ -666,7 +666,7 @@ function makeMbTiles() {
     // we don't want to log stdout for this operation, way too much overkill
     settings.logstdout = false;
 
-    cmd = `python3 ${appdir}/mbutil/mb-util --image_format=${imageformat} --scheme=tms ${sourcefolder} ${mbtiles}`;
+    cmd = `python3 ${appdir}/mbutil/mb-util --image_format=${imageformat} --silent --scheme=tms ${sourcefolder} ${mbtiles}`;
     executeCommand(cmd);
 
     let cpt = timings.get(chartname);
@@ -809,14 +809,14 @@ function getBestChartDate() {
  * Execute the passed in command and log the result
  * @param {string} command 
  */
-function executeCommand(command) {
+function executeCommand(command, logstdout = null) {
     try {
-        if (settings.logstdout) {
-            const stdout = execSync(command).toString();
-            logEntry(stdout);
+        if (logstdout == null) {
+            logstdout = settings.logstdout;
         }
-        else {
-            execSync(command);
+        const stdout = execSync(command).toString();
+        if (logstdout) {
+            logEntry(stdout);
         }
     }
     catch (error) {
