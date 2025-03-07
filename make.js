@@ -517,11 +517,11 @@ function processImages() {
         wgsbounds = infojson.wgs84Extent.coordinates[0];
 
         logEntry(`>> gdal_translate ${sourcetif}`);
-        cmd = `gdal_translate -strict -of vrt -ovr NONE -co "COMPRESS=LZW" -co "predictor=2" -co "TILED=YES" ${expandopt} ${sourcetif} ${expanded}`;
+        cmd = `gdal_translate -strict -of vrt -ovr NONE ${expandopt} ${sourcetif} ${expanded}`;
         executeCommand(cmd);
 
         logEntry(`>> gdalwarp warping and clipping ${clipped} using shapefile ${shapefile}`);
-        cmd = `gdalwarp -t_srs EPSG:3857 -dstalpha --config GDAL_CACHEMAX 256 -co SKIP_NOSOURCE=YES -multi -cblend ${cblend} -cutline ${shapefile} -crop_to_cutline ${expanded} ${clipped}`;
+        cmd = `gdalwarp -t_srs EPSG:3857 -dstalpha --config GDAL_CACHEMAX 256 -multi -cblend ${cblend} -cutline ${shapefile} -crop_to_cutline ${expanded} ${clipped}`;
         executeCommand(cmd);
 
         // setup formatting arguments for overviews        
@@ -798,7 +798,8 @@ function getBestChartDate() {
  */
 function executeCommand(command) {
     try {
-        execSync(command, { stdio: 'ignore' });
+        const stdout = execSync(command).toString();
+        logEntry(stdout);
     }
     catch (error) {
         logEntry(error.message);
