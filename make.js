@@ -76,6 +76,7 @@ function getProcessCount() {
     try {
         let r = execSync(`grep -c "^processor" /proc/cpuinfo`, { encoding: 'utf8'});
         nm = Number(r.replace('\n', ""));
+        logEntry(`Processor count = ${nm}`)
     }
     catch {}
     return nm;
@@ -475,7 +476,7 @@ function unzipCharts() {
     // in the .zip file, it has no matching .tfw file with wsgbounds 
     // and crashes the process, so we will just eliminate it.
     // Maybe in the future it could be added as a separate option.
-    cmd = `rm -r -f ${dir_1_unzipped}/Caribbean Planning Chart.tif`;
+    cmd = `rm -r -f "${dir_1_unzipped}/Caribbean Planning Chart.tif"`;
     executeCommand(cmd);
 }
 
@@ -806,8 +807,13 @@ function getBestChartDate() {
  */
 function executeCommand(command) {
     try {
-        const stdout = execSync(command).toString();
-        logEntry(stdout);
+        if (settings.logstdout) {
+            const stdout = execSync(command).toString();
+            logEntry(stdout);
+        }
+        else {
+            execSync(command);
+        }
     }
     catch (error) {
         logEntry(error.message);
