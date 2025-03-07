@@ -154,6 +154,7 @@ let addmetabounds = false;
 let parray = [];
 let jsonarray = settings.individualchartlist;
 let nm = 0;
+let processes = getProcessCount();
 
 let arg = process.argv.slice(2);
 
@@ -468,6 +469,14 @@ function unzipCharts() {
 
     cmd = `rm -r -f ${dir_1_unzipped}/*.zip`;
     executeCommand(cmd);
+
+    // This chart is a recent addition to the zip file from the FAA.
+    // It does not have a processing option, but as it is included 
+    // in the .zip file, it has no matching .tfw file with wsgbounds 
+    // and crashes the process, so we will just eliminate it.
+    // Maybe in the future it could be added as a separate option.
+    cmd = `rm -r -f ${dir_1_unzipped}/Caribbean Planning Chart.tif`;
+    executeCommand(cmd);
 }
 
 /** 
@@ -495,7 +504,6 @@ function processImages() {
     -------------------------------------------------------------------------*/
 
     let chartareas = buildChartNameArray();
-    let processes = getProcessCount();
     let cblend = settings.blendpixels;
 
     chartareas.forEach((area) => {
@@ -559,7 +567,7 @@ function mergeAndQuantize() {
     let ptm = new ProcessTime("mergetiles.pl");
     logEntry(`Executing mergetiles.pl Perl script to merge tiles into ${dir_5_merged}`);
     let loc = path.join(appdir, "mergetiles.pl");
-    let cmd = `perl ${loc} ${settings.mergethreads} ${dir_4_tiled} ${dir_5_merged}`;
+    let cmd = `perl ${loc} ${processes} ${dir_4_tiled} ${dir_5_merged}`;
     executeCommand(cmd);
     ptm.calculateProcessTime();
     logEntry(ptm.totaltime)
