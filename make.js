@@ -66,6 +66,14 @@ function processPrompt(message) {
 const timings = new Map();
 const settings = JSON.parse(fs.readFileSync(`${appdir}/settings.json`));
 
+/** 
+ *  Set the time zone of this process to the value in settings if it exists.
+ *  See https://en.wikipedia.org/wiki/List_of_tz_database_time_zones for
+ *  for an exhaustive list of valid timezone string values. 
+ */ 
+if (settings.timezone != "") {
+    process.env.TZ = settings.timezone; 
+}
 
 /**
  * Get the number of available processes
