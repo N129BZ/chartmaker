@@ -637,11 +637,10 @@ function makeMbTiles() {
     }
     
     let chartdesc = chartname.replaceAll("_", " "); // normalize description
-    
-    let metabounds = calculateBounds();
 
     let addedbounds = "";
     if (addmetabounds) {
+        let metabounds = calculateBounds();
         addedbounds = `"bounds": "${metabounds[0]},${metabounds[1]},${metabounds[2]},${metabounds[3]}",` +
                       `"center": "${metabounds[4][0]},${metabounds[4][1]},${settings.centerzoomlevel}",`
     }
@@ -671,11 +670,8 @@ function makeMbTiles() {
     
     logEntry(`>> creating database: ${mbtiles}`);
     
-    // we don't want to log stdout for this operation, way too much overkill
-    settings.logstdout = false;
-
     cmd = `python3 ${appdir}/mbutil/mb-util --image_format=${imageformat} --silent --scheme=tms ${sourcefolder} ${mbtiles}`;
-    executeCommand(cmd);
+    executeCommand(cmd, false);
 
     let cpt = timings.get(chartname);
     cpt.calculateProcessTime();
