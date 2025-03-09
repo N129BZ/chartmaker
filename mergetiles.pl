@@ -29,7 +29,7 @@ use FindBin '$Bin';
 use lib "$FindBin::Bin/local/lib/perl5";
 
 # Non-Standard modules that should be installed locally
-use Modern::Perl '2014';
+use Modern::Perl;
 use Params::Validate qw(:all);
 use File::Slurp;
 use File::Copy;
@@ -39,19 +39,9 @@ use Parallel::ForkManager;
 exit main(@ARGV);
 
 sub main {
-    # default maximum number of parallel processes
-    my $MAX_PROCESSES = 4;
-
+    
     # Number of arguments supplied on command line
     my $num_args = $#ARGV + 1;
-
-    if ( $num_args != 3 ) {
-        say "Usage: $0 <source_tiles_dir> <base_tile_set_dir> ";
-        say "   Tiles are saved in <base_tile_set_dir>";
-        say
-          "   <base_tile_set_dir> doesn't have to exist yet, any tiles that overlap will be blended together";
-        exit(1);
-    }
 
     # Get the passed in maximum number of processes argument
     my $max_processes = $ARGV[0];
@@ -59,24 +49,15 @@ sub main {
     # Get the source tiles directory argument
     my $source_tiles_directory = $ARGV[1];
     
-    # Get the base directory argument
+    # Get the merged tiles directory argument 
     my $base_tiles_directory    = $ARGV[2];
 
-    # Make the base directory if it doesn't already exist
-    unless ( -e "$source_tiles_directory" ) {
-        say STDERR
-          "overlay tile source: $source_tiles_directory does not exist";
-        exit(1);
-    }
-
-    # Make the base directory if it doesn't already exist
-    unless ( -e "$base_tiles_directory" ) {
-        mkdir "$base_tiles_directory";
-    }
-
-    my @areas = read_dir($source_tiles_directory);
+    # Set up the number of processes ForkManager will use 
     my $pm = Parallel::ForkManager->new($max_processes);
 
+    # Read the source tiles directory
+    my @areas = read_dir($source_tiles_directory);
+    
     foreach my $area (@areas) {
         my $overlay_tiles_directory = "$source_tiles_directory/$area"; 
         
@@ -128,8 +109,8 @@ sub main {
                         }
                     }
                 }
-            }
-            $pm->finish; # Terminate the child process 
+            }  
+            $pm->finish; # Terminate the child process
         }
         $pm->wait_all_children; # Ensure all processes have exited
     }
