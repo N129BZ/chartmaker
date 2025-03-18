@@ -269,7 +269,7 @@ else {
 function processOneArea() {
     let lst = "\nSelect the chart number you want to process from this list\r\n\r\n";
     for (var i = 0; i <  jsonarray.length; i++) {
-        lst += `${i} ${jsonarray[i][1].replaceAll("_", " ")}\r\n`; 
+        lst += `${i} ${jsonarray[i][1].split("_").join(" ")}\r\n`; 
     }
     lst += "--------------------------------------------\r\nYour selection: ";
     let response = processPrompt(lst);
@@ -315,7 +315,7 @@ function processOneFull() {
     let i = 0;
     settings.fullchartlist.forEach((fullchart) => {
         let cname = fullchart[0] === "DDECUS" ? fullchart[2] : fullchart[0];
-        lst += `${i} ${cname.replaceAll("_", " ")}\r\n`;
+        lst += `${i} ${cname.split("_").join(" ")}\r\n`;
         i++;
     });
     lst += "--------------------------------------------\r\nYour selection: ";
@@ -636,7 +636,7 @@ function makeMbTiles() {
         sourcefolder = dir_6_quantized;
     }
     
-    let chartdesc = chartname.replaceAll("_", " "); // normalize description
+    let chartdesc = chartname.split("_").join(" "); // normalize description
 
     let addedbounds = "";
     if (addmetabounds) {
@@ -750,13 +750,13 @@ function buildQuantizingCommandArray() {
  */
 function normalizeFileName(file) {
     return file.toLowerCase()
-               .replaceAll(" ", "_")
-               .replaceAll("'", "")
-               .replaceAll("-", "_")
-               .replaceAll("_sec", "")
-               .replaceAll("_tac", "")
-               .replaceAll("_chart", "")
-               .replaceAll("u.s.", "us");
+               .split(" ").join("_")
+               .split("'").join("")
+               .split("-").join("_")
+               .split("_sec").join("")
+               .split("_tac").join("")
+               .split("_chart").join("")
+               .split("u.s.").join("us");
 }
 
 /**
