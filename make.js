@@ -5,6 +5,9 @@ const { execSync } = require('child_process');
 const readlineSync = require('readline-sync');
 const path = require('path');
 
+// set the base application folder, this will change if running in docker
+let appdir = __dirname;
+
 class ProcessTime {
     constructor(processName) {
         this.processname = processName;
@@ -33,9 +36,6 @@ class ProcessTime {
         this.totaltime = `${this.processname} processing time: ${hh}:${mm}:${ss}`;
     }
 }
-
-// set the base application folder, this will change if running in docker
-let appdir = __dirname;
 
 /**
  * Utility to see if we are in a docker container
@@ -77,21 +77,21 @@ if (settings.timezone != "") {
 
 /**
  * Get the number of available processes
- * @returns string integer
+ * @returns integer
  */
 function getProcessCount() {
-    let nm = 4;
+    let pc = 4; // default
     try {
         let r = execSync(`grep -c "^processor" /proc/cpuinfo`, { encoding: 'utf8'});
-        nm = Number(r.replace('\n', ""));
-        logEntry(`Processor count = ${nm}`)
+        pc = Number(r.replace('\n', ""));
+        logEntry(`Processor count = ${pc}`)
     }
     catch {}
-    return nm;
+    return pc;
 }
 
 // logging
-let logfd = undefined;
+let logfd = 0;
 const setupDebugLog = function(logfolder) {
     if (settings.logtofile) {
         logfd = fs.openSync(`${logfolder}/debug.log`, 'w', 0o666);
