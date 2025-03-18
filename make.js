@@ -682,9 +682,9 @@ function makeMbTiles() {
  */
 function calculateBounds() {
     let lngdiff = (Math.abs(wgsbounds[0][0]) - Math.abs(wgsbounds[2][0])) / 2;
-    let latdiff =(Math.abs(wgsbounds[0][1]) - Math.abs(wgsbounds[2][1])) / 2;
+    let latdiff = (Math.abs(wgsbounds[0][1]) - Math.abs(wgsbounds[2][1])) / 2;
     let center = [wgsbounds[0][0] + lngdiff, wgsbounds[0][1] - latdiff];
-    return [wgsbounds[0][0], wgsbounds[0][1], wgsbounds[2][0], wgsbounds[2][1], center ];
+    return [`${wgsbounds[0][0]}`, `${wgsbounds[0][1]}`, `${wgsbounds[2][0]}`, `${wgsbounds[2][1]}`, `${center}`];
 }
 
 /**
@@ -853,15 +853,19 @@ function reportProcessingTime() {
     logEntry(`Start time: ${startdate}\r\nEnd time: ${date2}\r\nTotal processing time: ${hh}:${mm}:${ss}`);
 }
 
-/**
- * Utility to left-pad zeros for numbers under 10
- * @param {string} n 
- * @returns left zero padded numeric string 
- */
-function pad2(n) {
-    return (n < 10 ? '0' : '') + n;
+ /**
+  * Utility to left-pad zeros for numbers under 10
+  * @param {number} n 
+  * @returns {string}
+  */
+ function pad2(n) {
+    let nn = `${n}`;
+    if (n < 10)
+        nn = `0${nn}`;
+    else
+        nn = `${n}`;
+    return nn;
 }
-
 /**
  * Utility to make sure clipping files are all lower-case
  */
