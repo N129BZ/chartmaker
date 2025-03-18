@@ -64,7 +64,7 @@ function processPrompt(message) {
 }
 
 const timings = new Map();
-const settings = JSON.parse(fs.readFileSync(`${appdir}/settings.json`));
+const settings = JSON.parse(fs.readFileSync(`${appdir}/settings.json`, "utf-8"));
 
 /** 
  *  Set the time zone of this process to the value in settings if it exists.
@@ -769,7 +769,7 @@ function getBestChartDate() {
     let cdates = [];
     let found = false;
     let selectedDate = "";
-    let datedata = fs.readFileSync(path.join(appdir, "chartdates.json"));
+    let datedata = fs.readFileSync(path.join(appdir, "chartdates.json"), "utf-8");
     let datelist = JSON.parse(datedata);
     datelist.ChartDates.forEach((cdate) => {
         cdates.push(new Date(cdate))
