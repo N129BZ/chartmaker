@@ -20,9 +20,9 @@
 #-----------------------------------------------------------------------------
 # Modified March 20, 2025 by Brian A. Manlove to make Area folder tile 
 # manipulation a multiprocess operation, using the Parallel::ForkManager 
-# module. The calling program passes a new max_processes argument (in addition 
-# to the original 2 folder arguments) which is used as the limit of how many 
-# processes will be used at a time. See https://github.com/N129BZ/chartmaker/
+# module. (See https://metacpan.org/pod/Parallel::ForkManager for info.)
+# The calling program passes a new max_processes argument which is used 
+# as the limit of how many processes will be used at a time. 
 # ----------------------------------------------------------------------------
 
 #Standard modules
