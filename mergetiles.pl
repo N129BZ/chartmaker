@@ -72,9 +72,11 @@ sub main {
 
         print STDOUT "processing tiles: $area\n";
         
-        # Call the subroutine to process zoom levels
+        # Call the processZoomLevels subroutine, with parent directory arguments
+        # Note: These arguments will be copied by value in the subroutine!
         processZoomLevels($base_tiles_directory, $overlay_tiles_directory);
 
+        # Go on to another thread if one is available
         my $pid = $pm->start and next AREA_LOOP;
 
         $pm->finish; # Terminate this child process whwen finished
@@ -83,10 +85,10 @@ sub main {
 }
 
 sub processZoomLevels() {
-    # Get the passed in arguments as local variables (not global)
+    # Get the passed in arguments as local variables only.
     my ($base_directory, $overlay_directory) = @_;
 
-    # Get all of the directories (zoom levels) in the $overlay_directory
+    # Get all of the zoom level subdirectories in the $overlay_directory
     my @overlay_tiles_zoom_levels = read_dir($overlay_directory);
 
     foreach my $zoomlevel (@overlay_tiles_zoom_levels) {
@@ -99,11 +101,9 @@ sub processZoomLevels() {
             }
 
             # For each column...
-            my @overlay_tiles_x_levels =
-            read_dir("$overlay_directory/$zoomlevel");
+            my @overlay_tiles_x_levels = read_dir("$overlay_directory/$zoomlevel");
 
             foreach my $x (@overlay_tiles_x_levels) {
-
                 # Make the base/destination directory if it doesn't exist
                 if ( -d "$overlay_directory/$zoomlevel/$x" ) {
                     unless ( -e "$base_directory/$zoomlevel/$x" ) {
@@ -114,7 +114,6 @@ sub processZoomLevels() {
                     my @overlay_tiles_y_tiles = read_dir("$overlay_directory/$zoomlevel/$x");
 
                     foreach my $y (@overlay_tiles_y_tiles) {
-
                         # If both base and overlay tiles exist then composite them together with "convert"
                         if ( -e "$base_directory/$zoomlevel/$x/$y" ) {
                             qx(convert "$base_directory/$zoomlevel/$x/$y" "$overlay_directory/$zoomlevel/$x/$y" -composite "$base_directory/$zoomlevel/$x/$y");
