@@ -69,6 +69,8 @@ sub main {
     AREA_LOOP:
     foreach my $area (@areas) {
         my $overlay_tiles_directory = "$source_tiles_directory/$area"; 
+
+        print STDOUT "processing @area tiles\n";
         
         # Call the subroutine to process zoom levels
         processZoomLevels($base_tiles_directory, $overlay_tiles_directory);
