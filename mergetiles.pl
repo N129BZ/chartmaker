@@ -72,8 +72,6 @@ sub main {
 
         print STDOUT "processing @area tiles\n";
         
-        print STDOUT "processing @area tiles\n";
-        
         # Call the subroutine to process zoom levels
         processZoomLevels($base_tiles_directory, $overlay_tiles_directory);
 
