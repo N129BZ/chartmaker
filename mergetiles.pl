@@ -17,6 +17,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see [http://www.gnu.org/licenses/].
 
+#-----------------------------------------------------------------------------
+# Modified March 20, 2025 by Brian A. Manlove to make Area folder tile 
+# manipulation a multiprocess operation, using the Parallel::ForkManager 
+# module. The calling program passes a new max_processes argument (in addition 
+# to the original 2 folder arguments) which is used as the limit of how many 
+# processes will be used at a time. See https://github.com/N129BZ/chartmaker/
+# ----------------------------------------------------------------------------
+
 #Standard modules
 use strict;
 use warnings;
