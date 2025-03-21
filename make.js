@@ -416,7 +416,12 @@ process.exit();
  * Generate all of the working folders for image processing
  */
 function setupEnvironment() {
-    if (!fs.existsSync(chartfolder)) fs.mkdirSync(chartfolder);
+    // make sure the working folder for this chart is cleared out
+    fs.rmSync(chartfolder, { recursive: true, force: true });
+    
+    // OK, now create all of the workarea folders
+    fs.mkdirSync(chartfolder);
+    
     if (!fs.existsSync(dir_1_unzipped)) fs.mkdirSync(dir_1_unzipped);
     if (!fs.existsSync(dir_2_expanded)) fs.mkdirSync(dir_2_expanded);
     if (!fs.existsSync(dir_3_clipped)) fs.mkdirSync(dir_3_clipped);
@@ -424,7 +429,7 @@ function setupEnvironment() {
     if (!fs.existsSync(dir_5_merged)) fs.mkdirSync(dir_5_merged);
     if (!fs.existsSync(dir_6_quantized)) fs.mkdirSync(dir_6_quantized);
     if (settings.logtofile) setupDebugLog(chartfolder);
-    logEntry("Created working area subfolders");
+    logEntry("Created all workarea subfolders");
 }
 
 /**
@@ -574,13 +579,14 @@ function processImages() {
  */
 function mergeAndQuantize() {
     let ptm = new ProcessTime("mergetiles.pl");
-    logEntry(`Executing mergetiles.pl Perl script to merge tiles into ${dir_5_merged}`);
+    logEntry(`Executing mergetiles.pl Perl script to merge tiles into ${dir_5_merged}\n`);
+
     let loc = path.join(appdir, "mergetiles.pl");
     let cmd = `perl ${loc} ${processes} ${dir_4_tiled} ${dir_5_merged}`;
     executeCommand(cmd);
+
     ptm.calculateProcessTime();
-    logEntry(ptm.totaltime)
-    ptm = null;
+    logEntry(`${ptm.totaltime}\n`);
 
     // Only quantize png images, webp images are quantized via tiling option...
     if (imageformat === "png" && settings.tileimagequality < 100) {
