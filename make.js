@@ -416,7 +416,8 @@ process.exit();
  * Generate all of the working folders for image processing
  */
 function setupEnvironment() {
-    if (!fs.existsSync(chartfolder)) fs.mkdirSync(chartfolder);
+    fs.rmSync(chartfolder, { recursive: true, force: true });
+    fs.mkdirSync(chartfolder);
     if (!fs.existsSync(dir_1_unzipped)) fs.mkdirSync(dir_1_unzipped);
     if (!fs.existsSync(dir_2_expanded)) fs.mkdirSync(dir_2_expanded);
     if (!fs.existsSync(dir_3_clipped)) fs.mkdirSync(dir_3_clipped);
@@ -573,15 +574,15 @@ function processImages() {
  * Merge all of the individual chart zoom folders into a single master chart folder 
  */
 function mergeAndQuantize() {
+
+    logEntry(`Executing mergetiles.pl Perl script to merge tiles into ${dir_5_merged}\n`);
     let ptm = new ProcessTime("mergetiles.pl");
-    logEntry(`Executing mergetiles.pl Perl script to merge tiles into ${dir_5_merged}`);
     let loc = path.join(appdir, "mergetiles.pl");
     let cmd = `perl ${loc} ${processes} ${dir_4_tiled} ${dir_5_merged}`;
-    executeCommand(cmd);
+    executeCommand(cmd, true);
     ptm.calculateProcessTime();
-    logEntry(ptm.totaltime)
-    ptm = null;
-
+    logEntry(`${ptm.totaltime}\n`);
+    
     // Only quantize png images, webp images are quantized via tiling option...
     if (imageformat === "png" && settings.tileimagequality < 100) {
         quantizePngImages();
