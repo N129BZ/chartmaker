@@ -579,10 +579,10 @@ function processImages() {
  */
 function mergeAndQuantize() {
     let ptm = new ProcessTime("mergetiles.pl");
-    logEntry(`Executing mergetiles.pl Perl script to merge tiles into ${dir_5_merged}\n`);
+    logEntry(`Executing mergetiles.py Python script to merge tiles into ${dir_5_merged}\n`);
 
-    let loc = path.join(appdir, "mergetiles.pl");
-    let cmd = `perl ${loc} ${processes} ${dir_4_tiled} ${dir_5_merged}`;
+    cmd = `python3 ${appdir}/mergetiles.py ${processes} ${dir_4_tiled} ${dir_5_merged}`;
+
     executeCommand(cmd);
 
     ptm.calculateProcessTime();
