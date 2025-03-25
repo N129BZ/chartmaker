@@ -1,18 +1,19 @@
 # chartmaker - Download FAA VFR and IFR digital raster charts and translate into mbtiles databases for other mapping applications
 ### (Check out my chart viewing application https://github.com/n129bz/chartserver - also shows Metars, Pireps, Weather, etc.)
 
-### Docker image: ***docker pull n129bz/chartmaker:latest***
-### To run the image: ***docker run -it n129bz/chartmaker:latest***
-### To launch chartmaker on the docker image: ***cd /chartmaker*** then enter: ***node make*** or, for a specific chart: ***see Wiki for a complete list of possible arguments***
+### Docker image: ***docker pull n129bz/chartmaker:v1.42***
+### To run the image: ***docker run -it n129bz/chartmaker:v1.42***
+### To launch chartmaker on the docker image: ***node /chartmaker/main*** or, for a specific chart: ***see Wiki for a complete list of possible arguments***
 
-### Requirements: nodejs + npm, sqlite3, python, pngquant, imagemagick, curl, unzip, build-essential, libgdal-dev, libssl-dev, gdal-bin (v3.6.2 minimum)
+### Requirements: nodejs + npm, sqlite3, python, perl, cpanminus, pngquant, imagemagick, curl, unzip, build-essential, libgdal-dev, libssl-dev, gdal-bin (v3.6.2 minimum)
 
 #### Installation:
 1.) This node.js application is designed to run on Linux, and also runs well on **WSL** (Windows Subsystem for Linux) and assumes a pre-existing node js installation   
 2.) After installing all requirements, clone this repository, change directory to **chartmaker**, open a terminal and enter **npm install**        
-3.) Run the application in a terminal with the command **node make** or to see command line options, **node main --help**    
-4.) If not passing a chart number argument, respond to the prompt for what to process    
-5.) Go do something else... depending on the number of charts and image quality, the process can take several hours to complete.     
+3.) Give execute permissions to **perlinstall.sh** shell script and run it to install all the perl dependencies           
+4.) Run the application in a terminal with the command **node main** or to see command line options, **node main --help**    
+5.) If not passing a chart number argument, respond to the prompt for what to process    
+6.) Go do something else... depending on the number of charts and image quality, the process can take several hours to complete.     
 
 ### Process Control Files
 
@@ -55,7 +56,7 @@ The FAA publishes charts 20 days ***before*** the official chart date, and chart
 ```
 "chartprocessindexes": [0,1,2,3,4,5,6], <- charts represented by indexes, default is all 6 will be processed, in this order (order can be changed or indexes removed) 
 "faachartnames": [   
-    ["Sectional", "vfr", ""],    <- Entire USA + Alaska + Hawaii (NOTE no alias used for vfr charts)  
+    ["Sectional", "vfr", ""],    <- as in [FAA chart name, chart type, alias] (NOTE no alias used for vfr charts)  
     ["Caribbean", "vfr", ""],
     ["Grand_Canyon", "vfr", ""],     
     ["Terminal", "vfr", ""],   
