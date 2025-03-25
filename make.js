@@ -578,7 +578,7 @@ function processImages() {
  * Merge all of the individual chart zoom folders into a single master chart folder 
  */
 function mergeAndQuantize() {
-    let ptm = new ProcessTime("mergetiles.pl");
+    let ptm = new ProcessTime("mergetiles.py");
     logEntry(`Executing mergetiles.py Python script to merge tiles into ${dir_5_merged}\n`);
 
     cmd = `python3 ${appdir}/mergetiles.py ${processes} ${dir_4_tiled} ${dir_5_merged}`;
