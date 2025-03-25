@@ -17,6 +17,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see [http://www.gnu.org/licenses/].
 
+#-----------------------------------------------------------------------------
+# Modified March 20, 2025 by Brian A. Manlove to make Area folder tile 
+# manipulation a multiprocess operation, using the Parallel::ForkManager 
+# module. (See https://metacpan.org/pod/Parallel::ForkManager for info.)
+# The calling program passes a new max_processes argument which is used 
+# as the limit of how many processes will be used at a time. 
+# ----------------------------------------------------------------------------
+
 #Standard modules
 use strict;
 use warnings;
@@ -29,7 +37,7 @@ use FindBin '$Bin';
 use lib "$FindBin::Bin/local/lib/perl5";
 
 # Non-Standard modules that should be installed locally
-use Modern::Perl '2014';
+use Modern::Perl;
 use Params::Validate qw(:all);
 use File::Slurp;
 use File::Copy;
