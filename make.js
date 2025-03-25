@@ -578,16 +578,15 @@ function processImages() {
  * Merge all of the individual chart zoom folders into a single master chart folder 
  */
 function mergeAndQuantize() {
-    let ptm = new ProcessTime("mergetiles.py");
-    logEntry(`Executing mergetiles.py Python script to merge tiles into ${dir_5_merged}\n`);
 
-    cmd = `python3 ${appdir}/mergetiles.py ${processes} ${dir_4_tiled} ${dir_5_merged}`;
-
-    executeCommand(cmd);
-
+    logEntry(`Executing mergetiles.pl Perl script to merge tiles into ${dir_5_merged}\n`);
+    let ptm = new ProcessTime("mergetiles.pl");
+    let loc = path.join(appdir, "mergetiles.pl");
+    let cmd = `perl ${loc} ${processes} ${dir_4_tiled} ${dir_5_merged}`;
+    executeCommand(cmd, true);
     ptm.calculateProcessTime();
     logEntry(`${ptm.totaltime}\n`);
-
+    
     // Only quantize png images, webp images are quantized via tiling option...
     if (imageformat === "png" && settings.tileimagequality < 100) {
         quantizePngImages();
