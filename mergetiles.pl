@@ -79,9 +79,9 @@ sub main {
         # Go on to another thread if one is available
         my $pid = $pm->start and next AREA_LOOP;
 
-        $pm->finish; # Terminate this child process whwen finished
+        $pm->finish; # Terminate this child process when finished
     }
-    $pm->wait_all_children; # Ensure all processes have exited
+    $pm->wait_all_children; # Ensure all child processes have exited
 }
 
 sub processZoomLevels() {
