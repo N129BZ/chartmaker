@@ -100,10 +100,10 @@ sub processZoomLevels() {
                 mkdir "$base_directory/$zoomlevel";
             }
 
-            # For each column...
-            my @overlay_tiles_x_levels = read_dir("$overlay_directory/$zoomlevel");
+            # For each x level...
+            my @overlay_x_levels = read_dir("$overlay_directory/$zoomlevel");
 
-            foreach my $x (@overlay_tiles_x_levels) {
+            foreach my $x (@overlay_x_levels) {
                 # Make the base/destination directory if it doesn't exist
                 if ( -d "$overlay_directory/$zoomlevel/$x" ) {
                     unless ( -e "$base_directory/$zoomlevel/$x" ) {
@@ -111,9 +111,9 @@ sub processZoomLevels() {
                     }
 
                     # For each tile...
-                    my @overlay_tiles_y_tiles = read_dir("$overlay_directory/$zoomlevel/$x");
+                    my @overlay_y_tiles = read_dir("$overlay_directory/$zoomlevel/$x");
 
-                    foreach my $y (@overlay_tiles_y_tiles) {
+                    foreach my $y (@overlay_y_tiles) {
                         # If both base and overlay tiles exist then composite them together with "convert"
                         if ( -e "$base_directory/$zoomlevel/$x/$y" ) {
                             qx(convert "$base_directory/$zoomlevel/$x/$y" "$overlay_directory/$zoomlevel/$x/$y" -composite "$base_directory/$zoomlevel/$x/$y");
