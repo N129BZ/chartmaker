@@ -875,12 +875,12 @@ function reportProcessingTime() {
   */
  function pad2(n) {
     let nn = `${n}`;
-    if (n < 10)
+    if (n < 10) {
         nn = `0${nn}`;
-    else 
-        nn = `${n}`;
+    }
     return nn;
 }
+
 /**
  * Utility to make sure clipping files are all lower-case
  */
