@@ -45,9 +45,7 @@ sub main {
     # Get the merged tiles directory argument 
     my $base_directory    = $ARGV[1];
 
-    print STDOUT "Merging tiles from $source_directory into $base_directory\n";
-
-    my @areas = read_dir($source_directory);
+   my @areas = read_dir($source_directory);
    
     foreach my $area (@areas) {
         my $overlay_directory = "$source_directory/$area"; 

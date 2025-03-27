@@ -33,7 +33,10 @@ class ProcessTime {
         let ss = Math.floor(msec / 1000);
         msec -= ss * 1000;
 
-        this.totaltime = `${this.processname} processing time: ${hh}:${mm}:${ss}`;
+        let phh = pad2(hh);
+        let pmm = pad2(mm);
+        let pss = pad2(ss);
+        this.totaltime = `${this.processname} processing time: ${phh}:${pmm}:${pss}`;
     }
 }
 
@@ -857,8 +860,12 @@ function reportProcessingTime() {
     msec -= mm * 1000 * 60;
     let ss = Math.floor(msec / 1000);
     msec -= ss * 1000;
-    // diff = 28800000 => hh = 8, mm = 0, ss = 0, msec = 0
-    logEntry(`Start time: ${startdate}\r\nEnd time: ${date2}\r\nTotal processing time: ${hh}:${mm}:${ss}`);
+
+    let phh = pad2(hh);
+    let pmm = pad2(mm);
+    let pss = pad2(ss);
+    
+    logEntry(`Start time: ${startdate}\r\nEnd time: ${date2}\r\nTotal processing time: ${phh}:${pmm}:${pss}`);
 }
 
  /**
@@ -870,7 +877,7 @@ function reportProcessingTime() {
     let nn = `${n}`;
     if (n < 10)
         nn = `0${nn}`;
-    else
+    else 
         nn = `${n}`;
     return nn;
 }
