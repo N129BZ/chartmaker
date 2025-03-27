@@ -18,7 +18,7 @@
 # along with this program.  If not, see [http://www.gnu.org/licenses/].
 
 #-----------------------------------------------------------------------------
-# Modified March 20, 2025 by Brian A. Manlove to make Area folder tile 
+# Modified March 2025 by Brian A. Manlove to make Area folder tile 
 # manipulation a multiprocess operation, using the Parallel::ForkManager 
 # module. (See https://metacpan.org/pod/Parallel::ForkManager for info.)
 # The calling program passes a new max_processes argument which is used 
