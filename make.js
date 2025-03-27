@@ -578,11 +578,10 @@ function processImages() {
  * Merge all of the individual chart zoom folders into a single master chart folder 
  */
 function mergeAndQuantize() {
-
-    logEntry(`Executing mergetiles.pl Perl script to merge tiles into ${dir_5_merged}\n`);
     let ptm = new ProcessTime("mergetiles.pl");
     let loc = path.join(appdir, "mergetiles.pl");
-    let cmd = `perl ${loc} ${processes} ${dir_4_tiled} ${dir_5_merged}`;
+    logEntry(`Executing mergetiles.pl Perl script to merge tiles into ${dir_5_merged}\n`);
+    cmd = `perl ${loc} ${dir_4_tiled} ${dir_5_merged}`;
     executeCommand(cmd, true);
     ptm.calculateProcessTime();
     logEntry(`${ptm.totaltime}\n`);
