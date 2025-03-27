@@ -416,12 +416,16 @@ process.exit();
  * Generate all of the working folders for image processing
  */
 function setupEnvironment() {
+    
     // make sure the working folder for this chart is cleared out
-    fs.rmSync(chartfolder, { recursive: true, force: true });
-    
-    // OK, now create all of the workarea folders
+    if (fs.existsSync(chartfolder)) {
+        fs.rmSync(chartfolder, { recursive: true, force: true });
+    }
+
+    // Create the base workarea chart folder
     fs.mkdirSync(chartfolder);
-    
+
+    // OK, now create all of the workarea sub folders
     if (!fs.existsSync(dir_1_unzipped)) fs.mkdirSync(dir_1_unzipped);
     if (!fs.existsSync(dir_2_expanded)) fs.mkdirSync(dir_2_expanded);
     if (!fs.existsSync(dir_3_clipped)) fs.mkdirSync(dir_3_clipped);
