@@ -539,7 +539,12 @@ function processImages() {
         cmd = `gdalinfo -json "${sourcetif}"`;
         let infojson = JSON.parse(execSync(cmd));
         if (infojson.bands.length === 1) {
-            expandopt = "-expand rgb";
+            if (settings.outputgrayscale) {
+                expandopt = "-expand gray"; 
+            }
+            else {
+                expandopt = "-expand rgb";
+            }
         }
 
         wgsbounds = infojson.wgs84Extent.coordinates[0];
@@ -552,6 +557,12 @@ function processImages() {
         cmd = `gdalwarp -t_srs EPSG:3857 -dstalpha --config GDAL_CACHEMAX 256 -multi -cblend ${cblend} -cutline ${shapefile} -crop_to_cutline ${expanded} ${clipped}`;
         executeCommand(cmd);
 
+        // If user specified grayscale but left the imageformat as 
+        // webp, then force the imageformat to a default of png.
+        if (settings.outputgrayscale && imageformat === "webp") {
+            imageformat = "png";
+        }
+        
         // setup formatting arguments for overviews        
         let formatargs = `--tiledriver=${imageformat.toUpperCase()} `;
         let configargs = "";
