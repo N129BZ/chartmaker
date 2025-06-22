@@ -20,7 +20,9 @@
     "usecommandline": true,
     "timezone": "America/Chicago",
     "debug": true,
-    
+    "websocketport": 1952,
+    "startinwebsocketmode": true,
+
     "chartprocessindexes": [0,1,2,3,4,5,6,7],
     "fullchartlist": [
         ["Sectional", "vfr", ""],

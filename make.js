@@ -4,6 +4,14 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 const readlineSync = require('readline-sync');
 const path = require('path');
+const WebSocket = require('ws');
+
+//create a couple winsock variables
+var wss;
+var connections = new Map();
+var inWebsocketMode = false;
+var inMakeLoop = false;
+var sendSettings = false;
 
 // set the base application folder, this will change if running in docker
 let appdir = __dirname;
@@ -17,10 +25,6 @@ class ProcessTime {
 
     calculateProcessTime() {
         let date2 = new Date(new Date().toLocaleString());
-
-        // the following is to handle cases where the times are on the opposite side of
-        // midnight e.g. when you want to get the difference between 9:00 PM and 5:00 AM
-
         if (date2 < this.startdate) {
             date2.setDate(date2.getDate() + 1);
         }
@@ -68,6 +72,7 @@ function processPrompt(message) {
 
 const timings = new Map();
 const settings = JSON.parse(fs.readFileSync(`${appdir}/settings.json`, "utf-8"));
+const remotemenu = JSON.parse(fs.readFileSync(`${appdir}/remotemenu.json`, "utf-8"))
 
 /** 
  *  Set the time zone of this process to the value in settings if it exists.
@@ -173,7 +178,7 @@ if (settings.usecommandline) {
     if (arg.length >= 1) {
         let chart = "";
         let sarg = arg[0].toLowerCase();
-        if (sarg === "-s") {
+        if (sarg.startsWith("-s")) {
             // output settings.json
             
             console.log("\r\n\r\n----------------------------------------------------------------------------------\r\n" +
@@ -183,7 +188,7 @@ if (settings.usecommandline) {
             console.log("\r\n\r\n\r\n");
             process.exit();
         }
-        else if (sarg === "-h") {
+        else if (sarg.startsWith("-h")) {
             console.log("Command line options:\r\n" +
                         "----------------------------------------------------------------------------------\r\n" +
                         "-h, --help      Show this help\r\n" +
@@ -231,35 +236,49 @@ if (settings.usecommandline) {
         }
     }
     else {
-        let response = processPrompt("Select:\r\n" +
-                                    "----------------------------------------------------------------\r\n" +
+        if (settings.startinwebsocketmode) {
+            enterWebserverMode();
+        }
+        else {
+            let response = processPrompt("Select:\r\n" +
+                                    "--------------------------------------------------------------------\r\n" +
                                     "1 = Process a single area VFR chart\r\n" +
                                     "2 = Process all 53 area VFR charts individually\r\n" +
                                     "3 = Process a single full chart from the full chart list\r\n" +
                                     "4 = Process all of the full charts in the full chart list\r\n" +
                                     "5 = Generate a GeoTIFF from a mbtiles database\r\n" +
-                                    "----------------------------------------------------------------\r\n" +
+                                    "6 = Put chartmaker into webserver mode (new feature)\r\n" +
+                                    "7 = Output the settings.json file to the console\r\n" +
+                                    "---------------------------------------------------------------------\r\n\r\n" +
                                     "Your selection: "); 
-        switch (response) {
-            case "1":
-                processOneArea();
-                break;
-            case "2":
-                processAllAreas();
-                break;
-            case "3":
-                processOneFull();
-                break;
-            case "4":
-                parray = settings.chartprocessindexes;
-                processFulls(parray);
-                break;
-            case "5":
-                generateGeoTIFF();
-                break;
-            default:
-                console.log("Invalid response - exiting chartmaker!");
-                break;
+            switch (response) {
+                case "1":
+                    processOneArea();
+                    break;
+                case "2":
+                    processAllAreas();
+                    break;
+                case "3":
+                    processOneFull();
+                    break;
+                case "4":
+                    parray = settings.chartprocessindexes;
+                    processFulls(parray);
+                    break;
+                case "5":
+                    generateGeoTIFF();
+                    break;
+                case "6":
+                    enterWebserverMode();
+                    break;
+                case "7":
+                    console.log(settings);
+                    console.log("\r\n\r\n\r\n");
+                    process.exit();
+                default:
+                    console.log("Exiting chartmaker!");
+                    break;
+            }
         }
     }
 }
@@ -268,14 +287,19 @@ else {
     processFulls(parray);
 }
 
-function processOneArea() {
-    let lst = "\nSelect the chart number you want to process from this list\r\n\r\n";
-    for (var i = 0; i <  jsonarray.length; i++) {
-        lst += `${i} ${jsonarray[i][1].split("_").join(" ")}\r\n`; 
+function processOneArea(area = -1) {
+    if (area == -1) {
+        let lst = "\nSelect the chart number you want to process from this list\r\n\r\n";
+        for (var i = 0; i <  jsonarray.length; i++) {
+            lst += `${i} ${jsonarray[i][1].split("_").join(" ")}\r\n`; 
+        }
+        lst += "--------------------------------------------\r\nYour selection: ";
+        let response = processPrompt(lst);
+        nm = Number(response);
     }
-    lst += "--------------------------------------------\r\nYour selection: ";
-    let response = processPrompt(lst);
-    nm = Number(response);
+    else {
+        nm = Number(area);
+    }
 
     if (nm >= 0 && nm < jsonarray.length) {
         parray.push(nm);
@@ -412,7 +436,6 @@ if (settings.cleanprocessfolders) {
 }
 
 reportProcessingTime();
-process.exit();
 
 /**
  * Generate all of the working folders for image processing
@@ -447,7 +470,8 @@ function downloadCharts() {
         logEntry(`Using cached ${chartzip}`);
         return;
     }
-    else {
+    else {jsonarray = settings.individualchartlist;
+    
         let oldfiles = fs.readdirSync(chartcache);
         for (var i = 0; i < oldfiles.length; i++) {
             if (oldfiles[i].startsWith(chartworkname)) {
@@ -907,3 +931,212 @@ function normalizeClipNames() {
         logEntry(err.message);
     }
 }
+
+function enterWebserverMode() {
+    inWebsocketMode = true;
+    console.log("entering websocket mode")
+}
+
+
+(() => {
+    if (inWebsocketMode || settings.startinwebsocketmode) {
+        wss = new WebSocket.Server({ port: settings.websocketport });
+        var interval = setupPongResponder();
+        try {
+            wss.on('connection', (ws) => {
+                const id = Date.now();
+                ws.tag = id;
+                var helloSent = false;
+                ws.ping();
+                console.log(`Websocket connected, id: ${ws.tag}`);
+                
+                ws.on('close', function() {
+                    connections.delete(ws);
+                    console.log(`Websocket closed, id: ${ws.tag}`);
+                });
+
+                ws.on('pong', () => {
+                    connections.set(ws, true);
+                    if (!helloSent) {
+                        helloSent = true;
+                        sendMessageToClients(JSON.stringify(remotemenu));
+                    }
+                });
+
+                ws.on('error', (error) => {
+                    console.error("Websocket error:", error);
+                    connections.delete(ws);
+                });
+
+                ws.onmessage = (event) => {
+                    let rtnmsg = JSON.stringify({"message": "received message", "message": event.data});
+                    sendMessageToClients(rtnmsg);
+                    if (!inMakeLoop && !sendSettings) {
+                        let msg = JSON.parse(event.data);
+                        parseMakeCommand(msg, ws);
+                        rtnmsg = getTimingJsonObject();
+                        timings.clear();
+                    }
+
+                    if (sendSettings) {
+                        sendSettings = false;
+                        sendMessageToClients(JSON.stringify(settings));
+                        sendMessageToClients(JSON.stringify(remotemenu));
+                    }
+                };
+
+            });
+        } 
+        catch(error)  {
+            console.Error(error);
+            process.exit();
+        } 
+    }
+})();
+
+/**
+ * Iterate through any/all connected clients and send data
+ * @param {string} stringified json message 
+ */
+async function sendMessageToClients(jsonmessage) {
+    [...connections.keys()].forEach((client) => {
+        client.send(jsonmessage);
+    });
+}
+
+// Set up a periodic ping interval
+function setupPongResponder() {
+    const interval = setInterval(() => {
+        [...connections.keys()].forEach((ws) => {
+            if (connections.get(ws) === false) {
+                return ws.terminate();
+            }
+            connections.set(ws, false);
+            ws.ping();
+            //console.log(`ping sent to ws id: ${ws.tag}`);
+        });
+    }, 30000); // Send pings every 30 seconds
+    return interval;
+}
+
+function getTimingJsonObject() {
+    let tjson = {"timings": []};
+    [...timings.keys()].forEach((cpt) => {
+        tjson.timings.push({"chart": cpt.processname, "timing": cpt.totaltime });
+    });
+    return tjson;
+};
+
+/**
+ * Handle app closure and log the results
+ */
+process.on('exit', (code) => {
+  console.log(`\nAbout to exit with code: ${code}`);
+});
+
+process.on('SIGINT', () => {
+  console.log('\nReceived SIGINT. Cleaning up...');
+  // Perform cleanup operations here
+  process.exit(0); // Exit gracefully
+});
+
+/**
+ * 0 = Process a single area VFR chart
+ * 1 = Process all 53 area VFR charts individually
+ * 2 = Process a single full chart from the full chart list
+ * 3 = Process all of the full charts in the full chart list
+ * 4 = Return the settings.json file
+ * @param {*} msg JSON object message
+ */
+function parseMakeCommand(msg, ws) {
+    let idx = -1;
+    let opt = -1;
+    let item = {};
+    inMakeLoop = true;
+
+    outerloop: for (let i = 0; i < msg.makelist.length; i++) {
+        resetGlobalVariables();
+        item = msg.makelist[i];
+        idx = Number(item.command);
+        opt = Number(item.chart);
+        console.log(`command: ${idx}, chart: ${opt}`);
+        switch (idx) {
+            case 0:
+                if (opt >= 0 && opt <= 52) {
+                    processOneArea(opt);
+                }
+                break;
+            case 1:
+                // no sub command
+                processAllAreas();
+                break;
+            case 2:
+                if (opt >= 0 && opt <= 7) {
+                    let chart = settings.fullchartlist[opt][0].replace("_", " ");
+                    if (chart === "DDECUS") chart = settings.fullchartlist[opt][2].replace("_", " ");
+                    console.log(`Processing full chart: ${chart}`);
+                    parray.push(nm);
+                    processFulls();
+                }
+                break;
+            case 3:
+                // no subcommand
+                for (let i = 0; i <= 7; i++ ) {
+                    parray.push(i);
+                    processFulls();
+                }
+                break;  
+            case 4:
+                sendSettings = true;
+                break outerloop;
+        }
+    }
+    inMakeLoop = false;
+}
+
+function resetGlobalVariables() {
+    chartlayertype = "";
+    chartworkname = "";
+    chartname = "";
+    charturl = "";
+    clippedShapeFolder = "";
+    cmd = "";
+    chartfolder = "";
+    dir_1_unzipped = "";
+    dir_2_expanded = "";
+    dir_3_clipped = "";
+    dir_4_tiled = "";
+    dir_5_merged = "";
+    dir_6_quantized = "";
+    isifrchart = false;
+    wgsbounds = [];
+    addmetabounds = false;
+    parray = [];
+    nm = 0;
+}
+// /**
+//  * Start the express web server
+//  */
+// (() => {
+//     if (inWebserverMode) {
+//         var app = express();
+//         try {
+//             app.use(express.urlencoded({ extended: true }));
+//             app.use(express.json({}));
+//             app.use(cors());
+//             console.log(`Server listening on port ${settings.httpport}`);
+//             app.listen(settings.httpport, '0.0.0.0'); 
+
+//             app.get("/runmake", (req, res) => {
+//                 let query = req.query;
+//                 res.writeHead(200);
+//                 res.write("Make message received!");
+//                 res.end();
+//                 parseMakeCommand(query);
+//             });
+//         }
+//         catch (err) {
+//             console.log(err);
+//         }
+//     }
+// })();
