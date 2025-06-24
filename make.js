@@ -4,7 +4,11 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 const readlineSync = require('readline-sync');
 const path = require('path');
-const WebSocket = require('ws');
+const express = require('express');
+const WebSocket = require('ws')
+const favicon = require('serve-favicon');
+const cors = require('cors');
+const http = require('http');
 
 //create a couple winsock variables
 var wss;
@@ -71,8 +75,9 @@ function processPrompt(message) {
 }
 
 const timings = new Map();
-const settings = JSON.parse(fs.readFileSync(`${appdir}/settings.json`, "utf-8"));
+const settings = JSON.parse(fs.readFileSync(`${appdir}/settings.json`, "utf-8")).settings;
 const remotemenu = JSON.parse(fs.readFileSync(`${appdir}/remotemenu.json`, "utf-8"))
+const webpage = fs.readFileSync(`${appdir}/website/index.html`, "utf-8");
 
 /** 
  *  Set the time zone of this process to the value in settings if it exists.
@@ -168,7 +173,8 @@ let addmetabounds = false;
  * Chart processing starts here
  */
 let parray = [];
-let jsonarray = settings.individualchartlist;
+let areacharts = settings.areachartlist;
+let fullcharts = settings.fullchartlist;
 let nm = 0;
 let processes = getProcessCount();
 
@@ -210,7 +216,7 @@ if (settings.usecommandline) {
         else if (sarg.search("area-single") > -1) {
             try {
                 nm = Number(arg[0].split("=")[1]);
-                chart = settings.individualchartlist[nm][1].replace("_", " ");
+                chart = areacharts[nm][1].replace("_", " ");
                 console.log(`Processing area chart: ${chart}`);
                 parray.push(nm);
                 processSingles(parray);
@@ -223,8 +229,8 @@ if (settings.usecommandline) {
         else if (sarg.search("full-single") > -1) {
             try {
                 nm = Number(arg[0].split("=")[1]);
-                chart = settings.fullchartlist[nm][0].replace("_", " ");
-                if (chart === "DDECUS") chart = settings.fullchartlist[nm][2].replace("_", " ");
+                chart = fullcharts[nm][0].replace("_", " ");
+                if (chart === "DDECUS") chart = fullcharts[nm][2].replace("_", " ");
                 console.log(`Processing full chart: ${chart}`);
                 parray.push(nm);
                 processFulls(parray);
@@ -290,8 +296,8 @@ else {
 function processOneArea(area = -1) {
     if (area == -1) {
         let lst = "\nSelect the chart number you want to process from this list\r\n\r\n";
-        for (var i = 0; i <  jsonarray.length; i++) {
-            lst += `${i} ${jsonarray[i][1].split("_").join(" ")}\r\n`; 
+        for (var i = 0; i <  areacharts.length; i++) {
+            lst += `${i} ${areacharts[i][1].split("_").join(" ")}\r\n`; 
         }
         lst += "--------------------------------------------\r\nYour selection: ";
         let response = processPrompt(lst);
@@ -301,7 +307,7 @@ function processOneArea(area = -1) {
         nm = Number(area);
     }
 
-    if (nm >= 0 && nm < jsonarray.length) {
+    if (nm >= 0 && nm < areacharts.length) {
         parray.push(nm);
         processSingles(parray);
     }
@@ -322,7 +328,7 @@ function processAllAreas() {
 function processSingles(parray) {
     addmetabounds = true;   
     for (var x = 0; x < parray.length; x++) {
-        chartworkname = jsonarray[parray[x]][1];
+        chartworkname = areacharts[parray[x]];
         chartname = chartworkname;
         clippedShapeFolder = path.join(appdir, "clipshapes", "sectional");
         chartlayertype = settings.layertypes[settings.layertypeindex];
@@ -339,7 +345,7 @@ function processSingles(parray) {
 function processOneFull() {
     let lst = "\nSelect the full chart number you want to process from this list\r\n\r\n";
     let i = 0;
-    settings.fullchartlist.forEach((fullchart) => {
+    fullcharts.forEach((fullchart) => {
         let cname = fullchart[0] === "DDECUS" ? fullchart[2] : fullchart[0];
         lst += `${i} ${cname.split("_").join(" ")}\r\n`;
         i++;
@@ -348,7 +354,7 @@ function processOneFull() {
     let response = processPrompt(lst);
     nm = Number(response); 
 
-    if (nm >= 0 && nm < settings.fullchartlist.length) {
+    if (nm >= 0 && nm < fullcharts.length) {
         parray.push(nm);
     }
     else {
@@ -359,8 +365,9 @@ function processOneFull() {
 }
 
 function processFulls() {
+    addmetabounds = true; 
     parray.forEach((index) => {
-        let chart = settings.fullchartlist[index]; 
+        let chart = fullcharts[index]; 
         let lcasename = chart[0].toLowerCase();
         let charttype = chart[1];
 
@@ -372,7 +379,7 @@ function processFulls() {
             lcasename = chart[2].toLowerCase();
             charturl = settings.ifrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
             clippedShapeFolder = path.join(appdir, "clipshapes", lcasename);
-            chartname = settings.fullchartlist[index][2]; // use alias value for IFR
+            chartname = fullcharts[index][2]; // use alias value for IFR
             chartfolder = path.join(workarea, chartname);
         }
         else { // vfr
@@ -470,7 +477,7 @@ function downloadCharts() {
         logEntry(`Using cached ${chartzip}`);
         return;
     }
-    else {jsonarray = settings.individualchartlist;
+    else {areacharts = settings.individualchartlist;
     
         let oldfiles = fs.readdirSync(chartcache);
         for (var i = 0; i < oldfiles.length; i++) {
@@ -938,61 +945,60 @@ function enterWebserverMode() {
 }
 
 
-(() => {
-    if (inWebsocketMode || settings.startinwebsocketmode) {
-        wss = new WebSocket.Server({ port: settings.websocketport });
-        var interval = setupPongResponder();
-        try {
-            wss.on('connection', (ws) => {
-                const id = Date.now();
-                ws.tag = id;
-                var helloSent = false;
-                ws.ping();
-                console.log(`Websocket connected, id: ${ws.tag}`);
+// (() => {
+//     if (inWebsocketMode || settings.startinwebsocketmode) {
+//         wss = new WebSocket.Server({ port: settings.websocketport });
+//         var interval = setupPongResponder();
+//         try {
+//             wss.on('connection', (ws) => {
+//                 const id = Date.now();
+//                 ws.tag = id;
+//                 var helloSent = false;
+//                 ws.ping();
+//                 console.log(`Websocket connected, id: ${ws.tag}`);
                 
-                ws.on('close', function() {
-                    connections.delete(ws);
-                    console.log(`Websocket closed, id: ${ws.tag}`);
-                });
+//                 ws.on('close', function() {
+//                     connections.delete(ws);
+//                     console.log(`Websocket closed, id: ${ws.tag}`);
+//                 });
 
-                ws.on('pong', () => {
-                    connections.set(ws, true);
-                    if (!helloSent) {
-                        helloSent = true;
-                        sendMessageToClients(JSON.stringify(remotemenu));
-                    }
-                });
+//                 ws.on('pong', () => {
+//                     connections.set(ws, true);
+//                     if (!helloSent) {
+//                         helloSent = true;
+//                         sendMessageToClients(JSON.stringify(remotemenu));
+//                     }
+//                 });
 
-                ws.on('error', (error) => {
-                    console.error("Websocket error:", error);
-                    connections.delete(ws);
-                });
+//                 ws.on('error', (error) => {
+//                     console.error("Websocket error:", error);
+//                     connections.delete(ws);
+//                 });
 
-                ws.onmessage = (event) => {
-                    let rtnmsg = JSON.stringify({"message": "received message", "message": event.data});
-                    sendMessageToClients(rtnmsg);
-                    if (!inMakeLoop && !sendSettings) {
-                        let msg = JSON.parse(event.data);
-                        parseMakeCommand(msg, ws);
-                        rtnmsg = getTimingJsonObject();
-                        timings.clear();
-                    }
+//                 ws.onmessage = (event) => {
+//                     let msg = JSON.parse(event.data);
+//                     if (!inMakeLoop && !sendSettings) {
+//                         parseMakeCommand(msg, ws);
+//                         timings.clear();
+//                     }
 
-                    if (sendSettings) {
-                        sendSettings = false;
-                        sendMessageToClients(JSON.stringify(settings));
-                        sendMessageToClients(JSON.stringify(remotemenu));
-                    }
-                };
+//                     if (sendSettings) {
+//                         sendSettings = false;
+//                         let rs = JSON.parse(fs.readFileSync(`${appdir}/settings.json`, "utf-8")).settings;
+//                         sendMessageToClients(JSON.stringify({"full_chart_list":rs.fullchartindexes}));
+//                         sendMessageToClients(JSON.stringify({"area_chart_list":rs.areachartlist}));
+//                         sendMessageToClients(JSON.stringify({"remotemenu":remotemenu}));
+//                     }
+//                 };
 
-            });
-        } 
-        catch(error)  {
-            console.Error(error);
-            process.exit();
-        } 
-    }
-})();
+//             });
+//         } 
+//         catch(error)  {
+//             console.Error(error);
+//             process.exit();
+//         } 
+//     }
+// })();
 
 /**
  * Iterate through any/all connected clients and send data
@@ -1054,9 +1060,9 @@ function parseMakeCommand(msg, ws) {
     let item = {};
     inMakeLoop = true;
 
-    outerloop: for (let i = 0; i < msg.makelist.length; i++) {
+    outerloop: for (let i = 0; i < msg.commandlist.length; i++) {
         resetGlobalVariables();
-        item = msg.makelist[i];
+        item = msg.commandlist[i];
         idx = Number(item.command);
         opt = Number(item.chart);
         console.log(`command: ${idx}, chart: ${opt}`);
@@ -1072,10 +1078,10 @@ function parseMakeCommand(msg, ws) {
                 break;
             case 2:
                 if (opt >= 0 && opt <= 7) {
-                    let chart = settings.fullchartlist[opt][0].replace("_", " ");
-                    if (chart === "DDECUS") chart = settings.fullchartlist[opt][2].replace("_", " ");
+                    let chart = fullcharts[opt][0].replace("_", " ");
+                    if (chart === "DDECUS") chart = fullcharts[opt][2].replace("_", " ");
                     console.log(`Processing full chart: ${chart}`);
-                    parray.push(nm);
+                    parray.push(opt);
                     processFulls();
                 }
                 break;
@@ -1091,6 +1097,7 @@ function parseMakeCommand(msg, ws) {
                 break outerloop;
         }
     }
+    console.log("Completed the submitted remote chart makelist!")
     inMakeLoop = false;
 }
 
@@ -1114,29 +1121,92 @@ function resetGlobalVariables() {
     parray = [];
     nm = 0;
 }
-// /**
-//  * Start the express web server
-//  */
-// (() => {
-//     if (inWebserverMode) {
-//         var app = express();
-//         try {
-//             app.use(express.urlencoded({ extended: true }));
-//             app.use(express.json({}));
-//             app.use(cors());
-//             console.log(`Server listening on port ${settings.httpport}`);
-//             app.listen(settings.httpport, '0.0.0.0'); 
+/**
+ * Start the express web server
+ */
+(() => {
+    if (inWebsocketMode || settings.startinwebsocketmode) {
+        var app = express();
+        try {
 
-//             app.get("/runmake", (req, res) => {
-//                 let query = req.query;
-//                 res.writeHead(200);
-//                 res.write("Make message received!");
-//                 res.end();
-//                 parseMakeCommand(query);
-//             });
-//         }
-//         catch (err) {
-//             console.log(err);
-//         }
-//     }
-// })();
+            app.use(express.urlencoded({ extended: true }));
+            app.listen(settings.httpport, () => { 
+                console.log(`Web Server listening on port ${settings.httpport}`);
+            });
+
+            var options = {
+                dotfiles: 'ignore',
+                etag: false,
+                extensions: ['html'],
+                index: false,
+                redirect: false,
+                setHeaders: function (res, path, stat) {
+                    res.set('x-timestamp', Date.now());
+                }
+            };
+
+            app.use(express.static(`${appdir}/website`, options));
+            app.use(favicon(`${appdir}/website/img/favicon.png`));
+
+            app.get("/", (req, res) => {
+                res.send(webpage);
+                res.end();
+            });
+
+            app.get("/settings", (req, res) => {
+                res.send(JSON.stringify(settings));
+                res.end();
+            });
+        
+            wss = new WebSocket.Server({ port: settings.websocketport });
+            console.log(`Websocket listening on port ${settings.websocketport}`);
+
+            wss.on('connection', (ws) => {
+                const id = Date.now();
+                ws.tag = id;
+                var helloSent = false;
+                ws.ping();
+                
+                console.log(`Websocket connected, id: ${ws.tag}`);
+                
+                ws.on('close', function() {
+                    connections.delete(ws);
+                    console.log(`Websocket closed, id: ${ws.tag}`);
+                });
+
+                ws.on('pong', () => {
+                    connections.set(ws, true);
+                    if (!helloSent) {
+                        helloSent = true;
+                        sendMessageToClients(JSON.stringify(remotemenu));
+                    }
+                });
+
+                ws.on('error', (error) => {
+                    console.error("Websocket error:", error);
+                    connections.delete(ws);
+                });
+
+                ws.onmessage = (event) => {
+                    let msg = JSON.parse(event.data);
+                    if (!inMakeLoop && !sendSettings) {
+                        parseMakeCommand(msg, ws);
+                        timings.clear();
+                    }
+
+                    if (sendSettings) {
+                        sendSettings = false;
+                        let rs = JSON.parse(fs.readFileSync(`${appdir}/settings.json`, "utf-8")).settings;
+                        sendMessageToClients(JSON.stringify({"full_chart_list":rs.fullchartindexes}));
+                        sendMessageToClients(JSON.stringify({"area_chart_list":rs.areachartlist}));
+                        sendMessageToClients(JSON.stringify({"remotemenu":remotemenu}));
+                    }
+                };
+
+            });
+        }
+        catch (err) {
+            console.log(err);
+        }
+    }
+})();

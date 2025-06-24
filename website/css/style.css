@@ -1,0 +1,22 @@
+
+.menu {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: medium;
+	width: 400px;
+	/* display: inline-block; */
+	text-align: left;
+}
+
+.command {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: medium;
+	width: 30px;
+	text-align: left;
+}
+
+.label {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: medium;
+	width: 150px;
+	text-align: right;
+}

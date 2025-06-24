@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Chartmaker Remote Control</title>
+    <link rel="icon" type="image/x-icon" href="img/favicon.png" />
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/jquery.min.js"></script>
+    <script src="js/elm-pep.js"></script>
+</head>
+
+<body>
+    <table>
+        <tbody>
+            <div class="menu">CHARTMAKER REMOTE CONTROL<br><br></div>
+            <tr>
+                <div class="menu">
+                    0 = Process a single area VFR chart<br>
+                    1 = Process all 53 area VFR charts individually<br>
+                    2 = Process a single full chart from the full chart list<br>
+                    3 = Process all of the full charts in the full chart list<br>
+                    4 = Return the area and full chart lists<br><br>
+                </div>
+            </tr>
+            <tr>
+                <label for="command" class="label" id="commandlabel" >Command:</td>
+                <input type="text" class="command" id="command" value="0" tabindex="-1"></td>
+                <label for="chart" class="label" id="chartlabel" >Chart:</td>
+                <input type="text" class="command" id="chart" value="0" tabindex="-1"></td>
+            </tr>
+            <tr>
+                <div class="fulllist" id="fulllist"></div>
+            </tr>
+            <tr>
+                <div class="arealist" id="arealist"></div>
+            </tr>
+        </tbody>
+    </table>
+    <script src="js/remote.js"></script>
+</body>
+</html>
