@@ -11,12 +11,27 @@ let URL_HOST_PROTOCOL       = `${URL_PROTOCOL}//`;
 let URL_SERVER              = `${URL_HOST_PROTOCOL}${URL_HOST_BASE}`;
 let URL_WINSOCK             = `ws://${URL_LOCATION}:`;
 let URL_GET_SETTINGS        = `${URL_SERVER}/settings`;
-
+let URL_GET_STATUS          = `${URL_SERVER}/status`;
 
 var fclist = document.getElementById("fclist");
 var aclist = document.getElementById("aclist");
+var confwindow = document.getElementById("confwindow");
+var command = document.getElementById("command");
+var chart = document.getElementById("chart");
+var commandlist = document.getElementById("commandlist");
+var chartlist = document.getElementById("chartlist");
 
+
+var indexlist = [];
+var commands = {"commandlist": []};
+var confcommands = [];
 var settings = {};
+var selectedcommand = -1;
+var selectedchart = -1;
+
+window.addEventListener("load", (event) => {
+    populateCommandList();
+});
 
 $.get({
     async: false,
@@ -25,7 +40,6 @@ $.get({
     success: (data) => {
         try {
             settings = JSON.parse(data);
-            displayLists();
         }
         catch(err) {
             console.log(err);
@@ -36,45 +50,116 @@ $.get({
     }
 });
 
-// $.post({
-    
-//     console.log("request submitted");
-// });
+(function ($) {
+    setInterval(()=>{
+       fetch(URL_GET_STATUS)
+       .then((resp) => {alert(resp.body)})
+    },1000)
+}(jQuery));
 
 function submitRequest() {
-
-    let cmdobj = document.getElementById("command");
-    let chtobj = document.getElementById("chart");
-
-    //$.post("/data", {commandlist:[{ command: cmdval, chart: chtval }]});
+    $.post("/data", commands, function(data, status) {
+        console.log(data, status);
+        alert("Run command sent, clearing command list!");
+        confwindow.innerText = "";
+    });
 }
 
-function displayLists() {
+function addSubmitRequest() {
+    let entry = { "command": selectedcommand, "chart": selectedchart };
+    let confentry = command.value;
+    if (chart.value !== "") {
+        confentry += `: ${chart.value}`
+    }
+    commands.commandlist.push(entry); 
+    confwindow.innerText += confentry + "\r\n";
+    selectedchart = -1;
+    selectedcommand = -1;
+    populateCommandList();
+    resetChartList();  
+}
+
+function chartSelected() {
+    selectedchart = -1;
+    let item = chart.value;
+    for (let i = 0; i < settings.areachartlist.length; i++) {
+        if (chartlist.options[i].value === item) {
+            selectedchart = i;
+            break;
+        } 
+    }
+}
+
+function populateChartList() {
+    selectedcommand = -1;
+    let item = command.value;
+
+    for(let i = 0; i < commandlist.options.length; i++) {
+        if (commandlist.options[i].value === item) {
+            selectedcommand = i; // Found a match, store the index
+            break; // Exit the loop as the option is found
+        }
+    }
+
+    if (selectedcommand == 0) {
+        populateAreaChartList();
+    }
+    else if(selectedcommand == 2) {
+        populateFullChartList();
+    }
+}
+
+function populateAreaChartList() {
+    resetChartList();
+    for (let i = 0; i < settings.areachartlist.length; i++) {
+        let option = document.createElement('option');
+        option.value = `${settings.areachartlist[i].replaceAll("_", " ")}`;
+        chartlist.appendChild(option);
+    }
+}
+
+function populateFullChartList() {
+    resetChartList();
     let  i = 0;
     let item = "";
-    let row = Object;
-
+    
     for (i = 0; i < settings.fullchartlist.length; i++) {
+        let option = document.createElement('option');
         if (i == 5 || i == 6) {
-            item = `${i} = ${settings.fullchartlist[i][2].replaceAll("_", " ")}`;
-            row = fclist.insertRow();
+            item = `${settings.fullchartlist[i][2].replaceAll("_", " ")}`;
+            option.value = item;
         }
         else {
-            item = `${i} = ${settings.fullchartlist[i][0].replaceAll("_", " ")}`;
-            row = fclist.insertRow();
-        }
-        row.textContent = item;
-    }
-
-    for (i = 0; i < settings.areachartlist.length; i++) {
-        item = `${i} = ${settings.areachartlist[i]}`;
-        row = aclist.insertRow();
-        row.textContent = item;
+            item = `${settings.fullchartlist[i][0].replaceAll("_", " ")}`;
+            option.value = item;
+        } 
+        chartlist.appendChild(option)
     }
 }
 
-$(() => {
+function populateCommandList() {
+    resetCommandList();
+    let alist = []; 
+    for (let i = 0; i < 4; i++) {
+        alist.push(document.createElement('option'));
+        alist[i].className = "option";
+    }
+    alist[0].value = "Process a single area VFR chart";
+    commandlist.appendChild(alist[0]);
+    alist[1].value = "Process all 53 area VFR charts individually";
+    commandlist.appendChild(alist[1]);
+    alist[2].value = "Process a single full chart ";
+    commandlist.appendChild(alist[2]);
+    alist[3].value = "Process all of the full charts";
+    commandlist.appendChild(alist[3]);
+}
 
+function resetCommandList() {
+    commandlist.innerHTML = ""; 
+    command.value = "";
+}
 
-
-});
+function resetChartList() {
+    chartlist.innerHTML = "";
+    chart.value = "";
+}

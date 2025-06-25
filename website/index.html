@@ -17,30 +17,28 @@
         <tbody>
             <div class="menu"><h2>Chartmaker Remote Control</h2></div>
             <tr>
-                <div class="menu"><b><u>Avaliable Commands:</u></b><br>
-                    0 = Process a single area VFR chart<br>
-                    1 = Process all 53 area VFR charts individually<br>
-                    2 = Process a single full chart from the full chart list<br>
-                    3 = Process all of the full charts in the full chart list<br>
+                <div class="menu"><b><label for="command">Avaliable Commands:</label></b><br>
+                    <input type="text" id="command" list="commandlist" onchange="populateChartList()">
+                    <datalist class="listbox" id="commandlist">
+                    </datalist>
                 </div>
+                <br>
             </tr>
             <tr>
-                <h1>
-                <label for="command" class="label" id="commandlabel" >Command:</label>
-                <input type="text" class="command" id="command" value="0" tabindex="-1">
-                <label for="chart" class="label" id="chartlabel" >Chart:</label>
-                <input type="text" class="command" id="chart" value="0" tabindex="-1">
-                <button id="send" class="button" onclick="submitRequest()">Run</button>
-                </h1>
+                <div class="menu"><b><label for="chart">Chart:</label></b><br>
+                    <input type="text" id="chart" list="chartlist" onchange="chartSelected()">
+                    <datalist class="listbox" id="chartlist">             
+                    </datalist>
+                </div>
+                <br>   
+                <button id="addcmd" class="addbutton" onclick="addSubmitRequest()">Add Command</button>
+                
             </tr>
         </tbody>
     </table>
-    <div class="menu"><u><b>FULL CHART LIST</b></u><br></div>
-    <table class="table" id="fclist">
-    </table>
-    <div class="menu"><br><br><u><b>AREA CHART LIST</b></u></div>
-    <table class="table" id="aclist">        
-    </table>
+    <div class="menu"><label for="confwindow"><b>Confirmed command list:</b><br></div>
+    <div class="confwindow" id="confwindow"></div>
+    <button id="send" class="sendbutton" onclick="submitRequest()">Run</button>  
     <script src="js/remote.js"></script>
 </body>
 </html>

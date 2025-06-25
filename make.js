@@ -943,62 +943,6 @@ function enterWebserverMode() {
     console.log("entering websocket mode")
 }
 
-
-// (() => {
-//     if (inWebsocketMode || settings.startinwebsocketmode) {
-//         wss = new WebSocket.Server({ port: settings.websocketport });
-//         var interval = setupPongResponder();
-//         try {
-//             wss.on('connection', (ws) => {
-//                 const id = Date.now();
-//                 ws.tag = id;
-//                 var helloSent = false;
-//                 ws.ping();
-//                 console.log(`Websocket connected, id: ${ws.tag}`);
-                
-//                 ws.on('close', function() {
-//                     connections.delete(ws);
-//                     console.log(`Websocket closed, id: ${ws.tag}`);
-//                 });
-
-//                 ws.on('pong', () => {
-//                     connections.set(ws, true);
-//                     if (!helloSent) {
-//                         helloSent = true;
-//                         sendMessageToClients(JSON.stringify(remotemenu));
-//                     }
-//                 });
-
-//                 ws.on('error', (error) => {
-//                     console.error("Websocket error:", error);
-//                     connections.delete(ws);
-//                 });
-
-//                 ws.onmessage = (event) => {
-//                     let msg = JSON.parse(event.data);
-//                     if (!inMakeLoop && !sendSettings) {
-//                         parseMakeCommand(msg, ws);
-//                         timings.clear();
-//                     }
-
-//                     if (sendSettings) {
-//                         sendSettings = false;
-//                         let rs = JSON.parse(fs.readFileSync(`${appdir}/settings.json`, "utf-8")).settings;
-//                         sendMessageToClients(JSON.stringify({"full_chart_list":rs.fullchartindexes}));
-//                         sendMessageToClients(JSON.stringify({"area_chart_list":rs.areachartlist}));
-//                         sendMessageToClients(JSON.stringify({"remotemenu":remotemenu}));
-//                     }
-//                 };
-
-//             });
-//         } 
-//         catch(error)  {
-//             console.Error(error);
-//             process.exit();
-//         } 
-//     }
-// })();
-
 /**
  * Iterate through any/all connected clients and send data
  * @param {string} stringified json message 
@@ -1158,7 +1102,11 @@ function resetGlobalVariables() {
             });
         
             app.all("/data", (req, res) => {
-                parseMakeCommand(req.body);
+                res.send({"command_received": req.body});
+                if (!inMakeLoop && !sendSettings) {
+                    parseMakeCommand(req.body);
+                    timings.clear();
+                }
             });
 
             wss = new WebSocket.Server({ port: settings.websocketport });
