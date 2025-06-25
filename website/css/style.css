@@ -1,3 +1,7 @@
+.body {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: medium;
+}
 
 .menu {
 	font-family: Arial, Helvetica, sans-serif;
@@ -20,3 +24,34 @@
 	width: 150px;
 	text-align: right;
 }
+
+.table {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: medium;
+}
+.button {
+    top:50%;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: medium;
+	font-weight: bold;
+    background-color:#0a0a23;
+    color: #fff;
+	top:50%;
+    background-color:#0a0a23;
+    color: #fff;
+    border:none; 
+    border-radius:10px; 
+    padding:15px;
+    min-height:15px;
+    min-width: 25px;
+	margin-left: 60px;
+}
+/* 
+.button {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: medium;
+	width: auto;
+	text-align: center;
+	padding:
+	margin-left: 20px;
+} */

@@ -77,7 +77,6 @@ function processPrompt(message) {
 const timings = new Map();
 const settings = JSON.parse(fs.readFileSync(`${appdir}/settings.json`, "utf-8")).settings;
 const remotemenu = JSON.parse(fs.readFileSync(`${appdir}/remotemenu.json`, "utf-8"))
-const webpage = fs.readFileSync(`${appdir}/website/index.html`, "utf-8");
 
 /** 
  *  Set the time zone of this process to the value in settings if it exists.
@@ -1149,7 +1148,7 @@ function resetGlobalVariables() {
             app.use(favicon(`${appdir}/website/img/favicon.png`));
 
             app.get("/", (req, res) => {
-                res.send(webpage);
+                res.send(fs.readFileSync(`${appdir}/website/index.html`, "utf-8"));
                 res.end();
             });
 
@@ -1158,6 +1157,10 @@ function resetGlobalVariables() {
                 res.end();
             });
         
+            app.all("/data", (req, res) => {
+                parseMakeCommand(req.body);
+            });
+
             wss = new WebSocket.Server({ port: settings.websocketport });
             console.log(`Websocket listening on port ${settings.websocketport}`);
 

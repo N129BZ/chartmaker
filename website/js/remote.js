@@ -13,8 +13,9 @@ let URL_WINSOCK             = `ws://${URL_LOCATION}:`;
 let URL_GET_SETTINGS        = `${URL_SERVER}/settings`;
 
 
-var fulllist = document.getElementById("fulllist");
-var arealist = document.getElementById("arealist");
+var fclist = document.getElementById("fclist");
+var aclist = document.getElementById("aclist");
+
 var settings = {};
 
 $.get({
@@ -24,6 +25,7 @@ $.get({
     success: (data) => {
         try {
             settings = JSON.parse(data);
+            displayLists();
         }
         catch(err) {
             console.log(err);
@@ -34,14 +36,40 @@ $.get({
     }
 });
 
+// $.post({
+    
+//     console.log("request submitted");
+// });
+
+function submitRequest() {
+
+    let cmdobj = document.getElementById("command");
+    let chtobj = document.getElementById("chart");
+
+    //$.post("/data", {commandlist:[{ command: cmdval, chart: chtval }]});
+}
+
 function displayLists() {
     let  i = 0;
+    let item = "";
+    let row = Object;
+
     for (i = 0; i < settings.fullchartlist.length; i++) {
-        
+        if (i == 5 || i == 6) {
+            item = `${i} = ${settings.fullchartlist[i][2].replaceAll("_", " ")}`;
+            row = fclist.insertRow();
+        }
+        else {
+            item = `${i} = ${settings.fullchartlist[i][0].replaceAll("_", " ")}`;
+            row = fclist.insertRow();
+        }
+        row.textContent = item;
     }
 
     for (i = 0; i < settings.areachartlist.length; i++) {
-
+        item = `${i} = ${settings.areachartlist[i]}`;
+        row = aclist.insertRow();
+        row.textContent = item;
     }
 }
 

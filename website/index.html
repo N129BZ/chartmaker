@@ -15,29 +15,31 @@
 <body>
     <table>
         <tbody>
-            <div class="menu">CHARTMAKER REMOTE CONTROL<br><br></div>
+            <div class="menu"><h2>Chartmaker Remote Control</h2></div>
             <tr>
-                <div class="menu">
+                <div class="menu"><b><u>Avaliable Commands:</u></b><br>
                     0 = Process a single area VFR chart<br>
                     1 = Process all 53 area VFR charts individually<br>
                     2 = Process a single full chart from the full chart list<br>
                     3 = Process all of the full charts in the full chart list<br>
-                    4 = Return the area and full chart lists<br><br>
                 </div>
             </tr>
             <tr>
-                <label for="command" class="label" id="commandlabel" >Command:</td>
-                <input type="text" class="command" id="command" value="0" tabindex="-1"></td>
-                <label for="chart" class="label" id="chartlabel" >Chart:</td>
-                <input type="text" class="command" id="chart" value="0" tabindex="-1"></td>
-            </tr>
-            <tr>
-                <div class="fulllist" id="fulllist"></div>
-            </tr>
-            <tr>
-                <div class="arealist" id="arealist"></div>
+                <h1>
+                <label for="command" class="label" id="commandlabel" >Command:</label>
+                <input type="text" class="command" id="command" value="0" tabindex="-1">
+                <label for="chart" class="label" id="chartlabel" >Chart:</label>
+                <input type="text" class="command" id="chart" value="0" tabindex="-1">
+                <button id="send" class="button" onclick="submitRequest()">Run</button>
+                </h1>
             </tr>
         </tbody>
+    </table>
+    <div class="menu"><u><b>FULL CHART LIST</b></u><br></div>
+    <table class="table" id="fclist">
+    </table>
+    <div class="menu"><br><br><u><b>AREA CHART LIST</b></u></div>
+    <table class="table" id="aclist">        
     </table>
     <script src="js/remote.js"></script>
 </body>
