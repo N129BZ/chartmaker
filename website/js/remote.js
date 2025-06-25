@@ -21,8 +21,9 @@ var command = document.getElementById("command");
 var chart = document.getElementById("chart");
 var commandlist = document.getElementById("commandlist");
 var chartlist = document.getElementById("chartlist");
-var wss;
+let conflist = document.getElementById("conflist");
 
+var wss;
 var indexlist = [];
 var commands = {"commandlist": []};
 var confcommands = [];
@@ -85,11 +86,17 @@ $.get({
     }
 });
 
+function removeLastEntry() {
+    commands.commandlist.pop();
+    let lastItem = conflist.lastElementChild;
+    conflist.removeChild(lastItem);
+}
+
 function submitRequest() {
     $.post(URL_POST_DATA, commands, function(data, status) {
         console.log(data, status);
         alert("Run command sent, clearing command list!");
-        confwindow.innerText = "";
+        conflist.innerHTML = "";
     });
 }
 
@@ -106,7 +113,9 @@ function addSubmitRequest() {
         confentry += `: ${chart.value}`
     }
     commands.commandlist.push(entry); 
-    confwindow.innerText += confentry + "\r\n";
+    let li = document.createElement('li');
+    li.textContent = confentry;
+    conflist.appendChild(li);
     selectedchart = -1;
     selectedcommand = -1;
     populateCommandList();

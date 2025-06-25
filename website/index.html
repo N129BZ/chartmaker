@@ -37,8 +37,11 @@
         </tbody>
     </table>
     <div class="menu"><label for="confwindow"><b>Confirmed command list:</b><br></div>
-    <div class="confwindow" id="confwindow"></div>
-    <button id="send" class="sendbutton" onclick="submitRequest()">Run</button>  
+    <div class="confwindow" id="confwindow">
+        <ul id="conflist"></ul>
+    </div>
+    <button id="undo" class="removebutton" onclick="removeLastEntry()">Remove Last Command</button>
+    <button id="send" class="sendbutton" onclick="submitRequest()">Send Commands</button>  
     <script src="js/remote.js"></script>
 </body>
 </html>

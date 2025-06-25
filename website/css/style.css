@@ -46,8 +46,8 @@
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
 	font-weight: bold;
-    background-color:#0a0a23;
-    color: #fff;
+    background-color:darkgreen;
+    color: white;
 	border:none; 
     border-radius:10px; 
     padding:15px;
@@ -70,10 +70,36 @@
 	margin-left: 80px;
     position: absolute;
     top: 560px;
-    left: 145px;
+    left: 250px;
+}
+.removebutton {
+    font-family: Arial, Helvetica, sans-serif;
+	font-size: medium;
+	font-weight: bold;
+    background-color:darkred;
+    color: #fff;
+	border-radius:10px; 
+    padding:15px;
+    min-height:15px;
+    min-width: 25px;
+	margin-left: 20px;
+    position: absolute;
+    top: 560px;
+    left: 45px;
 }
 .confwindow {
     outline: 3px solid black;
+    position: absolute;
+    top:185px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: medium;
+    left: 0%;
+    height: 300px;
+    width: 480px;
+    margin: 20px;
+    padding: 20px;
+}
+.conflist {
     position: absolute;
     top:185px;
     font-family: Arial, Helvetica, sans-serif;

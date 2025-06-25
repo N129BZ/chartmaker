@@ -968,7 +968,8 @@ function setupPongResponder() {
 
 function getTimingJsonObject() {
     let tjson = {runresults: []};
-    [...timings.keys()].forEach((cpt) => {
+    [...timings.keys()].forEach((key) => {
+        let cpt = timings.get(key);
         tjson.runresults.push({chart: cpt.processname, timing: cpt.totaltime});
     });
     return tjson;
@@ -999,47 +1000,56 @@ function parseMakeCommand(msg, ws) {
     let idx = -1;
     let opt = -1;
     let item = {};
-    inMakeLoop = true;
+    
+    if (msg.commandlist.length > 0) {
+        try {
+            inMakeLoop = true;
+            outerloop: for (let i = 0; i < msg.commandlist.length; i++) {
+                resetGlobalVariables();
+                item = msg.commandlist[i];
+                idx = Number(item.command);
+                opt = Number(item.chart);
+                console.log(`command: ${idx}, chart: ${opt}`);
+                switch (idx) {
+                    case 0:
+                        if (opt >= 0 && opt <= 52) {
+                            processOneArea(opt);
+                        }
+                        break;
+                    case 1:
+                        // no sub command
+                        processAllAreas();
+                        break;
+                    case 2:
+                        if (opt >= 0 && opt <= 7) {
+                            let chart = fullcharts[opt][0].replace("_", " ");
+                            if (chart === "DDECUS") chart = fullcharts[opt][2].replace("_", " ");
+                            console.log(`Processing full chart: ${chart}`);
+                            parray.push(opt);
+                            processFulls();
+                        }
+                        break;
+                    case 3:
+                        // no subcommand
+                        for (let i = 0; i <= 7; i++ ) {
+                            parray.push(i);
+                            processFulls();
+                        }
+                        break;  
+                    case 4:
+                        sendSettings = true;
+                        break outerloop;
+                }
+            }
+            sendMessageToClients(JSON.stringify(getTimingJsonObject()));
+            timings.clear();
+            inMakeLoop = false;
 
-    outerloop: for (let i = 0; i < msg.commandlist.length; i++) {
-        resetGlobalVariables();
-        item = msg.commandlist[i];
-        idx = Number(item.command);
-        opt = Number(item.chart);
-        console.log(`command: ${idx}, chart: ${opt}`);
-        switch (idx) {
-            case 0:
-                if (opt >= 0 && opt <= 52) {
-                    processOneArea(opt);
-                }
-                break;
-            case 1:
-                // no sub command
-                processAllAreas();
-                break;
-            case 2:
-                if (opt >= 0 && opt <= 7) {
-                    let chart = fullcharts[opt][0].replace("_", " ");
-                    if (chart === "DDECUS") chart = fullcharts[opt][2].replace("_", " ");
-                    console.log(`Processing full chart: ${chart}`);
-                    parray.push(opt);
-                    processFulls();
-                }
-                break;
-            case 3:
-                // no subcommand
-                for (let i = 0; i <= 7; i++ ) {
-                    parray.push(i);
-                    processFulls();
-                }
-                break;  
-            case 4:
-                sendSettings = true;
-                break outerloop;
+        }
+        catch(err){
+            console.log(`Caught error:\r\n ${err}`);
         }
     }
-    sendMessageToClients(JSON.stringify(getTimingJsonObject()));
-    inMakeLoop = false;
 }
 
 function resetGlobalVariables() {
@@ -1099,11 +1109,6 @@ function resetGlobalVariables() {
                 res.end();
             });
             
-            app.get("/status", (req, res) => {
-                res.send({ "status": "POLLING STARTED!" });
-                res.end();
-            });
-        
             app.all("/data", (req, res) => {
                 let data = req.body;
                 res.send({"command_received": data});
@@ -1111,7 +1116,6 @@ function resetGlobalVariables() {
 
                 if (!inMakeLoop && !sendSettings) {
                     parseMakeCommand(data);
-                    timings.clear();
                 }
             });
 
@@ -1144,7 +1148,6 @@ function resetGlobalVariables() {
                     let msg = JSON.parse(event.data);
                     if (!inMakeLoop && !sendSettings) {
                         parseMakeCommand(msg, ws);
-                        timings.clear();
                     }
 
                     if (sendSettings) {
