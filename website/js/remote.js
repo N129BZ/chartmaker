@@ -12,6 +12,7 @@ let URL_SERVER              = `${URL_HOST_PROTOCOL}${URL_HOST_BASE}`;
 let URL_WINSOCK             = `ws://${URL_LOCATION}:`;
 let URL_GET_SETTINGS        = `${URL_SERVER}/settings`;
 let URL_GET_STATUS          = `${URL_SERVER}/status`;
+let URL_POST_DATA           = `${URL_SERVER}/data`;
 
 var fclist = document.getElementById("fclist");
 var aclist = document.getElementById("aclist");
@@ -20,7 +21,7 @@ var command = document.getElementById("command");
 var chart = document.getElementById("chart");
 var commandlist = document.getElementById("commandlist");
 var chartlist = document.getElementById("chartlist");
-
+var wss;
 
 var indexlist = [];
 var commands = {"commandlist": []};
@@ -50,15 +51,42 @@ $.get({
     }
 });
 
-(function ($) {
-    setInterval(()=>{
-       fetch(URL_GET_STATUS)
-       .then((resp) => {alert(resp.body)})
-    },1000)
-}(jQuery));
+/**
+ * Websocket connection and message handling
+ */
+ $(() => { 
+    try {
+        let wsurl = `${URL_WINSOCK}${settings.wsport}`;
+        console.log(`OPENING: ${wsurl}`);
+        wss = new WebSocket(wsurl);
+        wss.onmessage = (evt) => {
+            let message = JSON.parse(evt.data);
+            console.log(message);
+        }
+
+        wss.onerror = function(evt){
+            console.log("Websocket ERROR: " + evt.data);
+        }
+        
+        wss.onopen = function(evt) {
+            console.log("Websocket CONNECTED.");
+        }
+        
+        wss.onclose = function(evt) {
+            console.log("Websocket CLOSED.");
+        }
+    }
+    catch (error) {
+        console.log(error);
+    }
+    
+    if (settings.usestratux) {
+        setupStratuxWebsockets();
+    }
+});
 
 function submitRequest() {
-    $.post("/data", commands, function(data, status) {
+    $.post(URL_POST_DATA, commands, function(data, status) {
         console.log(data, status);
         alert("Run command sent, clearing command list!");
         confwindow.innerText = "";
@@ -68,6 +96,12 @@ function submitRequest() {
 function addSubmitRequest() {
     let entry = { "command": selectedcommand, "chart": selectedchart };
     let confentry = command.value;
+    if (selectedcommand === 0 || selectedcommand === 2) {
+        if (chart.value === "") {
+            alert("You must select a chart for the selected command");
+            return;
+        }
+    }
     if (chart.value !== "") {
         confentry += `: ${chart.value}`
     }

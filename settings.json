@@ -23,7 +23,7 @@
         "timezone": "America/Chicago",
         "debug": true,
         "httpport": 1962,
-        "websocketport": 1970,
+        "wsport": 1970,
         "startinwebsocketmode": true,
 
         "chartprocessindexes": [0,1,2,3,4,5,6,7],

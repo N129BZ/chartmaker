@@ -7,8 +7,6 @@ const path = require('path');
 const express = require('express');
 const WebSocket = require('ws')
 const favicon = require('serve-favicon');
-const cors = require('cors');
-const http = require('http');
 
 //create a couple winsock variables
 var wss;
@@ -969,9 +967,9 @@ function setupPongResponder() {
 }
 
 function getTimingJsonObject() {
-    let tjson = {"timings": []};
+    let tjson = {runresults: []};
     [...timings.keys()].forEach((cpt) => {
-        tjson.timings.push({"chart": cpt.processname, "timing": cpt.totaltime });
+        tjson.runresults.push({chart: cpt.processname, timing: cpt.totaltime});
     });
     return tjson;
 };
@@ -1040,7 +1038,7 @@ function parseMakeCommand(msg, ws) {
                 break outerloop;
         }
     }
-    console.log("Completed the submitted remote chart makelist!")
+    sendMessageToClients(JSON.stringify(getTimingJsonObject()));
     inMakeLoop = false;
 }
 
@@ -1100,17 +1098,25 @@ function resetGlobalVariables() {
                 res.send(JSON.stringify(settings));
                 res.end();
             });
+            
+            app.get("/status", (req, res) => {
+                res.send({ "status": "POLLING STARTED!" });
+                res.end();
+            });
         
             app.all("/data", (req, res) => {
-                res.send({"command_received": req.body});
+                let data = req.body;
+                res.send({"command_received": data});
+                res.end();
+
                 if (!inMakeLoop && !sendSettings) {
-                    parseMakeCommand(req.body);
+                    parseMakeCommand(data);
                     timings.clear();
                 }
             });
 
-            wss = new WebSocket.Server({ port: settings.websocketport });
-            console.log(`Websocket listening on port ${settings.websocketport}`);
+            wss = new WebSocket.Server({ port: settings.wsport });
+            console.log(`Websocket listening on port ${settings.wsport}`);
 
             wss.on('connection', (ws) => {
                 const id = Date.now();
@@ -1127,10 +1133,6 @@ function resetGlobalVariables() {
 
                 ws.on('pong', () => {
                     connections.set(ws, true);
-                    if (!helloSent) {
-                        helloSent = true;
-                        sendMessageToClients(JSON.stringify(remotemenu));
-                    }
                 });
 
                 ws.on('error', (error) => {
