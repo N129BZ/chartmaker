@@ -15,28 +15,27 @@
 <body class="body">
     <table>
         <tbody>
-            <div class="menu"><h2>Chartmaker Remote Control</h2></div>
+            <div class="header"><h2>Chartmaker Remote Control</h2></div>
             <tr>
                 <div class="menu"><b><label for="command">Avaliable Commands:</label></b><br>
-                    <input type="text" id="command" list="commandlist" onchange="populateChartList()">
+                    <input type="text" class="listitem" id="command" list="commandlist" onchange="populateChartList()">
                     <datalist class="listbox" id="commandlist">
                     </datalist>
                 </div>
                 <br>
             </tr>
             <tr>
-                <div class="menu"><b><label for="chart">Chart:</label></b><br>
-                    <input type="text" id="chart" list="chartlist" onchange="chartSelected()">
+                <div class="menu"><b><br><label for="chart">Chart:</label></b><br>
+                    <input type="text" class="listitem" id="chart" list="chartlist" onchange="chartSelected()">
                     <datalist class="listbox" id="chartlist">             
                     </datalist>
                 </div>
                 <br>   
                 <button id="addcmd" class="addbutton" onclick="addSubmitRequest()">Add Command</button>
-                
             </tr>
         </tbody>
     </table>
-    <div class="menu"><label for="confwindow"><b>Confirmed command list:</b><br></div>
+    <div class="menu"><label class="conflabel" for="confwindow"><b>Confirmed command list:</b><br></div>
     <div class="confwindow" id="confwindow">
         <ul id="conflist"></ul>
     </div>

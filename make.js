@@ -72,7 +72,7 @@ function processPrompt(message) {
     return readlineSync.question(message); 
 }
 
-const timings = new Map();
+var timings = new Map();
 const settings = JSON.parse(fs.readFileSync(`${appdir}/settings.json`, "utf-8")).settings;
 const remotemenu = JSON.parse(fs.readFileSync(`${appdir}/remotemenu.json`, "utf-8"))
 
@@ -960,14 +960,13 @@ function setupPongResponder() {
             }
             connections.set(ws, false);
             ws.ping();
-            //console.log(`ping sent to ws id: ${ws.tag}`);
-        });
+         });
     }, 30000); // Send pings every 30 seconds
     return interval;
 }
 
 function getTimingJsonObject() {
-    let tjson = {runresults: []};
+    let tjson = {process_timing_results: []};
     [...timings.keys()].forEach((key) => {
         let cpt = timings.get(key);
         tjson.runresults.push({chart: cpt.processname, timing: cpt.totaltime});
@@ -989,67 +988,69 @@ process.on('SIGINT', () => {
 });
 
 /**
+ * Parse a command JSON object and send jobs to the right place
+ * 
  * 0 = Process a single area VFR chart
  * 1 = Process all 53 area VFR charts individually
  * 2 = Process a single full chart from the full chart list
  * 3 = Process all of the full charts in the full chart list
  * 4 = Return the settings.json file
- * @param {*} msg JSON object message
+ * @param {*} targets JSON object message
  */
-function parseMakeCommand(msg, ws) {
+function parseMakeCommand(targets) {
     let idx = -1;
     let opt = -1;
     let item = {};
-    
-    if (msg.commandlist.length > 0) {
-        try {
-            inMakeLoop = true;
-            outerloop: for (let i = 0; i < msg.commandlist.length; i++) {
-                resetGlobalVariables();
-                item = msg.commandlist[i];
-                idx = Number(item.command);
-                opt = Number(item.chart);
-                console.log(`command: ${idx}, chart: ${opt}`);
-                switch (idx) {
-                    case 0:
-                        if (opt >= 0 && opt <= 52) {
-                            processOneArea(opt);
-                        }
-                        break;
-                    case 1:
-                        // no sub command
-                        processAllAreas();
-                        break;
-                    case 2:
-                        if (opt >= 0 && opt <= 7) {
-                            let chart = fullcharts[opt][0].replace("_", " ");
-                            if (chart === "DDECUS") chart = fullcharts[opt][2].replace("_", " ");
-                            console.log(`Processing full chart: ${chart}`);
-                            parray.push(opt);
-                            processFulls();
-                        }
-                        break;
-                    case 3:
-                        // no subcommand
-                        for (let i = 0; i <= 7; i++ ) {
-                            parray.push(i);
-                            processFulls();
-                        }
-                        break;  
-                    case 4:
-                        sendSettings = true;
-                        break outerloop;
-                }
+    let list = targets.commandlist;
+    try {
+        inMakeLoop = true;
+        outerloop: for (let i = 0; i < list.length; i++) {
+            resetGlobalVariables();
+            item = list[i];
+            idx = Number(item.command);
+            opt = Number(item.chart);
+            console.log(`command: ${idx}, chart: ${opt}`);
+            switch (idx) {
+                case 0:
+                    if (opt >= 0 && opt <= 52) {
+                        processOneArea(opt);
+                    }
+                    break;
+                case 1:
+                    // no sub command
+                    processAllAreas();
+                    break;
+                case 2:
+                    if (opt >= 0 && opt <= 7) {
+                        let chart = fullcharts[opt][0].replace("_", " ");
+                        if (chart === "DDECUS") chart = fullcharts[opt][2].replace("_", " ");
+                        console.log(`Processing full chart: ${chart}`);
+                        parray.push(opt);
+                        processFulls();
+                    }
+                    break;
+                case 3:
+                    // no subcommand
+                    for (let i = 0; i <= 7; i++ ) {
+                        parray.push(i);
+                        processFulls();
+                    }
+                    break;  
+                case 4:
+                    sendSettings = true;
+                    break outerloop;
             }
-            sendMessageToClients(JSON.stringify(getTimingJsonObject()));
-            timings.clear();
-            inMakeLoop = false;
-
         }
-        catch(err){
-            console.log(`Caught error:\r\n ${err}`);
-        }
+        let tmmsg = getTimingJsonObject();
+        sendMessageToClients(JSON.stringify(tmmsg));
     }
+    catch(err){
+        console.log(`Error:\r\n ${err}`);
+    }
+
+    timings = null;
+    timings = new Map();
+    inMakeLoop = false;
 }
 
 function resetGlobalVariables() {
@@ -1110,12 +1111,31 @@ function resetGlobalVariables() {
             });
             
             app.all("/data", (req, res) => {
-                let data = req.body;
-                res.send({"command_received": data});
+                let targets = req.body;
+                let clist = {"commandlist": []};
+                for (let i = 0; i < targets.commandlist.length; i++) {
+                    let cCO = targets.commandlist[i].command;
+                    let cCC = targets.commandlist[i].chart;
+                    let sCO = remotemenu.menuitems[cCO];
+                    let sCC = "";
+                    switch (cCO) {
+                        case '0':
+                            sCC = settings.areachartlist[cCC];
+                            break;
+                        case '2':
+                            sCC = settings.fullchartlist[cCC];
+                            break;
+                        default:
+                            sCC = "N/A";
+                            break;
+                    }     
+                    clist.commandlist.push({"command": sCO, "chart": sCC})
+                }
+                res.send(clist);
                 res.end();
 
                 if (!inMakeLoop && !sendSettings) {
-                    parseMakeCommand(data);
+                    parseMakeCommand(targets);
                 }
             });
 
@@ -1145,9 +1165,9 @@ function resetGlobalVariables() {
                 });
 
                 ws.onmessage = (event) => {
-                    let msg = JSON.parse(event.data);
+                    let targets = JSON.parse(event.data.commandlist);
                     if (!inMakeLoop && !sendSettings) {
-                        parseMakeCommand(msg, ws);
+                        parseMakeCommand(targets);
                     }
 
                     if (sendSettings) {

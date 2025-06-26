@@ -7,12 +7,27 @@ html, body {
     align-items: center; */
 }
 
+.header {
+    font-family: Arial, Helvetica, sans-serif;
+    margin-left: 100px;
+}
+
 .menu {
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
 	width: 400px;
-	/* display: inline-block; */
+    /* display: inline-block; */
 	text-align: left;
+}
+
+.conflabel {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: medium;
+	width: 400px;
+    text-align: left;
+    position:absolute;
+    top: 180px;
+
 }
 
 .command {
@@ -34,10 +49,13 @@ html, body {
 	font-size: medium;
 }
 
-.listbox {
+.listitem {
     font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
     text-align: left;
+    position: absolute;
+    width: 300px;
+    height: 14px;
 }
 
 .option {
@@ -58,38 +76,36 @@ html, body {
     min-height:15px;
     min-width: 25px;
 	position:absolute;
-    top: 100px;
-    left:240px;
+    top: 146px;
+    left:402px;
 }
 .sendbutton {
     font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
 	font-weight: bold;
-    background-color:darkred;
+    background-color:blue;
     color: #fff;
 	border-radius:10px; 
     padding:15px;
     min-height:15px;
     min-width: 25px;
-	margin-left: 80px;
-    position: absolute;
+	position: absolute;
     top: 560px;
-    left: 250px;
+    left: 375px;
 }
 .removebutton {
     font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
 	font-weight: bold;
-    background-color:darkred;
-    color: #fff;
+    background-color:yellow;
+    color: black;
 	border-radius:10px; 
     padding:15px;
     min-height:15px;
     min-width: 25px;
-	margin-left: 20px;
-    position: absolute;
+	position: absolute;
     top: 560px;
-    left: 45px;
+    left: 17px;
 }
 .confwindow {
     outline: 3px solid black;

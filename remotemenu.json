@@ -1,7 +1,8 @@
 {
-    "0": "Process a single area VFR chart",
-    "1": "Process all 53 area VFR charts individually",
-    "2": "Process a single full chart from the full chart list",
-    "3": "Process all of the full charts in the full chart list",
-    "4": "Return the area and full chart lists"
+    "menuitems": [
+        "Process a single area VFR chart",
+        "Process all 53 area VFR charts individually",
+        "Process a single full chart",
+        "Process all of the full charts"
+    ]
 }

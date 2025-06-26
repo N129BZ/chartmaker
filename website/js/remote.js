@@ -97,6 +97,7 @@ function submitRequest() {
         console.log(data, status);
         alert("Run command sent, clearing command list!");
         conflist.innerHTML = "";
+        commands = {"commandlist": []};
     });
 }
 
