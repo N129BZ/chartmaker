@@ -966,11 +966,12 @@ function setupPongResponder() {
 }
 
 function getTimingJsonObject() {
-    let tjson = {process_timing_results: []};
+    let ptimes = [];
     [...timings.keys()].forEach((key) => {
         let cpt = timings.get(key);
-        tjson.runresults.push({chart: cpt.processname, timing: cpt.totaltime});
+        ptimes.push({chart: cpt.processname, timing: cpt.totaltime});
     });
+    let tjson = {processtimes: ptimes};
     return tjson;
 };
 
@@ -1114,22 +1115,22 @@ function resetGlobalVariables() {
                 let targets = req.body;
                 let clist = {"commandlist": []};
                 for (let i = 0; i < targets.commandlist.length; i++) {
-                    let cCO = targets.commandlist[i].command;
-                    let cCC = targets.commandlist[i].chart;
-                    let sCO = remotemenu.menuitems[cCO];
-                    let sCC = "";
-                    switch (cCO) {
+                    let tclcmd = targets.commandlist[i].command;
+                    let tclcht = targets.commandlist[i].chart;
+                    let strcmd = remotemenu.menuitems[tclcmd];
+                    let strcht = "";
+                    switch (tclcmd) {
                         case '0':
-                            sCC = settings.areachartlist[cCC];
+                            strcht = settings.areachartlist[tclcht];
                             break;
                         case '2':
-                            sCC = settings.fullchartlist[cCC];
+                            strcht = settings.fullchartlist[tclcht];
                             break;
                         default:
-                            sCC = "N/A";
+                            strcht = "N/A";
                             break;
                     }     
-                    clist.commandlist.push({"command": sCO, "chart": sCC})
+                    clist.commandlist.push({"command": strcmd, "chart": strcht})
                 }
                 res.send(clist);
                 res.end();
