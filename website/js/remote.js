@@ -21,9 +21,8 @@ var command = document.getElementById("command");
 var chart = document.getElementById("chart");
 var commandlist = document.getElementById("commandlist");
 var chartlist = document.getElementById("chartlist");
-let conflist = document.getElementById("conflist");
 let sendBtn = document.getElementById("send");
-let timetable = document.getElementById("timetable");
+let commandbody = document.getElementById("commandbody");
 
 var wss;
 var indexlist = [];
@@ -33,8 +32,10 @@ var settings = {};
 var selectedcommand = -1;
 var selectedchart = -1;
 var blinking = false;
+var inResponseView = false;
 
 window.addEventListener("load", (event) => {
+    setupCommandTable();
     populateCommandList();
 });
 
@@ -85,31 +86,42 @@ $.get({
     catch (error) {
         console.log(error);
     }
-    
-    if (settings.usestratux) {
-        setupStratuxWebsockets();
-    }
 });
 
-function postTimeTable(message) {
-    let tr;
-    let line = "";
-    timetable.style.visibility = "visible";
-    conflist.style.visibility = "hidden";
-    for (let i = 0; i < message.processtimes.length; i++) {
-        line = message.processtimes[i].timing;
-        tr = document.createElement("tr");    
-        tr.textContent = line;
+function setupCommandTable() {
+    inResponseView = false;
+    commandbody.innerText = "";
+    for (let i = 0; i < 53; i++) {
+        let tr = document.createElement("tr");
+        tr.setAttribute("tag", i.toString());
         tr.className = "tablerow";
-        timetable.appendChild(tr);
+        let td = document.createElement("td");
+        td.className = "tablecell";
+        tr.appendChild(td);
+        commandbody.appendChild(tr);
+    }
+}
+
+function postTimeTable(message) {
+    for (let i = 0; i < message.processtimes.length; i++) {
+        let line = message.processtimes[i].timing;
+        let tr = commandbody.rows[i];
+        let td = tr.firstChild;
+        td.textContent = line;
     }
 }
 
 function removeLastEntry() {
     if (commands.commandlist.length > 0) {
         commands.commandlist.pop();
-        let lastItem = conflist.lastElementChild;
-        conflist.removeChild(lastItem);
+        for (let i = commandbody.rows.length - 1; i >= 0; i--) {
+            let lastitem = commandbody.rows[i];
+            let td = lastitem.firstChild;
+            if (td.textContent !== "") {
+                td.textContent = "";
+                break;        
+            }
+        }
     }
 }
 
@@ -118,12 +130,15 @@ function resetEverything() {
     selectedcommand = -1;
     populateCommandList();
     resetChartList();  
+    setupCommandTable();
     blinking = false;
+    sendBtn.innerText = "Send Commands";
     sendBtn.style.backgroundColor = "Blue";
 }
 
 function submitRequest() {
     if (commands.commandlist.length > 0) {
+        inResponseView = true;
         blinkSendButton(true);
         $.post(URL_POST_DATA, commands, function(data, status) {
             console.log(data, status);
@@ -140,7 +155,7 @@ setInterval(() => {
             sendBtn.style.backgroundColor = "Black";
         }
         else {
-            sendBtn.style.backgroundColor = "Blue"
+            sendBtn.style.backgroundColor = "Red"
             isBlue = true;
         }
     }
@@ -159,10 +174,15 @@ function blinkSendButton(state) {
 }
 
 function addSubmitRequest() {
+    if (selectedcommand == -1) {
+        alert("You must first select a command to add!")
+        return;
+    }
+    if (inResponseView) {
+        setupCommandTable();
+    }
     let entry = { "command": selectedcommand, "chart": selectedchart };
     let confentry = command.value;
-    conflist.style.visibility = "visible";
-    timetable.style.visibility = "hidden";
     if (selectedcommand === 0 || selectedcommand === 2) {
         if (chart.value === "") {
             alert("You must select a chart for the selected command");
@@ -173,9 +193,13 @@ function addSubmitRequest() {
         confentry += `: ${chart.value}`
     }
     commands.commandlist.push(entry); 
-    let li = document.createElement('li');
-    li.textContent = confentry;
-    conflist.appendChild(li);
+    for (let i = 0; i < commandbody.rows.length; i++) {
+        let tr = commandbody.rows[i];
+        if (tr.textContent === "") {
+            tr.textContent = confentry;
+            break; 
+        }
+    }
     selectedchart = -1;
     selectedcommand = -1;
     populateCommandList();
@@ -194,17 +218,13 @@ function chartSelected() {
 }
 
 function populateChartList() {
-    timetable.style.visibility = "hidden";
-    timetable.innerText = "";
-    conflist.style.visibility = "visible";
-
     selectedcommand = -1;
     let item = command.value;
 
     for(let i = 0; i < commandlist.options.length; i++) {
         if (commandlist.options[i].value === item) {
-            selectedcommand = i; // Found a match, store the index
-            break; // Exit the loop as the option is found
+            selectedcommand = i;
+            break; 
         }
     }
 
@@ -262,11 +282,14 @@ function populateCommandList() {
 }
 
 function resetCommandList() {
-    commandlist.innerHTML = ""; 
+    commandlist.innerText = ""; 
     command.value = "";
+    selectedcommand = -1;
+    selectedchart = -1;
+
 }
 
 function resetChartList() {
-    chartlist.innerHTML = "";
+    chartlist.innerText = "";
     chart.value = "";
 }

@@ -1,17 +1,11 @@
 html, body {
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
-    /* height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center; */
 }
-
 .header {
     font-family: Arial, Helvetica, sans-serif;
     margin-left: 100px;
 }
-
 .menu {
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
@@ -19,7 +13,6 @@ html, body {
     /* display: inline-block; */
 	text-align: left;
 }
-
 .conflabel {
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
@@ -27,57 +20,47 @@ html, body {
     text-align: left;
     position:absolute;
     top: 180px;
-
 }
-
 .command {
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
 	width: 30px;
 	text-align: left;
 }
-
 .label {
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
 	width: 150px;
 	text-align: right;
 }
-
 .table {
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
 }
-
 .listitem {
     font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
     text-align: left;
     position: absolute;
     width: 300px;
-    height: 14px;
+    height: 18px;
 }
-
-.option {
-    font-family: Arial, Helvetica, sans-serif;
-	font-size: medium;
-    text-align: left;   
-}
-
 .addbutton {
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
 	font-weight: bold;
-    background-color:darkgreen;
-    color: white;
-	border:none; 
-    border-radius:10px; 
+    background-color:lightgray;
+    color: black;
+	border-radius:10px; 
+    border-width: 1px;
     padding:15px;
-    min-height:15px;
-    min-width: 25px;
-	position:absolute;
-    top: 146px;
-    left:402px;
+    position:absolute;
+    top: 111px;
+    left:393px;
+}
+.addbutton:active {
+  transform: translateY(2px);
+  box-shadow: 0 5px #666;
 }
 .sendbutton {
     font-family: Arial, Helvetica, sans-serif;
@@ -86,86 +69,94 @@ html, body {
     background-color:blue;
     color: #fff;
 	border-radius:10px; 
+    border-width: 1px;
     padding:15px;
-    min-height:15px;
-    min-width: 25px;
-	position: absolute;
+    position: absolute;
     top: 560px;
     left: 375px;
     width:165px;
+}
+.sendbutton:active {
+  transform: translateY(2px);
+  box-shadow: 0 5px #666;
 }
 .resetbutton {
     font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
 	font-weight: bold;
-    background-color: yellow;
+    background-color: lightgray;
     color:black;
-	border-radius:10px; 
+	border-radius:10px;
+    border-width: 1px; 
     padding:15px;
-    min-height:15px;
-    min-width: 25px;
-	position: absolute;
+    position: absolute;
     top: 560px;
     left: 17px;
     width: 102px;
+}
+.resetbutton:active {
+  transform: translateY(2px); 
+  box-shadow: 0 5px #666; 
 }
 .removebutton {
     font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
 	font-weight: bold;
-    background-color:red;
-    color: white;
+    background-color:lightgray;
+    color: black;
 	border-radius:10px; 
+    border-width: 1px;
     padding:15px;
-    min-height:15px;
-    min-width: 25px;
 	position: absolute;
     top: 560px;
     left: 139px;
 }
+.removebutton:active {
+  transform: translateY(2px); 
+  box-shadow: 0 5px #666; 
+}
 .confwindow {
-    outline: 3px solid black;
+    outline: 3px solid rgb(67, 67, 207);
     position: absolute;
     top:185px;
     font-family: Arial, Helvetica, sans-serif;
     font-size: medium;
     left: 0%;
-    height: 300px;
+    height: 301px;
     width: 480px;
     margin: 20px;
     padding: 20px;
+    overflow-x: hidden;
+    overflow-y: scroll;
 }
-.conflist {
+.commandtable {
     position: absolute;
-    top:185px;
     font-family: Arial, Helvetica, sans-serif;
     font-size: medium;
-    left: 0%;
+    top: -39px;
+    left: -25px;
     height: 300px;
-    width: 480px;
+    width: 520px;
     margin: 20px;
     padding: 20px;
-    visibility: visible;
 }
-
-.timetable {
-    position: absolute;
-    top:0px;
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: medium;
-    left: 0%;
-    height: 300px;
-    width: 480px;
-    margin: 20px;
-    padding: 20px;
-    visibility: hidden;
-}
-
 .tablerow {
     font-family: Arial, Helvetica, sans-serif;
     font-size: medium;
-    text-align: center;
-    height: auto;
+    text-align: left;
+    /* outline-style: inset;
+    outline-color: black;
+    outline-width: 1px;; */
+    height: 20px;
+    width: 480px;
+}
+.tablecell {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: medium;
+    text-align: left;
+    background-color: white;
+    height: 20px;
+    width: 480px;
 }
 
 /* For animations */
