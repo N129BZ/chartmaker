@@ -1,10 +1,26 @@
 html, body {
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
+    margin: 0 auto;
+}
+@media screen and (max-width: 600px) {
+  /* Apply styles here for screens 600px or narrower */
 }
 .header {
     font-family: Arial, Helvetica, sans-serif;
-    margin-left: 100px;
+    font-size:x-large;
+    font-weight: bold;
+    text-align: center;
+    margin: 0 auto;
+    display: inline-block;
+    flex-wrap: nowrap;
+    position:relative;
+    width: max-content;
+    left: 100px;
+}
+.application {
+    width: 50%;
+    margin: 0 auto;
 }
 .menu {
 	font-family: Arial, Helvetica, sans-serif;
@@ -18,8 +34,9 @@ html, body {
 	font-size: medium;
 	width: 400px;
     text-align: left;
-    position:absolute;
-    top: 180px;
+    position:relative;
+    top: -15px;
+    left: 0px;
 }
 .command {
 	font-family: Arial, Helvetica, sans-serif;
@@ -41,7 +58,7 @@ html, body {
     font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
     text-align: left;
-    position: absolute;
+    position: relative;
     width: 300px;
     height: 18px;
 }
@@ -53,30 +70,14 @@ html, body {
     color: black;
 	border-radius:10px; 
     border-width: 1px;
-    padding:15px;
-    position:absolute;
-    top: 111px;
-    left:393px;
+    padding:0px;
+    position:relative;
+    top: -54px;
+    left: 358px;
+    height: 38px;
+    width: 150px;
 }
 .addbutton:active {
-  transform: translateY(2px);
-  box-shadow: 0 5px #666;
-}
-.sendbutton {
-    font-family: Arial, Helvetica, sans-serif;
-	font-size: medium;
-	font-weight: bold;
-    background-color:blue;
-    color: #fff;
-	border-radius:10px; 
-    border-width: 1px;
-    padding:15px;
-    position: absolute;
-    top: 560px;
-    left: 375px;
-    width:165px;
-}
-.sendbutton:active {
   transform: translateY(2px);
   box-shadow: 0 5px #666;
 }
@@ -84,14 +85,17 @@ html, body {
     font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
 	font-weight: bold;
+    text-align:center;
+    align-content: center;
     background-color: lightgray;
     color:black;
 	border-radius:10px;
     border-width: 1px; 
-    padding:15px;
-    position: absolute;
-    top: 560px;
-    left: 17px;
+    padding:0px;
+    position: relative;
+    top: 0px;
+    left: 0px;
+    height: 38px;
     width: 102px;
 }
 .resetbutton:active {
@@ -106,47 +110,71 @@ html, body {
     color: black;
 	border-radius:10px; 
     border-width: 1px;
-    padding:15px;
-	position: absolute;
-    top: 560px;
-    left: 139px;
+    padding:0px;
+	position: relative;
+    top: 0px;
+    left: 18px;
+    height: 38px;
+    width: 200px;
 }
 .removebutton:active {
   transform: translateY(2px); 
   box-shadow: 0 5px #666; 
 }
+.sendbutton {
+    font-family: Arial, Helvetica, sans-serif;
+	font-size: medium;
+	font-weight: bold;
+    background-color:blue;
+    color: #fff;
+	border-radius:10px; 
+    border-width: 1px;
+    padding:0px;
+    position: relative;
+    top: 0px;
+    left: 35px;
+    height: 38px;
+    width:165px;
+}
+.sendbutton:active {
+  transform: translateY(2px);
+  box-shadow: 0 5px #666;
+}
+.buttongroup {
+    position:relative;
+    display: flex;
+    flex-wrap: nowrap;
+    top:0px;
+    height:40px;
+    left: 0px;
+}
 .confwindow {
     outline: 3px solid rgb(67, 67, 207);
-    position: absolute;
-    top:185px;
     font-family: Arial, Helvetica, sans-serif;
     font-size: medium;
-    left: 0%;
+    position: relative;
+    top: -10px;
+    left: -18;
     height: 301px;
-    width: 480px;
-    margin: 20px;
-    padding: 20px;
+    width: 513px;
     overflow-x: hidden;
     overflow-y: scroll;
 }
 .commandtable {
-    position: absolute;
+    position: relative;
     font-family: Arial, Helvetica, sans-serif;
     font-size: medium;
     top: -39px;
-    left: -25px;
+    left: 0px;
     height: 300px;
-    width: 520px;
-    margin: 20px;
-    padding: 20px;
+    width: 513px;
+    margin: 10px;
+    padding: 0px;
 }
 .tablerow {
     font-family: Arial, Helvetica, sans-serif;
     font-size: medium;
     text-align: left;
-    /* outline-style: inset;
-    outline-color: black;
-    outline-width: 1px;; */
     height: 20px;
     width: 480px;
 }
