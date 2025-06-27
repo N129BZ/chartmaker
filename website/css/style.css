@@ -92,13 +92,14 @@ html, body {
 	position: absolute;
     top: 560px;
     left: 375px;
+    width:165px;
 }
-.removebutton {
+.resetbutton {
     font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
 	font-weight: bold;
-    background-color:yellow;
-    color: black;
+    background-color: yellow;
+    color:black;
 	border-radius:10px; 
     padding:15px;
     min-height:15px;
@@ -106,6 +107,21 @@ html, body {
 	position: absolute;
     top: 560px;
     left: 17px;
+    width: 102px;
+}
+.removebutton {
+    font-family: Arial, Helvetica, sans-serif;
+	font-size: medium;
+	font-weight: bold;
+    background-color:red;
+    color: white;
+	border-radius:10px; 
+    padding:15px;
+    min-height:15px;
+    min-width: 25px;
+	position: absolute;
+    top: 560px;
+    left: 139px;
 }
 .confwindow {
     outline: 3px solid black;
@@ -129,4 +145,32 @@ html, body {
     width: 480px;
     margin: 20px;
     padding: 20px;
+    visibility: visible;
+}
+
+.timetable {
+    position: absolute;
+    top:0px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: medium;
+    left: 0%;
+    height: 300px;
+    width: 480px;
+    margin: 20px;
+    padding: 20px;
+    visibility: hidden;
+}
+
+.tablerow {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: medium;
+    text-align: center;
+    height: auto;
+}
+
+/* For animations */
+@keyframes colorChange {
+    0% { background-color: blue; }
+    50% { background-color: green; }
+    100% { background-color: red; }
 }

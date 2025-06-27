@@ -22,6 +22,8 @@ var chart = document.getElementById("chart");
 var commandlist = document.getElementById("commandlist");
 var chartlist = document.getElementById("chartlist");
 let conflist = document.getElementById("conflist");
+let sendBtn = document.getElementById("send");
+let timetable = document.getElementById("timetable");
 
 var wss;
 var indexlist = [];
@@ -30,6 +32,7 @@ var confcommands = [];
 var settings = {};
 var selectedcommand = -1;
 var selectedchart = -1;
+var blinking = false;
 
 window.addEventListener("load", (event) => {
     populateCommandList();
@@ -62,7 +65,9 @@ $.get({
         wss = new WebSocket(wsurl);
         wss.onmessage = (evt) => {
             let message = JSON.parse(evt.data);
+            postTimeTable(message);
             console.log(message);
+            blinkSendButton(false);
         }
 
         wss.onerror = function(evt){
@@ -86,24 +91,78 @@ $.get({
     }
 });
 
+function postTimeTable(message) {
+    let tr;
+    let line = "";
+    timetable.style.visibility = "visible";
+    conflist.style.visibility = "hidden";
+    for (let i = 0; i < message.processtimes.length; i++) {
+        line = message.processtimes[i].timing;
+        tr = document.createElement("tr");    
+        tr.textContent = line;
+        tr.className = "tablerow";
+        timetable.appendChild(tr);
+    }
+}
+
 function removeLastEntry() {
-    commands.commandlist.pop();
-    let lastItem = conflist.lastElementChild;
-    conflist.removeChild(lastItem);
+    if (commands.commandlist.length > 0) {
+        commands.commandlist.pop();
+        let lastItem = conflist.lastElementChild;
+        conflist.removeChild(lastItem);
+    }
+}
+
+function resetEverything() {
+    selectedchart = -1;
+    selectedcommand = -1;
+    populateCommandList();
+    resetChartList();  
+    blinking = false;
+    sendBtn.style.backgroundColor = "Blue";
 }
 
 function submitRequest() {
-    $.post(URL_POST_DATA, commands, function(data, status) {
-        console.log(data, status);
-        alert("Run command sent, clearing command list!");
-        conflist.innerHTML = "";
-        commands = {"commandlist": []};
-    });
+    if (commands.commandlist.length > 0) {
+        blinkSendButton(true);
+        $.post(URL_POST_DATA, commands, function(data, status) {
+            console.log(data, status);
+            commands = {"commandlist": []};
+        });
+    }
+}
+
+let isBlue = true; 
+setInterval(() => {
+    if(blinking) {
+        if (isBlue) {
+            isBlue = false;
+            sendBtn.style.backgroundColor = "Black";
+        }
+        else {
+            sendBtn.style.backgroundColor = "Blue"
+            isBlue = true;
+        }
+    }
+},800);
+
+function blinkSendButton(state) {
+    if (state) {
+        blinking = true;
+        sendBtn.textContent = "Processing...";
+    }
+    else {
+        blinking = false;
+        sendBtn.textContent = "Send Commands";
+        sendBtn.style.backgroundColor = "Blue";
+    }
 }
 
 function addSubmitRequest() {
     let entry = { "command": selectedcommand, "chart": selectedchart };
     let confentry = command.value;
+    conflist.style.visibility = "visible";
+    timetable.style.visibility = "hidden";
     if (selectedcommand === 0 || selectedcommand === 2) {
         if (chart.value === "") {
             alert("You must select a chart for the selected command");
@@ -135,6 +194,10 @@ function chartSelected() {
 }
 
 function populateChartList() {
+    timetable.style.visibility = "hidden";
+    timetable.innerText = "";
+    conflist.style.visibility = "visible";
+
     selectedcommand = -1;
     let item = command.value;
 

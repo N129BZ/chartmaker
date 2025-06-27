@@ -20,7 +20,7 @@ let appdir = __dirname;
 
 class ProcessTime {
     constructor(processName) {
-        this.processname = processName;
+        this.processname = processName.replaceAll("_", " ");
         this.startdate = new Date(new Date().toLocaleString());
         this.totaltime = "";
     }
@@ -427,16 +427,14 @@ function runProcessing() {
     processImages();
     mergeAndQuantize();
     makeMbTiles();
-}
 
-if (settings.cleanprocessfolders) {
-    let workfiles = fs.readdirSync(workarea)
-    workfiles.forEach(file => {
-        if (!file.endsWith(".db")) {
-            cmd = `rm -r -f ${workarea}/${file}`;
-            executeCommand(cmd);
-        }
-    });    
+    if (settings.cleanprocessfolders === true) {
+        cmd = `rm -rf ${workarea}`
+        executeCommand(cmd);
+
+        cmd = `mkdir ${workarea}`
+        executeCommand(cmd);
+    }    
 }
 
 reportProcessingTime();
@@ -1114,29 +1112,36 @@ function resetGlobalVariables() {
             app.all("/data", (req, res) => {
                 let targets = req.body;
                 let clist = {"commandlist": []};
-                for (let i = 0; i < targets.commandlist.length; i++) {
-                    let tclcmd = targets.commandlist[i].command;
-                    let tclcht = targets.commandlist[i].chart;
-                    let strcmd = remotemenu.menuitems[tclcmd];
-                    let strcht = "";
-                    switch (tclcmd) {
-                        case '0':
-                            strcht = settings.areachartlist[tclcht];
-                            break;
-                        case '2':
-                            strcht = settings.fullchartlist[tclcht];
-                            break;
-                        default:
-                            strcht = "N/A";
-                            break;
-                    }     
-                    clist.commandlist.push({"command": strcmd, "chart": strcht})
-                }
-                res.send(clist);
-                res.end();
+                try {
+                    if (targets.commandlist.length > 0) {
+                        for (let i = 0; i < targets.commandlist.length; i++) {
+                            let tclcmd = targets.commandlist[i].command;
+                            let tclcht = targets.commandlist[i].chart;
+                            let strcmd = remotemenu.menuitems[tclcmd];
+                            let strcht = "";
+                            switch (tclcmd) {
+                                case '0':
+                                    strcht = settings.areachartlist[tclcht];
+                                    break;
+                                case '2':
+                                    strcht = settings.fullchartlist[tclcht];
+                                    break;
+                                default:
+                                    strcht = "N/A";
+                                    break;
+                            }     
+                            clist.commandlist.push({"command": strcmd, "chart": strcht})
+                        }
+                        res.send(clist);
+                        res.end();
 
-                if (!inMakeLoop && !sendSettings) {
-                    parseMakeCommand(targets);
+                        if (!inMakeLoop && !sendSettings) {           
+                            parseMakeCommand(targets);
+                        }
+                    }
+                }
+                catch(err) {
+                    //console.log(err);
                 }
             });
 
@@ -1170,8 +1175,7 @@ function resetGlobalVariables() {
                     if (!inMakeLoop && !sendSettings) {
                         parseMakeCommand(targets);
                     }
-
-                    if (sendSettings) {
+                    else if (sendSettings) {
                         sendSettings = false;
                         let rs = JSON.parse(fs.readFileSync(`${appdir}/settings.json`, "utf-8")).settings;
                         sendMessageToClients(JSON.stringify({"full_chart_list":rs.fullchartindexes}));

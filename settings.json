@@ -9,7 +9,7 @@
 
         "renameworkarea": false,
         "logtofile": false,
-        "cleanprocessfolders": false,
+        "cleanprocessfolders": true,
 
         "outputgrayscale": false,
         "tileimagequality" : 40,

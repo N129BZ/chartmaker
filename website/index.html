@@ -38,7 +38,9 @@
     <div class="menu"><label class="conflabel" for="confwindow"><b>Confirmed command list:</b><br></div>
     <div class="confwindow" id="confwindow">
         <ul id="conflist"></ul>
+        <table class="timetable" id="timetable"></table>
     </div>
+    <button id="reset" class="resetbutton" onclick="resetEverything()">Reset</button>
     <button id="undo" class="removebutton" onclick="removeLastEntry()">Remove Last Command</button>
     <button id="send" class="sendbutton" onclick="submitRequest()">Send Commands</button>  
     <script src="js/remote.js"></script>
