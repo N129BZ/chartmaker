@@ -143,10 +143,12 @@ html, body {
 .buttongroup {
     position:relative;
     display: flex;
+    justify-content: space-between;
     flex-wrap: nowrap;
     top:0px;
-    height:40px;
     left: 0px;
+    height:40px;
+    width: 480px;
 }
 .confwindow {
     outline: 3px solid rgb(67, 67, 207);
@@ -164,7 +166,7 @@ html, body {
     position: relative;
     font-family: Arial, Helvetica, sans-serif;
     font-size: medium;
-    top: -39px;
+    top: 0px;
     left: 0px;
     height: 300px;
     width: 513px;
