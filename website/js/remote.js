@@ -64,6 +64,7 @@ $.get({
         let wsurl = `${URL_WINSOCK}${settings.wsport}`;
         console.log(`OPENING: ${wsurl}`);
         wss = new WebSocket(wsurl);
+
         wss.onmessage = (evt) => {
             let message = JSON.parse(evt.data);
             postTimeTable(message);

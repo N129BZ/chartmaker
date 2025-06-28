@@ -9,7 +9,6 @@ const WebSocket = require('ws')
 const favicon = require('serve-favicon');
 
 //create a couple winsock variables
-var wss;
 var connections = new Map();
 var inWebsocketMode = false;
 var inMakeLoop = false;
@@ -1077,7 +1076,8 @@ function resetGlobalVariables() {
  */
 (() => {
     if (inWebsocketMode || settings.startinwebsocketmode) {
-        var app = express();
+        const app = express();
+        
         try {
 
             app.use(express.urlencoded({ extended: true }));
@@ -1145,9 +1145,9 @@ function resetGlobalVariables() {
                 }
             });
 
-            wss = new WebSocket.Server({ port: settings.wsport });
+            const wss = new WebSocket.Server({ port: settings.wsport });
             console.log(`Websocket listening on port ${settings.wsport}`);
-
+            
             wss.on('connection', (ws) => {
                 const id = Date.now();
                 ws.tag = id;
