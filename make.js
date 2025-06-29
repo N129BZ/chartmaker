@@ -13,6 +13,7 @@ var connections = new Map();
 var inWebsocketMode = false;
 var inMakeLoop = false;
 var sendSettings = false;
+var pingSenderId = 0;
 
 // set the base application folder, this will change if running in docker
 let appdir = __dirname;
@@ -165,12 +166,15 @@ let isifrchart = false;
 let wgsbounds = [];
 let addmetabounds = false;
 
+// Message types
+const MTI = "info";
+const MTP = "process";
+const MTS = "settings"
+
 /**
  * Chart processing starts here
  */
 let parray = [];
-let areacharts = settings.areachartlist;
-let fullcharts = settings.fullchartlist;
 let nm = 0;
 let processes = getProcessCount();
 
@@ -212,10 +216,10 @@ if (settings.usecommandline) {
         else if (sarg.search("area-single") > -1) {
             try {
                 nm = Number(arg[0].split("=")[1]);
-                chart = areacharts[nm][1].replace("_", " ");
+                chart = settings.areachartlist[nm][1].replace("_", " ");
                 console.log(`Processing area chart: ${chart}`);
                 parray.push(nm);
-                processSingles(parray);
+                processSingles();
             }
             catch {
                 console.log("Index error in argument, format is: area-single=X where X is a valid vfr chart index number (see settings.json.) Exiting chartmaker!");
@@ -225,11 +229,11 @@ if (settings.usecommandline) {
         else if (sarg.search("full-single") > -1) {
             try {
                 nm = Number(arg[0].split("=")[1]);
-                chart = fullcharts[nm][0].replace("_", " ");
-                if (chart === "DDECUS") chart = fullcharts[nm][2].replace("_", " ");
+                chart = settings.fullchartlist[nm][0].replace("_", " ");
+                if (chart === "DDECUS") chart = settings.fullchartlist[nm][2].replace("_", " ");
                 console.log(`Processing full chart: ${chart}`);
                 parray.push(nm);
-                processFulls(parray);
+                processFulls();
             }
             catch {
                 console.log("Index error in argument, format is: full-single=X where X is a valid full chart index number (see settings.json.) Exiting chartmaker!");
@@ -265,7 +269,7 @@ if (settings.usecommandline) {
                     break;
                 case "4":
                     parray = settings.chartprocessindexes;
-                    processFulls(parray);
+                    processFulls();
                     break;
                 case "5":
                     generateGeoTIFF();
@@ -286,14 +290,14 @@ if (settings.usecommandline) {
 }
 else {
     parray = settings.chartprocessindexes;
-    processFulls(parray);
+    processFulls();
 }
 
 function processOneArea(area = -1) {
     if (area == -1) {
         let lst = "\nSelect the chart number you want to process from this list\r\n\r\n";
-        for (var i = 0; i <  areacharts.length; i++) {
-            lst += `${i} ${areacharts[i][1].split("_").join(" ")}\r\n`; 
+        for (var i = 0; i <  settings.areacharlist.length; i++) {
+            lst += `${i} ${settings.areachartlist[i][1].split("_").join(" ")}\r\n`; 
         }
         lst += "--------------------------------------------\r\nYour selection: ";
         let response = processPrompt(lst);
@@ -303,13 +307,18 @@ function processOneArea(area = -1) {
         nm = Number(area);
     }
 
-    if (nm >= 0 && nm < areacharts.length) {
-        parray.push(nm);
-        processSingles(parray);
+    try {
+        if (nm >= 0 && nm < settings.areachartlist.length) {
+            parray.push(nm);
+            processSingles();
+        }
+        else {
+            console.log("Invalid response, exiting chartmaker!");
+            process.exit();
+        }
     }
-    else {
-        console.log("Invalid response, exiting chartmaker!");
-        process.exit();
+    catch(err) {
+        console.error(err);
     }
 }
 
@@ -318,14 +327,15 @@ function processAllAreas() {
     for (var i = 0; i < 53; i++) {
         parray.push(i);
     }
-    processSingles(parray);
+    processSingles();
 }
 
-function processSingles(parray) {
+function processSingles() {
     addmetabounds = true;   
     for (var x = 0; x < parray.length; x++) {
-        chartworkname = areacharts[parray[x]];
+        chartworkname = settings.areachartlist[parray[x]];
         chartname = chartworkname;
+        sendMessageToClients({messagetype: MTI, messagebody: `Now processing chart: ${chartname}`});
         clippedShapeFolder = path.join(appdir, "clipshapes", "sectional");
         chartlayertype = settings.layertypes[settings.layertypeindex];
         chartfolder = `${workarea}/${chartworkname}`;
@@ -341,7 +351,7 @@ function processSingles(parray) {
 function processOneFull() {
     let lst = "\nSelect the full chart number you want to process from this list\r\n\r\n";
     let i = 0;
-    fullcharts.forEach((fullchart) => {
+    settings.fullchartlist.forEach((fullchart) => {
         let cname = fullchart[0] === "DDECUS" ? fullchart[2] : fullchart[0];
         lst += `${i} ${cname.split("_").join(" ")}\r\n`;
         i++;
@@ -350,20 +360,20 @@ function processOneFull() {
     let response = processPrompt(lst);
     nm = Number(response); 
 
-    if (nm >= 0 && nm < fullcharts.length) {
+    if (nm >= 0 && nm < settings.fullchartlist.length) {
         parray.push(nm);
     }
     else {
         console.log("Invalid response, exiting!");
         process.exit();
     }
-    processFulls(parray);
+    processFulls();
 }
 
 function processFulls() {
     addmetabounds = true; 
     parray.forEach((index) => {
-        let chart = fullcharts[index]; 
+        let chart = settings.fullchartlist[index]; 
         let lcasename = chart[0].toLowerCase();
         let charttype = chart[1];
 
@@ -375,7 +385,7 @@ function processFulls() {
             lcasename = chart[2].toLowerCase();
             charturl = settings.ifrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
             clippedShapeFolder = path.join(appdir, "clipshapes", lcasename);
-            chartname = fullcharts[index][2]; // use alias value for IFR
+            chartname = settings.fullchartlist[index][2]; // use alias value for IFR
             chartfolder = path.join(workarea, chartname);
         }
         else { // vfr
@@ -389,7 +399,7 @@ function processFulls() {
             chartname = chartworkname;
             chartfolder = `${workarea}/${chartworkname}`;
         }
-        
+        sendMessageToClients({messagetype: MTP, message: `Now processing chart: ${chartname}`});
         let cpt = new ProcessTime(chartname);
         timings.set(chartname, cpt);
         runProcessing();
@@ -471,8 +481,7 @@ function downloadCharts() {
         logEntry(`Using cached ${chartzip}`);
         return;
     }
-    else {areacharts = settings.individualchartlist;
-    
+    else { 
         let oldfiles = fs.readdirSync(chartcache);
         for (var i = 0; i < oldfiles.length; i++) {
             if (oldfiles[i].startsWith(chartworkname)) {
@@ -727,10 +736,15 @@ function makeMbTiles() {
  * Get the bounds of the processed GEOTIFF for database metadata
  */
 function calculateBounds() {
-    let lngdiff = (Math.abs(wgsbounds[0][0]) - Math.abs(wgsbounds[2][0])) / 2;
-    let latdiff = (Math.abs(wgsbounds[0][1]) - Math.abs(wgsbounds[2][1])) / 2;
-    let center = [wgsbounds[0][0] + lngdiff, wgsbounds[0][1] - latdiff];
-    return [`${wgsbounds[0][0]}`, `${wgsbounds[0][1]}`, `${wgsbounds[2][0]}`, `${wgsbounds[2][1]}`, `${center}`];
+    try {
+        let lngdiff = (Math.abs(wgsbounds[0][0]) - Math.abs(wgsbounds[2][0])) / 2;
+        let latdiff = (Math.abs(wgsbounds[0][1]) - Math.abs(wgsbounds[2][1])) / 2;
+        let center = [wgsbounds[0][0] + lngdiff, wgsbounds[0][1] - latdiff];
+        return [`${wgsbounds[0][0]}`, `${wgsbounds[0][1]}`, `${wgsbounds[2][0]}`, `${wgsbounds[2][1]}`, `${center}`];
+    }
+    catch(error) {
+        console.log(error);
+    }
 }
 
 /**
@@ -942,24 +956,24 @@ function enterWebserverMode() {
  * Iterate through any/all connected clients and send data
  * @param {string} stringified json message 
  */
-async function sendMessageToClients(jsonmessage) {
+async function sendMessageToClients(msgtype, jsonbody) {
+    let msg = {messagetype: msgtype, messagebody: jsonbody};
     [...connections.keys()].forEach((client) => {
-        client.send(jsonmessage);
+        client.send(JSON.stringify(msg));
     });
 }
 
 // Set up a periodic ping interval
-function setupPongResponder() {
+function startPingSender() {
+    if (pingSenderId !== 0) {
+        return pingSenderId;
+    }
     const interval = setInterval(() => {
         [...connections.keys()].forEach((ws) => {
-            if (connections.get(ws) === false) {
-                return ws.terminate();
-            }
-            connections.set(ws, false);
             ws.ping();
          });
-    }, 30000); // Send pings every 30 seconds
-    return interval;
+    }, 3000); // Send pings every 30 seconds
+    pingSenderId = interval;
 }
 
 function getTimingJsonObject() {
@@ -976,13 +990,20 @@ function getTimingJsonObject() {
  * Handle app closure and log the results
  */
 process.on('exit', (code) => {
-  console.log(`\nAbout to exit with code: ${code}`);
+    if (pingSenderId !== 0) {
+        try {
+            clearInterval(pingSenderId);
+            console.log("clearInterval called on ping sender");
+        } 
+        finally {}
+    }
+    console.log(`\nAbout to exit with code: ${code}`);
 });
 
 process.on('SIGINT', () => {
-  console.log('\nReceived SIGINT. Cleaning up...');
-  // Perform cleanup operations here
-  process.exit(0); // Exit gracefully
+    console.log('\nReceived SIGINT. Cleaning up...');
+    // Perform cleanup operations here
+    process.exit(0); // Exit gracefully
 });
 
 /**
@@ -1020,8 +1041,8 @@ function parseMakeCommand(targets) {
                     break;
                 case 2:
                     if (opt >= 0 && opt <= 7) {
-                        let chart = fullcharts[opt][0].replace("_", " ");
-                        if (chart === "DDECUS") chart = fullcharts[opt][2].replace("_", " ");
+                        let chart = settings.fullchartlist[opt][0].replace("_", " ");
+                        if (chart === "DDECUS") chart = settings.fullchartlist[opt][2].replace("_", " ");
                         console.log(`Processing full chart: ${chart}`);
                         parray.push(opt);
                         processFulls();
@@ -1040,7 +1061,7 @@ function parseMakeCommand(targets) {
             }
         }
         let tmmsg = getTimingJsonObject();
-        sendMessageToClients(JSON.stringify(tmmsg));
+        sendMessageToClients({messagetype: "PT", message: tmmsg});
     }
     catch(err){
         console.log(`Error:\r\n ${err}`);
@@ -1132,17 +1153,19 @@ function resetGlobalVariables() {
                             }     
                             clist.commandlist.push({"command": strcmd, "chart": strcht})
                         }
+                        // statuses : 20 = OK submission or 400 = Bad Request
+                        res.status = 200;
                         res.send(clist);
-                        res.end();
-
+                        
                         if (!inMakeLoop && !sendSettings) {           
                             parseMakeCommand(targets);
                         }
                     }
                 }
                 catch(err) {
-                    //console.log(err);
+                    res.status = 400;
                 }
+                res.end();
             });
 
             const wss = new WebSocket.Server({ port: settings.wsport });
@@ -1178,16 +1201,18 @@ function resetGlobalVariables() {
                     else if (sendSettings) {
                         sendSettings = false;
                         let rs = JSON.parse(fs.readFileSync(`${appdir}/settings.json`, "utf-8")).settings;
-                        sendMessageToClients(JSON.stringify({"full_chart_list":rs.fullchartindexes}));
-                        sendMessageToClients(JSON.stringify({"area_chart_list":rs.areachartlist}));
-                        sendMessageToClients(JSON.stringify({"remotemenu":remotemenu}));
+                        sendMessageToClients({messagetype: MTS, message: { full_chart_list: rs.fullchartindexes}});
+                        sendMessageToClients({messagetype: MTS, message: { area_chart_list :rs.areachartlist}});
+                        sendMessageToClients({messagetype: MTS, messagebody: {"remotemenu":remotemenu}});
                     }
                 };
-
             });
+
+            startPingSender();
         }
         catch (err) {
             console.log(err);
         }
+        
     }
 })();

@@ -67,7 +67,13 @@ $.get({
 
         wss.onmessage = (evt) => {
             let message = JSON.parse(evt.data);
-            postTimeTable(message);
+            if (message.processtimes) {
+                postTimeTable(message);
+            }
+            else {
+                addLineToCommandbody(message.)
+            }
+            
             console.log(message);
             blinkSendButton(false);
         }
@@ -104,11 +110,10 @@ function setupCommandTable() {
 }
 
 function postTimeTable(message) {
+    addLineToCommandbody("Processing times, in the order of the submitted commands:");
     for (let i = 0; i < message.processtimes.length; i++) {
         let line = message.processtimes[i].timing;
-        let tr = commandbody.rows[i];
-        let td = tr.firstChild;
-        td.textContent = line;
+        addLineToCommandbody(line);
     }
 }
 
@@ -141,26 +146,32 @@ function submitRequest() {
     if (commands.commandlist.length > 0) {
         inResponseView = true;
         blinkSendButton(true);
+
         $.post(URL_POST_DATA, commands, function(data, status) {
-            console.log(data, status);
+            console.log(data);
+            if (status === 'success') {
+                addLineToCommandbody("###########################################################");
+                addLineToCommandbody(`  Server response: success, command(s) are in progress...`);
+                addLineToCommandbody("###########################################################");
+            }
             commands = {"commandlist": []};
         });
     }
 }
 
-let isBlue = true; 
-setInterval(() => {
-    if(blinking) {
-        if (isBlue) {
-            isBlue = false;
-            sendBtn.style.backgroundColor = "Black";
-        }
-        else {
-            sendBtn.style.backgroundColor = "Red"
-            isBlue = true;
-        }
-    }
-},800);
+let isGreen = true; 
+// setInterval(() => {
+//     if(blinking) {
+//         if (isGreen) {
+//             isGreen = false;
+//             sendBtn.style.backgroundColor = "lightgray;";
+//         }
+//         else {
+//             sendBtn.style.backgroundColor = "green"
+//             isGreen = true;
+//         }
+//     }
+// },800);
 
 function blinkSendButton(state) {
     if (state) {
@@ -183,7 +194,7 @@ function addSubmitRequest() {
         setupCommandTable();
     }
     let entry = { "command": selectedcommand, "chart": selectedchart };
-    let confentry = command.value;
+    let confentry = `${selectedcommand}: ${command.value}`;
     if (selectedcommand === 0 || selectedcommand === 2) {
         if (chart.value === "") {
             alert("You must select a chart for the selected command");
@@ -191,20 +202,26 @@ function addSubmitRequest() {
         }
     }
     if (chart.value !== "") {
-        confentry += `: ${chart.value}`
+        confentry += `,  ${selectedchart}: ${chart.value}`
     }
+
     commands.commandlist.push(entry); 
-    for (let i = 0; i < commandbody.rows.length; i++) {
-        let tr = commandbody.rows[i];
-        if (tr.textContent === "") {
-            tr.textContent = confentry;
-            break; 
-        }
-    }
+    
+    addLineToCommandbody(confentry);
     selectedchart = -1;
     selectedcommand = -1;
     populateCommandList();
     resetChartList();  
+}
+
+function addLineToCommandbody(line) {
+    for (let i = 0; i < commandbody.rows.length; i++) {
+        let tr = commandbody.rows[i];
+        if (tr.textContent === "") {
+            tr.textContent = line;
+            break; 
+        }
+    }
 }
 
 function chartSelected() {
@@ -226,7 +243,7 @@ function populateChartList() {
         if (commandlist.options[i].value === item) {
             selectedcommand = i;
             break; 
-        }
+        }Red
     }
 
     if (selectedcommand == 0) {
