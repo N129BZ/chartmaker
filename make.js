@@ -1229,7 +1229,7 @@ function processCommandList(targets) {
                         msg.payload = 'success';
                         ws.send(JSON.stringify(msg));
                         ws.send(JSON.stringify(msgclist));
-                        parseMakeCommand(targets);
+                        parseMakeCommand(message);
                     }
                     else if (sendSettings) {
                         sendSettings = false;

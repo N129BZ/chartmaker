@@ -42,10 +42,9 @@ window.addEventListener("load", (event) => {
 });
 
 document.addEventListener('keydown', function(event) {
-    if (event.shiftKey) { // Check if the Shift key is pressed.
-        // Shift key is down, now check for specific shifted characters or any character.
-        if (event.key.length === 1 && event.key.match(/[~]/)) { // Check if it's a shifted character.
-            console.log(`Secret key: "${event.key}" for settings was pressed!`); // Update the output paragraph.
+    if (event.shiftKey) {  
+        if (event.key === '~') {
+            console.log(`Secret key combo shift + '~' was pressed for settings request`);
             websocket.send(JSON.stringify(messagetypes.settings));
         }
     }
@@ -178,13 +177,6 @@ function submitRequest() {
         blinkSendButton(true);
         websocket.send(JSON.stringify(commands));
         commands = {"commandlist": []};
-        // $.post(URL_POST_DATA, commands, function(data, status) {
-        //     console.log(data);
-        //     if (status === 'success') {
-        //         addLineToCommandbody("Server response: chart processing has started...", true);
-        //     }
-        //     commands = {"commandlist": []};
-        // });
     }
 }
 
