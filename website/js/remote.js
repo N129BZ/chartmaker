@@ -14,6 +14,11 @@ let URL_GET_SETTINGS        = `${URL_SERVER}/settings`;
 let URL_GET_STATUS          = `${URL_SERVER}/status`;
 let URL_POST_DATA           = `${URL_SERVER}/data`;
 
+// Message types
+const MTI = "info";
+const MTT = "timing";
+const MTS = "settings"
+
 var fclist = document.getElementById("fclist");
 var aclist = document.getElementById("aclist");
 var confwindow = document.getElementById("confwindow");
@@ -67,15 +72,14 @@ $.get({
 
         wss.onmessage = (evt) => {
             let message = JSON.parse(evt.data);
-            if (message.processtimes) {
-                postTimeTable(message);
+            if (message.messagetype === MTT) {
+                blinkSendButton(false);
+                postTimeTable(message.messagebody);
             }
-            else {
-                addLineToCommandbody(message.)
+            else if (message.messagetype === MTI) {
+                addLineToCommandbody(message.messagebody);
             }
-            
             console.log(message);
-            blinkSendButton(false);
         }
 
         wss.onerror = function(evt){
@@ -110,7 +114,7 @@ function setupCommandTable() {
 }
 
 function postTimeTable(message) {
-    addLineToCommandbody("Processing times, in the order of the submitted commands:");
+    addLineToCommandbody("Processing times for submitted commands:", true);
     for (let i = 0; i < message.processtimes.length; i++) {
         let line = message.processtimes[i].timing;
         addLineToCommandbody(line);
@@ -150,37 +154,25 @@ function submitRequest() {
         $.post(URL_POST_DATA, commands, function(data, status) {
             console.log(data);
             if (status === 'success') {
-                addLineToCommandbody("###########################################################");
-                addLineToCommandbody(`  Server response: success, command(s) are in progress...`);
-                addLineToCommandbody("###########################################################");
+                addLineToCommandbody("Server response: success, command(s) are in progress...", true);
             }
             commands = {"commandlist": []};
         });
     }
 }
 
-let isGreen = true; 
-// setInterval(() => {
-//     if(blinking) {
-//         if (isGreen) {
-//             isGreen = false;
-//             sendBtn.style.backgroundColor = "lightgray;";
-//         }
-//         else {
-//             sendBtn.style.backgroundColor = "green"
-//             isGreen = true;
-//         }
-//     }
-// },800);
-
 function blinkSendButton(state) {
-    if (state) {
+    if (state === true) {
         blinking = true;
         sendBtn.textContent = "Processing...";
+        sendBtn.classList.remove('stop-animation')
+        sendBtn.classList.add('start-animation');
     }
     else {
         blinking = false;
         sendBtn.textContent = "Send Commands";
+        sendBtn.classList.remove('start-animation');
+        sendBtn.classList.add('stop-animation')
         sendBtn.style.backgroundColor = "Blue";
     }
 }
@@ -214,12 +206,19 @@ function addSubmitRequest() {
     resetChartList();  
 }
 
-function addLineToCommandbody(line) {
+function addLineToCommandbody(line, usebold = false) {
     for (let i = 0; i < commandbody.rows.length; i++) {
         let tr = commandbody.rows[i];
-        if (tr.textContent === "") {
-            tr.textContent = line;
-            break; 
+        let td = tr.firstChild;
+        if (td.innerText === "") { 
+            if (usebold === true) {
+                td.classList.add('boldline')
+                td.textContent = line;
+            }
+            else {
+                td.textContent = line;
+            }
+            return;
         }
     }
 }

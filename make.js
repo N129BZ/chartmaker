@@ -8,16 +8,6 @@ const express = require('express');
 const WebSocket = require('ws')
 const favicon = require('serve-favicon');
 
-//create a couple winsock variables
-var connections = new Map();
-var inWebsocketMode = false;
-var inMakeLoop = false;
-var sendSettings = false;
-var pingSenderId = 0;
-
-// set the base application folder, this will change if running in docker
-let appdir = __dirname;
-
 class ProcessTime {
     constructor(processName) {
         this.processname = processName.replaceAll("_", " ");
@@ -44,7 +34,26 @@ class ProcessTime {
         let pss = pad2(ss);
         this.totaltime = `${this.processname} processing time: ${phh}:${pmm}:${pss}`;
     }
-}
+};
+
+class WsMessage {
+    constructor(strMsgtype, strMessage) {
+        this.msgtype = msgtype;
+        this.outputmessage = { messagetype: strMsgtype, messagebody: strMessage };
+    };
+};
+
+//create a couple winsock variables
+var connections = new Map();
+var inWebsocketMode = false;
+var inMakeLoop = false;
+var sendSettings = false;
+var pingSenderId = 0;
+
+// set the base application folder, this will change if running in docker
+let appdir = __dirname;
+
+
 
 /**
  * Utility to see if we are in a docker container
@@ -116,6 +125,14 @@ const logEntry = function(entry) {
     }
 }
 
+function pad2(n) {
+    let nn = `${n}`;
+    if (n < 10) {
+        nn = `0${nn}`;
+    }
+    return nn;
+}
+
 // Get the current chart date from the chartdates.json file
 let expiredate = "";
 const chartdate = getBestChartDate();
@@ -168,7 +185,7 @@ let addmetabounds = false;
 
 // Message types
 const MTI = "info";
-const MTP = "process";
+const MTT = "timing";
 const MTS = "settings"
 
 /**
@@ -335,7 +352,6 @@ function processSingles() {
     for (var x = 0; x < parray.length; x++) {
         chartworkname = settings.areachartlist[parray[x]];
         chartname = chartworkname;
-        sendMessageToClients({messagetype: MTI, messagebody: `Now processing chart: ${chartname}`});
         clippedShapeFolder = path.join(appdir, "clipshapes", "sectional");
         chartlayertype = settings.layertypes[settings.layertypeindex];
         chartfolder = `${workarea}/${chartworkname}`;
@@ -343,6 +359,7 @@ function processSingles() {
         console.log(charturl);
         let cpt = new ProcessTime(chartname);
         timings.set(chartname, cpt);
+        sendMessageToClients(MTI, `Now processing chart: ${chartname.replaceAll("_", " ")}`);
         runProcessing();
         console.log(`${cpt.totaltime}\r\n`);
     }
@@ -399,7 +416,7 @@ function processFulls() {
             chartname = chartworkname;
             chartfolder = `${workarea}/${chartworkname}`;
         }
-        sendMessageToClients({messagetype: MTP, message: `Now processing chart: ${chartname}`});
+        sendMessageToClients(MTI, `Now processing chart: ${chartname.replaceAll("_", " ")}`);
         let cpt = new ProcessTime(chartname);
         timings.set(chartname, cpt);
         runProcessing();
@@ -917,19 +934,6 @@ function reportProcessingTime() {
     logEntry(`Start time: ${startdate}\r\nEnd time: ${date2}\r\nTotal processing time: ${phh}:${pmm}:${pss}`);
 }
 
- /**
-  * Utility to left-pad zeros for numbers under 10
-  * @param {number} n 
-  * @returns {string}
-  */
- function pad2(n) {
-    let nn = `${n}`;
-    if (n < 10) {
-        nn = `0${nn}`;
-    }
-    return nn;
-}
-
 /**
  * Utility to make sure clipping files are all lower-case
  */
@@ -956,8 +960,8 @@ function enterWebserverMode() {
  * Iterate through any/all connected clients and send data
  * @param {string} stringified json message 
  */
-async function sendMessageToClients(msgtype, jsonbody) {
-    let msg = {messagetype: msgtype, messagebody: jsonbody};
+async function sendMessageToClients(msgtype, msgbody) {
+    let msg = {messagetype: msgtype, messagebody: msgbody};
     [...connections.keys()].forEach((client) => {
         client.send(JSON.stringify(msg));
     });
@@ -1061,7 +1065,7 @@ function parseMakeCommand(targets) {
             }
         }
         let tmmsg = getTimingJsonObject();
-        sendMessageToClients({messagetype: "PT", message: tmmsg});
+        sendMessageToClients(MTT, tmmsg);
     }
     catch(err){
         console.log(`Error:\r\n ${err}`);
@@ -1201,9 +1205,9 @@ function resetGlobalVariables() {
                     else if (sendSettings) {
                         sendSettings = false;
                         let rs = JSON.parse(fs.readFileSync(`${appdir}/settings.json`, "utf-8")).settings;
-                        sendMessageToClients({messagetype: MTS, message: { full_chart_list: rs.fullchartindexes}});
-                        sendMessageToClients({messagetype: MTS, message: { area_chart_list :rs.areachartlist}});
-                        sendMessageToClients({messagetype: MTS, messagebody: {"remotemenu":remotemenu}});
+                        sendMessageToClients(MTS, {full_chart_list: rs.fullchartindexes});
+                        sendMessageToClients(MTS, { area_chart_list :rs.areachartlist});
+                        sendMessageToClients(MTS, {"remotemenu":remotemenu});
                     }
                 };
             });
