@@ -17,7 +17,9 @@ let URL_POST_DATA           = `${URL_SERVER}/data`;
 // Message types
 const MTI = "info";
 const MTT = "timing";
-const MTS = "settings"
+const MTS = "settings";
+const MTR = "response";
+const MTC = "commands";
 
 var fclist = document.getElementById("fclist");
 var aclist = document.getElementById("aclist");
@@ -29,7 +31,7 @@ var chartlist = document.getElementById("chartlist");
 let sendBtn = document.getElementById("send");
 let commandbody = document.getElementById("commandbody");
 
-var wss;
+var websocket;
 var indexlist = [];
 var commands = {"commandlist": []};
 var confcommands = [];
@@ -68,29 +70,43 @@ $.get({
     try {
         let wsurl = `${URL_WINSOCK}${settings.wsport}`;
         console.log(`OPENING: ${wsurl}`);
-        wss = new WebSocket(wsurl);
+        websocket = new WebSocket(wsurl);
 
-        wss.onmessage = (evt) => {
+        websocket.onmessage = (evt) => {
             let message = JSON.parse(evt.data);
-            if (message.messagetype === MTT) {
-                blinkSendButton(false);
-                postTimeTable(message.messagebody);
-            }
-            else if (message.messagetype === MTI) {
-                addLineToCommandbody(message.messagebody);
+            switch (message.messagetype) {
+                case MTT: 
+                    blinkSendButton(false);
+                    postTimeTable(message.messagebody);
+                    break;
+                case MTI:
+                    addLineToCommandbody(message.messagebody);
+                    break;
+                case MTR:
+                    if (message.messagebody === 'success') {
+                        addLineToCommandbody("Server response: chart processing has started...", true);
+                    }
+                    else {
+                        addLineToCommandbody("Server response: status unknown, possible command error", true);
+                    }
+                    break;
+                default:
+                    //do nothing
+                    break;
+
             }
             console.log(message);
         }
 
-        wss.onerror = function(evt){
+        websocket.onerror = function(evt){
             console.log("Websocket ERROR: " + evt.data);
         }
         
-        wss.onopen = function(evt) {
+        websocket.onopen = function(evt) {
             console.log("Websocket CONNECTED.");
         }
         
-        wss.onclose = function(evt) {
+        websocket.onclose = function(evt) {
             console.log("Websocket CLOSED.");
         }
     }
@@ -150,14 +166,15 @@ function submitRequest() {
     if (commands.commandlist.length > 0) {
         inResponseView = true;
         blinkSendButton(true);
-
-        $.post(URL_POST_DATA, commands, function(data, status) {
-            console.log(data);
-            if (status === 'success') {
-                addLineToCommandbody("Server response: chart processing has started...", true);
-            }
-            commands = {"commandlist": []};
-        });
+        websocket.send(JSON.stringify(commands));
+        commands = {"commandlist": []};
+        // $.post(URL_POST_DATA, commands, function(data, status) {
+        //     console.log(data);
+        //     if (status === 'success') {
+        //         addLineToCommandbody("Server response: chart processing has started...", true);
+        //     }
+        //     commands = {"commandlist": []};
+        // });
     }
 }
 
@@ -185,7 +202,7 @@ function addSubmitRequest() {
     if (inResponseView) {
         setupCommandTable();
     }
-    let entry = { "command": selectedcommand, "chart": selectedchart };
+    let entry = { command: selectedcommand, chart: selectedchart };
     let confentry = `${selectedcommand}: ${command.value}`;
     if (selectedcommand === 0 || selectedcommand === 2) {
         if (chart.value === "") {

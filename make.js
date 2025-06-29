@@ -186,7 +186,9 @@ let addmetabounds = false;
 // Message types
 const MTI = "info";
 const MTT = "timing";
-const MTS = "settings"
+const MTS = "settings";
+const MTR = "response";
+const MTC = "commands";
 
 /**
  * Chart processing starts here
@@ -313,15 +315,15 @@ else {
 function processOneArea(area = -1) {
     if (area == -1) {
         let lst = "\nSelect the chart number you want to process from this list\r\n\r\n";
-        for (var i = 0; i <  settings.areacharlist.length; i++) {
-            lst += `${i} ${settings.areachartlist[i][1].split("_").join(" ")}\r\n`; 
+        for (var i = 0; i <  settings.areachartlist.length; i++) {
+            lst += `${i} ${settings.areachartlist[i].split("_").join(" ")}\r\n`; 
         }
         lst += "--------------------------------------------\r\nYour selection: ";
         let response = processPrompt(lst);
-        nm = Number(response);
+        nm = +response;
     }
     else {
-        nm = Number(area);
+        nm = +area;
     }
 
     try {
@@ -1096,6 +1098,38 @@ function resetGlobalVariables() {
     parray = [];
     nm = 0;
 }
+
+function processCommandList(targets) {
+    let clist = {messagetype: MTC, messagebody: {commandlist: []}};
+    try {
+        if (targets.commandlist.length > 0) {
+            for (let i = 0; i < targets.commandlist.length; i++) {
+                let tclcmd = +targets.commandlist[i].command;
+                let tclcht = +targets.commandlist[i].chart;
+                let strcmd = remotemenu.menuitems[tclcmd];
+                let strcht = "";
+                switch (tclcmd) {
+                    case 0:
+                        strcht = settings.areachartlist[tclcht].replaceAll("_", " ");
+                        break;
+                    case 2:
+                        strcht = settings.fullchartlist[tclcht].replaceAll("_", " ");
+                        break;
+                    default:
+                        strcht = "N/A";
+                        break;
+                }     
+                clist.messagebody.commandlist.push({"command": strcmd, "chart": strcht})
+            }
+        }
+    }
+    catch(error) {
+        console.log(error)
+    }
+
+    return clist;
+}
+
 /**
  * Start the express web server
  */
@@ -1134,43 +1168,22 @@ function resetGlobalVariables() {
                 res.end();
             });
             
-            app.all("/data", (req, res) => {
-                let targets = req.body;
-                let clist = {"commandlist": []};
-                try {
-                    if (targets.commandlist.length > 0) {
-                        for (let i = 0; i < targets.commandlist.length; i++) {
-                            let tclcmd = targets.commandlist[i].command;
-                            let tclcht = targets.commandlist[i].chart;
-                            let strcmd = remotemenu.menuitems[tclcmd];
-                            let strcht = "";
-                            switch (tclcmd) {
-                                case '0':
-                                    strcht = settings.areachartlist[tclcht];
-                                    break;
-                                case '2':
-                                    strcht = settings.fullchartlist[tclcht];
-                                    break;
-                                default:
-                                    strcht = "N/A";
-                                    break;
-                            }     
-                            clist.commandlist.push({"command": strcmd, "chart": strcht})
-                        }
-                        // statuses : 20 = OK submission or 400 = Bad Request
-                        res.status = 200;
-                        res.send(clist);
-                        
-                        if (!inMakeLoop && !sendSettings) {           
-                            parseMakeCommand(targets);
-                        }
-                    }
-                }
-                catch(err) {
-                    res.status = 400;
-                }
-                res.end();
-            });
+            // app.all("/data", (req, res) => {
+            //     let targets = req.body;
+            //     try {
+            //         let clist = processCommandList(targets);
+            //         res.status = 200;
+            //         res.send(clist);
+                    
+            //         if (!inMakeLoop && !sendSettings) {           
+            //             parseMakeCommand(targets);
+            //         }
+            //     }
+            //     catch(err) {
+            //         res.status = 400;
+            //     }
+            //     res.end();
+            // });
 
             const wss = new WebSocket.Server({ port: settings.wsport });
             console.log(`Websocket listening on port ${settings.wsport}`);
@@ -1198,8 +1211,11 @@ function resetGlobalVariables() {
                 });
 
                 ws.onmessage = (event) => {
-                    let targets = JSON.parse(event.data.commandlist);
+                    let targets = JSON.parse(event.data);
+                    let clist = processCommandList(targets);
+                    ws.send(JSON.stringify({messagetype: MTR, messagebody: 'success'}));
                     if (!inMakeLoop && !sendSettings) {
+                        ws.send(JSON.stringify({messagetype: MTC, messagebody: clist}));
                         parseMakeCommand(targets);
                     }
                     else if (sendSettings) {

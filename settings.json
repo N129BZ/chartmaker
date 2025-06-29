@@ -24,7 +24,7 @@
         "debug": true,
         "httpport": 1962,
         "wsport": 1970,
-        "startinwebsocketmode": true,
+        "startinwebsocketmode": false,
 
         "chartprocessindexes": [0,1,2,3,4,5,6,7],
         "fullchartlist": [
