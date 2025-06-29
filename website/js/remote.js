@@ -14,12 +14,7 @@ let URL_GET_SETTINGS        = `${URL_SERVER}/settings`;
 let URL_GET_STATUS          = `${URL_SERVER}/status`;
 let URL_POST_DATA           = `${URL_SERVER}/data`;
 
-// Message types
-const MTI = "info";
-const MTT = "timing";
-const MTS = "settings";
-const MTR = "response";
-const MTC = "commands";
+var messagetypes = {};
 
 var fclist = document.getElementById("fclist");
 var aclist = document.getElementById("aclist");
@@ -46,6 +41,16 @@ window.addEventListener("load", (event) => {
     populateCommandList();
 });
 
+document.addEventListener('keydown', function(event) {
+    if (event.shiftKey) { // Check if the Shift key is pressed.
+        // Shift key is down, now check for specific shifted characters or any character.
+        if (event.key.length === 1 && event.key.match(/[~]/)) { // Check if it's a shifted character.
+            console.log(`Secret key: "${event.key}" for settings was pressed!`); // Update the output paragraph.
+            websocket.send(JSON.stringify(messagetypes.settings));
+        }
+    }
+});
+
 $.get({
     async: false,
     type: "GET",
@@ -53,6 +58,7 @@ $.get({
     success: (data) => {
         try {
             settings = JSON.parse(data);
+            messagetypes = settings.messagetypes;
         }
         catch(err) {
             console.log(err);
@@ -74,28 +80,32 @@ $.get({
 
         websocket.onmessage = (evt) => {
             let message = JSON.parse(evt.data);
-            switch (message.messagetype) {
-                case MTT: 
+            switch (message.type) {
+                case messagetypes.timing.type: 
                     blinkSendButton(false);
-                    postTimeTable(message.messagebody);
+                    postTimeTable(message.payload);
                     break;
-                case MTI:
-                    addLineToCommandbody(message.messagebody);
+                case messagetypes.info.type:
+                    addLineToCommandbody(message.payload);
                     break;
-                case MTR:
-                    if (message.messagebody === 'success') {
+                case messagetypes.response.type:
+                    if (message.payload === 'success') {
                         addLineToCommandbody("Server response: chart processing has started...", true);
                     }
                     else {
                         addLineToCommandbody("Server response: status unknown, possible command error", true);
                     }
                     break;
-                default:
-                    //do nothing
+                case messagetypes.settings.type:
+                    let payload = JSON.parse(message.payload);
+                    console.log(payload);
                     break;
-
+                case messagetypes.command.type:
+                default:
+                    console.log(message.payload);
+                    break;
+                // end of case work
             }
-            console.log(message);
         }
 
         websocket.onerror = function(evt){

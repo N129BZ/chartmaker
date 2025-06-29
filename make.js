@@ -5,8 +5,9 @@ const { execSync } = require('child_process');
 const readlineSync = require('readline-sync');
 const path = require('path');
 const express = require('express');
-const WebSocket = require('ws')
 const favicon = require('serve-favicon');
+const WebSocket = require('ws')
+
 
 class ProcessTime {
     constructor(processName) {
@@ -43,9 +44,8 @@ class WsMessage {
     };
 };
 
-//create a couple winsock variables
+// create winsock variables
 var connections = new Map();
-var inWebsocketMode = false;
 var inMakeLoop = false;
 var sendSettings = false;
 var pingSenderId = 0;
@@ -84,6 +84,7 @@ function processPrompt(message) {
 var timings = new Map();
 const settings = JSON.parse(fs.readFileSync(`${appdir}/settings.json`, "utf-8")).settings;
 const remotemenu = JSON.parse(fs.readFileSync(`${appdir}/remotemenu.json`, "utf-8"))
+var useWebServer = settings.webservermode;
 
 /** 
  *  Set the time zone of this process to the value in settings if it exists.
@@ -184,11 +185,12 @@ let wgsbounds = [];
 let addmetabounds = false;
 
 // Message types
-const MTI = "info";
-const MTT = "timing";
-const MTS = "settings";
-const MTR = "response";
-const MTC = "commands";
+const messagetypes = settings.messagetypes;
+// const MTI = "info";
+// const MTT = "timing";
+// const MTS = "settings";
+// const MTR = "response";
+// const MTC = "commands";
 
 /**
  * Chart processing starts here
@@ -261,7 +263,7 @@ if (settings.usecommandline) {
         }
     }
     else {
-        if (settings.startinwebsocketmode) {
+        if (settings.webservermode) {
             enterWebserverMode();
         }
         else {
@@ -361,7 +363,7 @@ function processSingles() {
         console.log(charturl);
         let cpt = new ProcessTime(chartname);
         timings.set(chartname, cpt);
-        sendMessageToClients(MTI, `Now processing chart: ${chartname.replaceAll("_", " ")}`);
+        sendMessageToClients(messagetypes.info, `Now processing chart: ${chartname.replaceAll("_", " ")}`);
         runProcessing();
         console.log(`${cpt.totaltime}\r\n`);
     }
@@ -418,7 +420,7 @@ function processFulls() {
             chartname = chartworkname;
             chartfolder = `${workarea}/${chartworkname}`;
         }
-        sendMessageToClients(MTI, `Now processing chart: ${chartname.replaceAll("_", " ")}`);
+        sendMessageToClients(messagetypes.info, `Now processing chart: ${chartname.replaceAll("_", " ")}`);
         let cpt = new ProcessTime(chartname);
         timings.set(chartname, cpt);
         runProcessing();
@@ -954,7 +956,7 @@ function normalizeClipNames() {
 }
 
 function enterWebserverMode() {
-    inWebsocketMode = true;
+    useWebServer = true;
     console.log("entering websocket mode")
 }
 
@@ -962,10 +964,10 @@ function enterWebserverMode() {
  * Iterate through any/all connected clients and send data
  * @param {string} stringified json message 
  */
-async function sendMessageToClients(msgtype, msgbody) {
-    let msg = {messagetype: msgtype, messagebody: msgbody};
+async function sendMessageToClients(message, payload) {
+    message.payload = payload;
     [...connections.keys()].forEach((client) => {
-        client.send(JSON.stringify(msg));
+        client.send(JSON.stringify(message));
     });
 }
 
@@ -1067,7 +1069,7 @@ function parseMakeCommand(targets) {
             }
         }
         let tmmsg = getTimingJsonObject();
-        sendMessageToClients(MTT, tmmsg);
+        sendMessageToClients(messagetypes.timing, tmmsg);
     }
     catch(err){
         console.log(`Error:\r\n ${err}`);
@@ -1100,26 +1102,33 @@ function resetGlobalVariables() {
 }
 
 function processCommandList(targets) {
-    let clist = {messagetype: MTC, messagebody: {commandlist: []}};
+    let clist = messagetypes.command;
+    clist.payload =  {commandlist: []};
     try {
-        if (targets.commandlist.length > 0) {
-            for (let i = 0; i < targets.commandlist.length; i++) {
-                let tclcmd = +targets.commandlist[i].command;
-                let tclcht = +targets.commandlist[i].chart;
-                let strcmd = remotemenu.menuitems[tclcmd];
-                let strcht = "";
-                switch (tclcmd) {
-                    case 0:
-                        strcht = settings.areachartlist[tclcht].replaceAll("_", " ");
-                        break;
-                    case 2:
-                        strcht = settings.fullchartlist[tclcht].replaceAll("_", " ");
-                        break;
-                    default:
-                        strcht = "N/A";
-                        break;
-                }     
-                clist.messagebody.commandlist.push({"command": strcmd, "chart": strcht})
+        if (targets.type === messagetypes.settings.type) {
+            sendSettings = true;
+            return;
+        }
+        else {
+            if (targets.commandlist.length > 0) {
+                for (let i = 0; i < targets.commandlist.length; i++) {
+                    let tclcmd = +targets.commandlist[i].command;
+                    let tclcht = +targets.commandlist[i].chart;
+                    let strcmd = remotemenu.menuitems[tclcmd];
+                    let strcht = "";
+                    switch (tclcmd) {
+                        case 0:
+                            strcht = settings.areachartlist[tclcht].replaceAll("_", " ");
+                            break;
+                        case 2:
+                            strcht = settings.fullchartlist[tclcht].replaceAll("_", " ");
+                            break;
+                        default:
+                            strcht = "N/A";
+                            break;
+                    }     
+                    clist.payload.commandlist.push({"command": strcmd, "chart": strcht})
+                }
             }
         }
     }
@@ -1134,7 +1143,7 @@ function processCommandList(targets) {
  * Start the express web server
  */
 (() => {
-    if (inWebsocketMode || settings.startinwebsocketmode) {
+    if (useWebServer || settings.webservermode) {
         const app = express();
         
         try {
@@ -1187,7 +1196,8 @@ function processCommandList(targets) {
 
             const wss = new WebSocket.Server({ port: settings.wsport });
             console.log(`Websocket listening on port ${settings.wsport}`);
-            
+            let msg = {};
+
             wss.on('connection', (ws) => {
                 const id = Date.now();
                 ws.tag = id;
@@ -1211,19 +1221,22 @@ function processCommandList(targets) {
                 });
 
                 ws.onmessage = (event) => {
-                    let targets = JSON.parse(event.data);
-                    let clist = processCommandList(targets);
-                    ws.send(JSON.stringify({messagetype: MTR, messagebody: 'success'}));
+                    let message = JSON.parse(event.data);
+                    let msgclist = processCommandList(message);
+
                     if (!inMakeLoop && !sendSettings) {
-                        ws.send(JSON.stringify({messagetype: MTC, messagebody: clist}));
+                        msg = messagetypes.response;
+                        msg.payload = 'success';
+                        ws.send(JSON.stringify(msg));
+                        ws.send(JSON.stringify(msgclist));
                         parseMakeCommand(targets);
                     }
                     else if (sendSettings) {
                         sendSettings = false;
-                        let rs = JSON.parse(fs.readFileSync(`${appdir}/settings.json`, "utf-8")).settings;
-                        sendMessageToClients(MTS, {full_chart_list: rs.fullchartindexes});
-                        sendMessageToClients(MTS, { area_chart_list :rs.areachartlist});
-                        sendMessageToClients(MTS, {"remotemenu":remotemenu});
+                        let rs = fs.readFileSync(`${appdir}/settings.json`, "utf-8");
+                        msg = messagetypes.settings;
+                        msg.payload = rs;
+                        ws.send(JSON.stringify(msg));
                     }
                 };
             });

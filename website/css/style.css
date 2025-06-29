@@ -219,8 +219,8 @@ html, body {
 
 /* For animations */
 @keyframes colorChange {
-    0% { background-color: green; color: white;}
+    0% { background-color: darkgreen ; color: white;}
     50% { background-color: red; color: white; }
     /* 66.66% { background-color: green; color: white;} */
-    100% { background-color: green; color: white;}
+    100% { background-color: darkgreen; color: white;}
 }
