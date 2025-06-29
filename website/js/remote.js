@@ -154,7 +154,7 @@ function submitRequest() {
         $.post(URL_POST_DATA, commands, function(data, status) {
             console.log(data);
             if (status === 'success') {
-                addLineToCommandbody("Server response: success, command(s) are in progress...", true);
+                addLineToCommandbody("Server response: chart processing has started...", true);
             }
             commands = {"commandlist": []};
         });
