@@ -186,11 +186,6 @@ let addmetabounds = false;
 
 // Message types
 const messagetypes = settings.messagetypes;
-// const MTI = "info";
-// const MTT = "timing";
-// const MTS = "settings";
-// const MTR = "response";
-// const MTC = "commands";
 
 /**
  * Chart processing starts here
@@ -866,7 +861,7 @@ function getBestChartDate() {
             let diffdays = parseInt(tdays.toFixed(0));
             if (diffdays >= -20 && diffdays <= 36) {
                 let m = pad2(dateobj.getMonth() + 1); // months (0-11)
-                let d = pad2(dateobj.getDate());    // day (1-31)
+                let d = pad2(dateobj.getDate());      // day (1-31)
                 let y = dateobj.getFullYear();
                 selectedDate = `${m}-${d}-${y}`;
                 found = true;
@@ -875,7 +870,7 @@ function getBestChartDate() {
         else {
             if (expiredate === "") {
                 let m = pad2(dateobj.getMonth() + 1); // months (0-11)
-                let d = pad2(dateobj.getDate());    // day (1-31)
+                let d = pad2(dateobj.getDate());      // day (1-31)
                 let y = dateobj.getFullYear();
                 expiredate = `${m}-${d}-${y}`;
             }
@@ -1022,13 +1017,13 @@ process.on('SIGINT', () => {
  * 2 = Process a single full chart from the full chart list
  * 3 = Process all of the full charts in the full chart list
  * 4 = Return the settings.json file
- * @param {*} targets JSON object message
+ * @param {*} commands JSON object message
  */
-function parseMakeCommand(targets) {
+function parseMakeCommand(commands) {
     let idx = -1;
     let opt = -1;
     let item = {};
-    let list = targets.commandlist;
+    let list = commands.commandlist;
     try {
         inMakeLoop = true;
         outerloop: for (let i = 0; i < list.length; i++) {
@@ -1101,19 +1096,19 @@ function resetGlobalVariables() {
     nm = 0;
 }
 
-function processCommandList(targets) {
+function processCommandList(commands) {
     let clist = messagetypes.command;
     clist.payload =  {commandlist: []};
     try {
-        if (targets.type === messagetypes.settings.type) {
+        if (commands.type === messagetypes.settings.type) {
             sendSettings = true;
             return;
         }
         else {
-            if (targets.commandlist.length > 0) {
-                for (let i = 0; i < targets.commandlist.length; i++) {
-                    let tclcmd = +targets.commandlist[i].command;
-                    let tclcht = +targets.commandlist[i].chart;
+            if (commands.commandlist.length > 0) {
+                for (let i = 0; i < commands.commandlist.length; i++) {
+                    let tclcmd = +commands.commandlist[i].command;
+                    let tclcht = +commands.commandlist[i].chart;
                     let strcmd = remotemenu.menuitems[tclcmd];
                     let strcht = "";
                     switch (tclcmd) {
@@ -1177,23 +1172,6 @@ function processCommandList(targets) {
                 res.end();
             });
             
-            // app.all("/data", (req, res) => {
-            //     let targets = req.body;
-            //     try {
-            //         let clist = processCommandList(targets);
-            //         res.status = 200;
-            //         res.send(clist);
-                    
-            //         if (!inMakeLoop && !sendSettings) {           
-            //             parseMakeCommand(targets);
-            //         }
-            //     }
-            //     catch(err) {
-            //         res.status = 400;
-            //     }
-            //     res.end();
-            // });
-
             const wss = new WebSocket.Server({ port: settings.wsport });
             console.log(`Websocket listening on port ${settings.wsport}`);
             let msg = {};

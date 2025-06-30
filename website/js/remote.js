@@ -37,7 +37,7 @@ var blinking = false;
 var inResponseView = false;
 
 window.addEventListener("load", (event) => {
-    setupCommandTable();
+    setupCommandBody();
     populateCommandList();
 });
 
@@ -124,7 +124,7 @@ $.get({
     }
 });
 
-function setupCommandTable() {
+function setupCommandBody() {
     inResponseView = false;
     commandbody.innerText = "";
     for (let i = 0; i < 53; i++) {
@@ -165,13 +165,13 @@ function resetEverything() {
     selectedcommand = -1;
     populateCommandList();
     resetChartList();  
-    setupCommandTable();
+    setupCommandBody();
     blinking = false;
     sendBtn.innerText = "Send Commands";
     sendBtn.style.backgroundColor = "Blue";
 }
 
-function submitRequest() {
+function submitCommands() {
     if (commands.commandlist.length > 0) {
         inResponseView = true;
         blinkSendButton(true);
@@ -180,29 +180,13 @@ function submitRequest() {
     }
 }
 
-function blinkSendButton(state) {
-    if (state === true) {
-        blinking = true;
-        sendBtn.textContent = "Processing...";
-        sendBtn.classList.remove('stop-animation')
-        sendBtn.classList.add('start-animation');
-    }
-    else {
-        blinking = false;
-        sendBtn.textContent = "Send Commands";
-        sendBtn.classList.remove('start-animation');
-        sendBtn.classList.add('stop-animation')
-        sendBtn.style.backgroundColor = "Blue";
-    }
-}
-
-function addSubmitRequest() {
+function addCommandRequest() {
     if (selectedcommand == -1) {
         alert("You must first select a command to add!")
         return;
     }
     if (inResponseView) {
-        setupCommandTable();
+        setupCommandBody();
     }
     let entry = { command: selectedcommand, chart: selectedchart };
     let confentry = `${selectedcommand}: ${command.value}`;
@@ -223,6 +207,22 @@ function addSubmitRequest() {
     selectedcommand = -1;
     populateCommandList();
     resetChartList();  
+}
+
+function blinkSendButton(state) {
+    if (state === true) {
+        blinking = true;
+        sendBtn.textContent = "Processing...";
+        sendBtn.classList.remove('stop-animation')
+        sendBtn.classList.add('start-animation');
+    }
+    else {
+        blinking = false;
+        sendBtn.textContent = "Send Commands";
+        sendBtn.classList.remove('start-animation');
+        sendBtn.classList.add('stop-animation')
+        sendBtn.style.backgroundColor = "Blue";
+    }
 }
 
 function addLineToCommandbody(line, usebold = false) {
