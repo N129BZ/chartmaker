@@ -9,7 +9,9 @@ This is controlled by 3 new settings in settings.json. You can use whatever ***h
     "webservermode": true,
 ```
 ![chartmakerhome](https://github.com/user-attachments/assets/a7dba29b-41e1-44c8-8f68-84b973f52d90)
-
+<br>
+<br>
+## Using a Docker image
 ### Docker image: ***docker pull n129bz/chartmaker:latest***
 ### To run the image: ***docker run -it n129bz/chartmaker:latest***
 ### To launch chartmaker on the docker image: ***cd /chartmaker*** then enter: ***node make*** or, for a specific chart: ***see Wiki for a complete list of possible arguments***
