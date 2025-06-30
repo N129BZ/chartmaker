@@ -1,7 +1,13 @@
 # chartmaker - Download FAA VFR and IFR digital raster charts and translate into mbtiles databases for other mapping applications
 ### (Check out my chart viewing application https://github.com/n129bz/chartserver - also shows Metars, Pireps, Weather, etc.)
 
-## NEW!   Put chartmaker into web server mode and make maps by using the web page or by remotely sending control messages through a connected websocket. More documentation coming soon!    
+## NEW!   Put chartmaker into web server mode and make maps by using a web page or by remotely sending control messages through a connected websocket. More documentation coming soon!    
+This is controlled by 3 new settings in settings.json. You can use whatever ***httpport*** and ***wsport*** port values you want.
+```
+    "httpport": 1962,
+    "wsport": 1970,
+    "webservermode": true,
+```
 ![ChartmakerRemote](https://github.com/user-attachments/assets/29cd5db9-be9b-4318-8362-624f46e7e297)
 
 ### Docker image: ***docker pull n129bz/chartmaker:latest***
