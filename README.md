@@ -8,7 +8,7 @@ This is controlled by 3 new settings in settings.json. You can use whatever ***h
     "wsport": 1970,
     "webservermode": true,
 ```
-![ChartmakerRemote](https://github.com/user-attachments/assets/29cd5db9-be9b-4318-8362-624f46e7e297)
+![chartmakerhome](https://github.com/user-attachments/assets/a7dba29b-41e1-44c8-8f68-84b973f52d90)
 
 ### Docker image: ***docker pull n129bz/chartmaker:latest***
 ### To run the image: ***docker run -it n129bz/chartmaker:latest***
