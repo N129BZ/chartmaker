@@ -38,7 +38,7 @@ var inResponseView = false;
 
 window.addEventListener("load", (event) => {
     setupCommandBody();
-    populateCommandList();
+    populateCommandsDropdown();
 });
 
 document.addEventListener('keydown', function(event) {
@@ -82,17 +82,22 @@ $.get({
             switch (message.type) {
                 case messagetypes.timing.type: 
                     blinkSendButton(false);
-                    postTimeTable(message.payload);
+                    postTimeTable(message);
                     break;
                 case messagetypes.info.type:
-                    addLineToCommandbody(message.payload);
+                    addMessageToCommandbody(message);
+                    break;
+                case messagetypes.running.type:
+                    addMessageToCommandbody(message);
                     break;
                 case messagetypes.response.type:
                     if (message.payload === 'success') {
-                        addLineToCommandbody("Server response: chart processing has started...", true);
+                        message.payload = "Server response: chart processing has started...";
+                        addMessageToCommandbody(message);
                     }
                     else {
-                        addLineToCommandbody("Server response: status unknown, possible command error", true);
+                        message.payload = "Server response: status unknown, possible command error";
+                        addMessageToCommandbody(message);
                     }
                     break;
                 case messagetypes.settings.type:
@@ -139,10 +144,14 @@ function setupCommandBody() {
 }
 
 function postTimeTable(message) {
-    addLineToCommandbody("Processing times for submitted commands:", true);
-    for (let i = 0; i < message.processtimes.length; i++) {
-        let line = message.processtimes[i].timing;
-        addLineToCommandbody(line);
+    let msgtt = messagetypes.timing;
+    msgtt.payload = "Chart processing times:"
+    addMessageToCommandbody(msgtt);
+    let times = message.payload.processtimes;
+    for (let i = 0; i < times.length; i++) {
+        let lmsg = messagetypes.info;
+        lmsg.payload = times[i].timing;
+        addMessageToCommandbody(lmsg);
     }
 }
 
@@ -163,7 +172,7 @@ function removeLastEntry() {
 function resetEverything() {
     selectedchart = -1;
     selectedcommand = -1;
-    populateCommandList();
+    resetCommandList(); 
     resetChartList();  
     setupCommandBody();
     blinking = false;
@@ -177,36 +186,45 @@ function submitCommands() {
         blinkSendButton(true);
         websocket.send(JSON.stringify(commands));
         commands = {"commandlist": []};
+        resetCommandList();
+        resetChartList();  
     }
 }
 
 function addCommandRequest() {
+    if (inResponseView) {
+        setupCommandBody();
+    }
+
     if (selectedcommand == -1) {
         alert("You must first select a command to add!")
         return;
     }
-    if (inResponseView) {
-        setupCommandBody();
-    }
-    let entry = { command: selectedcommand, chart: selectedchart };
-    let confentry = `${selectedcommand}: ${command.value}`;
+
     if (selectedcommand === 0 || selectedcommand === 2) {
         if (chart.value === "") {
             alert("You must select a chart for the selected command");
             return;
         }
     }
-    if (chart.value !== "") {
-        confentry += `,  ${selectedchart}: ${chart.value}`
-    }
 
-    commands.commandlist.push(entry); 
+    let infomessage = settings.messagetypes.info;
+    infomessage.payload = command.value;
     
-    addLineToCommandbody(confentry);
+    if (chart.value !== "") {
+        infomessage.payload += ` : ${chart.value}`
+    }
+    addMessageToCommandbody(infomessage);
+    
+    let idx = commands.commandlist.length;
+    let entry = { command: selectedcommand, chart: selectedchart };
+    commands.commandlist.push(entry); 
+
     selectedchart = -1;
     selectedcommand = -1;
-    populateCommandList();
-    resetChartList();  
+    
+    command.value = "";
+    chart.value = "";
 }
 
 function blinkSendButton(state) {
@@ -225,18 +243,21 @@ function blinkSendButton(state) {
     }
 }
 
-function addLineToCommandbody(line, usebold = false) {
+function addMessageToCommandbody(message) { //(line, usebold = false, colorclass = 'none') {
     for (let i = 0; i < commandbody.rows.length; i++) {
         let tr = commandbody.rows[i];
+        if (i > 0) {
+            let lastrow = commandbody.rows[i -1];
+            let lasttd = lastrow.firstChild;
+            if (lasttd.classList.contains("runningchart")) {
+                lasttd.classList.remove("runningchart");
+                lasttd.innerText = lasttd.innerText.replace("Now", "Finished");
+            };
+        }
         let td = tr.firstChild;
         if (td.innerText === "") { 
-            if (usebold === true) {
-                td.classList.add('boldline')
-                td.textContent = line;
-            }
-            else {
-                td.textContent = line;
-            }
+            td.classList.add(... message.css);
+            td.textContent = message.payload;
             return;
         }
     }
@@ -300,18 +321,17 @@ function populateFullChartList() {
     }
 }
 
-function populateCommandList() {
-    resetCommandList();
+function populateCommandsDropdown() {
     let alist = []; 
     for (let i = 0; i < 4; i++) {
         alist.push(document.createElement('option'));
         alist[i].className = "option";
     }
-    alist[0].value = "Process a single area VFR chart";
+    alist[0].value = "Process single area VFR chart";
     commandlist.appendChild(alist[0]);
-    alist[1].value = "Process all 53 area VFR charts individually";
+    alist[1].value = "Process all 53 area VFR charts";
     commandlist.appendChild(alist[1]);
-    alist[2].value = "Process a single full chart ";
+    alist[2].value = "Process single full chart";
     commandlist.appendChild(alist[2]);
     alist[3].value = "Process all of the full charts";
     commandlist.appendChild(alist[3]);
@@ -322,7 +342,6 @@ function resetCommandList() {
     command.value = "";
     selectedcommand = -1;
     selectedchart = -1;
-
 }
 
 function resetChartList() {

@@ -346,10 +346,10 @@ function processAllAreas() {
     processSingles();
 }
 
-function processSingles() {
+function processSingles(msgid = -1) {
     addmetabounds = true;   
-    for (var x = 0; x < parray.length; x++) {
-        chartworkname = settings.areachartlist[parray[x]];
+    for (let idx = 0; idx < parray.length; idx++) {
+        chartworkname = settings.areachartlist[parray[idx]];
         chartname = chartworkname;
         clippedShapeFolder = path.join(appdir, "clipshapes", "sectional");
         chartlayertype = settings.layertypes[settings.layertypeindex];
@@ -358,7 +358,10 @@ function processSingles() {
         console.log(charturl);
         let cpt = new ProcessTime(chartname);
         timings.set(chartname, cpt);
-        sendMessageToClients(messagetypes.info, `Now processing chart: ${chartname.replaceAll("_", " ")}`);
+        let runmsg = messagetypes.running;
+        runmsg.payload = `Now processing chart: ${chartname.replaceAll("_", " ")}`;
+        runmsg.id = msgid;
+        sendMessageToClients(runmsg);
         runProcessing();
         console.log(`${cpt.totaltime}\r\n`);
     }
@@ -386,10 +389,10 @@ function processOneFull() {
     processFulls();
 }
 
-function processFulls() {
+function processFulls(msgid = -1) {
     addmetabounds = true; 
-    parray.forEach((index) => {
-        let chart = settings.fullchartlist[index]; 
+    for (let idx = 0; idx < parray.length; idx++) { //forEach((index) => {
+        let chart = settings.fullchartlist[idx]; 
         let lcasename = chart[0].toLowerCase();
         let charttype = chart[1];
 
@@ -401,7 +404,7 @@ function processFulls() {
             lcasename = chart[2].toLowerCase();
             charturl = settings.ifrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
             clippedShapeFolder = path.join(appdir, "clipshapes", lcasename);
-            chartname = settings.fullchartlist[index][2]; // use alias value for IFR
+            chartname = settings.fullchartlist[idx][2]; // use alias value for IFR
             chartfolder = path.join(workarea, chartname);
         }
         else { // vfr
@@ -415,12 +418,15 @@ function processFulls() {
             chartname = chartworkname;
             chartfolder = `${workarea}/${chartworkname}`;
         }
-        sendMessageToClients(messagetypes.info, `Now processing chart: ${chartname.replaceAll("_", " ")}`);
+        let runmsg = messagetypes.running;
+        runmsg.payload = `Now processing chart: ${chartname.replaceAll("_", " ")}`;
+        runmsg.id = msgid;
+        sendMessageToClients(runmsg);
         let cpt = new ProcessTime(chartname);
         timings.set(chartname, cpt);
         runProcessing();
         console.log(`${cpt.totaltime}\n`);
-    });
+    };
 }
 
 function generateGeoTIFF() {
@@ -957,10 +963,9 @@ function enterWebserverMode() {
 
 /**
  * Iterate through any/all connected clients and send data
- * @param {string} stringified json message 
+ * @param {message} json message object 
  */
-async function sendMessageToClients(message, payload) {
-    message.payload = payload;
+async function sendMessageToClients(message) {
     [...connections.keys()].forEach((client) => {
         client.send(JSON.stringify(message));
     });
@@ -1017,13 +1022,13 @@ process.on('SIGINT', () => {
  * 2 = Process a single full chart from the full chart list
  * 3 = Process all of the full charts in the full chart list
  * 4 = Return the settings.json file
- * @param {*} commands JSON object message
+ * @param {*} message JSON object message
  */
-function parseMakeCommand(commands) {
+function parseMakeCommand(message) {
     let idx = -1;
     let opt = -1;
     let item = {};
-    let list = commands.commandlist;
+    let list = message.commandlist;
     try {
         inMakeLoop = true;
         outerloop: for (let i = 0; i < list.length; i++) {
@@ -1035,7 +1040,8 @@ function parseMakeCommand(commands) {
             switch (idx) {
                 case 0:
                     if (opt >= 0 && opt <= 52) {
-                        processOneArea(opt);
+                        parray.push(opt);
+                        processSingles(i);
                     }
                     break;
                 case 1:
@@ -1048,7 +1054,7 @@ function parseMakeCommand(commands) {
                         if (chart === "DDECUS") chart = settings.fullchartlist[opt][2].replace("_", " ");
                         console.log(`Processing full chart: ${chart}`);
                         parray.push(opt);
-                        processFulls();
+                        processFulls(i);
                     }
                     break;
                 case 3:
@@ -1063,8 +1069,10 @@ function parseMakeCommand(commands) {
                     break outerloop;
             }
         }
-        let tmmsg = getTimingJsonObject();
-        sendMessageToClients(messagetypes.timing, tmmsg);
+        let payload = getTimingJsonObject();
+        let timemsg = messagetypes.timing;
+        timemsg.payload = payload;
+        sendMessageToClients(timemsg);
     }
     catch(err){
         console.log(`Error:\r\n ${err}`);

@@ -180,15 +180,6 @@ html, body {
     height: 20px;
     width: 480px;
 }
-.tablecell {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: medium;
-    text-align: left;
-    background-color: white;
-    height: 20px;
-    width: 480px;
-}
-
 .centeredcell {
     font-family: Arial, Helvetica, sans-serif;
     font-size: medium;
@@ -198,14 +189,37 @@ html, body {
     width: 480px;
 }
 
-.boldline {
+/* These classes are for command table entries */
+.normal {
     font-family: Arial, Helvetica, sans-serif;
     font-size: medium;
-    font-weight: bold;
     text-align: left;
+    background-color: white;
+    height: 20px;
+    width: 480px;
+}
+.boldgreen {
+    font-weight: bold;
     background-color: darkgreen;
     color: white;
-    /* text-decoration: underline overline;  */
+}
+.boldyellow {
+    font-weight: bold;
+    background-color: yellow;
+    color: black;
+}
+.boldred {
+    font-weight: bold;
+    background-color: red;
+    color: white;
+}
+.timingheader {
+    font-weight: bold;
+    background-color: lightgreen;
+    color: black;
+}
+.runningchart {
+    animation: runningChart 3s infinite
 }
 
 .start-animation {
@@ -220,7 +234,12 @@ html, body {
 /* For animations */
 @keyframes colorChange {
     0% { background-color: darkgreen ; color: white;}
-    50% { background-color: red; color: white; }
-    /* 66.66% { background-color: green; color: white;} */
+    50% { background-color: yellow; color: black; }
     100% { background-color: darkgreen; color: white;}
+}
+
+@keyframes runningChart {
+    0% { background-color: white; color: black; }
+    50% { background-color: lightgreen; color: black; }
+    100% { background-color: white; color: black; }
 }
