@@ -33,7 +33,7 @@ class ProcessTime {
         let phh = pad2(hh);
         let pmm = pad2(mm);
         let pss = pad2(ss);
-        this.totaltime = `timing: ${phh}:${pmm}:${pss}`;
+        this.totaltime = `time: ${phh}:${pmm}:${pss}`;
     }
 };
 
