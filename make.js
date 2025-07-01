@@ -33,7 +33,7 @@ class ProcessTime {
         let phh = pad2(hh);
         let pmm = pad2(mm);
         let pss = pad2(ss);
-        this.totaltime = `${this.processname} processing time: ${phh}:${pmm}:${pss}`;
+        this.totaltime = `timing: ${phh}:${pmm}:${pss}`;
     }
 };
 
@@ -358,12 +358,14 @@ function processSingles(msgid = -1) {
         console.log(charturl);
         let cpt = new ProcessTime(chartname);
         timings.set(chartname, cpt);
-        let runmsg = messagetypes.running;
-        runmsg.payload = `Now processing chart: ${chartname.replaceAll("_", " ")}`;
-        runmsg.id = msgid;
-        sendMessageToClients(runmsg);
         runProcessing();
         console.log(`${cpt.totaltime}\r\n`);
+        
+        // if this was a single chart process request,
+        // return the resulting timing class object
+        if (msgid > -1) {
+            return cpt;
+        }
     }
 }
 
@@ -936,7 +938,11 @@ function reportProcessingTime() {
     let pmm = pad2(mm);
     let pss = pad2(ss);
     
-    logEntry(`Start time: ${startdate}\r\nEnd time: ${date2}\r\nTotal processing time: ${phh}:${pmm}:${pss}`);
+    let logtime = `Start time: ${startdate}, End time: ${date2}, Total time: ${phh}:${pmm}:${pss}`;
+    logEntry(logtime);
+    
+    let ttime = `${phh}:${pmm}:${pss}`;
+    return ttime;
 }
 
 /**
@@ -1041,7 +1047,19 @@ function parseMakeCommand(message) {
                 case 0:
                     if (opt >= 0 && opt <= 52) {
                         parray.push(opt);
-                        processSingles(i);
+                        let ridx = i + 1;
+
+                        let mt = messagetypes.running;
+                        mt.rowindex = ridx;
+                        sendMessageToClients(messagetypes.running);
+
+                        let cpt = processSingles(i);
+
+                        mt = messagetypes.complete;
+                        mt.rowindex = ridx;
+                        let mtcomplete = messagetypes.complete;
+                        mtcomplete.payload = cpt.totaltime;
+                        sendMessageToClients(mtcomplete);
                     }
                     break;
                 case 1:
@@ -1069,7 +1087,7 @@ function parseMakeCommand(message) {
                     break outerloop;
             }
         }
-        let payload = getTimingJsonObject();
+        let payload = reportProcessingTime(); //getTimingJsonObject();
         let timemsg = messagetypes.timing;
         timemsg.payload = payload;
         sendMessageToClients(timemsg);

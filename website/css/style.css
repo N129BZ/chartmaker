@@ -169,7 +169,7 @@ html, body {
     top: 0px;
     left: 0px;
     height: 300px;
-    width: 513px;
+    width: 490px;
     margin: 10px;
     padding: 0px;
 }
@@ -190,16 +190,40 @@ html, body {
 }
 
 /* These classes are for command table entries */
+.leftcell {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: medium;
+    text-align: left;
+    background-color: white;
+    border: 1px solid darkgreen;
+    color: black;
+    height: 20px;
+    width: 65%;
+}
+.rightcell {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: medium;
+    text-align: center;
+    margin-right: 8px;
+    background-color: white;
+    border: 1px solid darkgreen;
+    overflow-y: hidden;
+    color: black;
+    height: 20px;
+    width: 35%;
+}
 .normal {
     font-family: Arial, Helvetica, sans-serif;
     font-size: medium;
     text-align: left;
     background-color: white;
+    color: black;
     height: 20px;
     width: 480px;
 }
 .boldgreen {
     font-weight: bold;
+    text-align: center;
     background-color: darkgreen;
     color: white;
 }
@@ -218,10 +242,9 @@ html, body {
     background-color: lightgreen;
     color: black;
 }
-.runningchart {
+.running {
     animation: runningChart 3s infinite
 }
-
 .start-animation {
     animation: colorChange 4s infinite; 
 }

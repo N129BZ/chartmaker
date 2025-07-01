@@ -24,7 +24,7 @@
         "debug": true,
         "httpport": 1962,
         "wsport": 1970,
-        "webservermode": false,
+        "webservermode": true,
 
         "chartprocessindexes": [0,1,2,3,4,5,6,7],
         "fullchartlist": [
@@ -119,23 +119,39 @@
         "messagetypes": {
             "info": { 
                "type": "info",
-               "payload": ""
+               "payload": "",
+               "css": ["normal"]
             },
             "timing": {
                 "type": "timing",
-                "payload": ""
+                "payload": "",
+                "css": ["timingheader"]
             },
             "response": {
                 "type": "response",
-                "payload": ""
+                "payload": "",
+                "css": ["boldgreen"]
+            },
+            "running": {
+                "type": "running",
+                "css": "runningchart",
+                "rowindex": -1
+            },
+            "complete": {
+                "type": "complete",
+                "payload": "",
+                "css":  "normal",
+                "rowindex": -1
             },
             "command": {
                 "type": "command",
-                "payload": ""
+                "payload": "",
+                "css": ["normal"]
             },
             "settings": {
                 "type": "settings",
-                "payload": ""
+                "payload": "",
+                "css": ["normal"]
             }
         }
     }

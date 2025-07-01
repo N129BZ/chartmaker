@@ -35,6 +35,8 @@ var selectedcommand = -1;
 var selectedchart = -1;
 var blinking = false;
 var inResponseView = false;
+var fullChartNames = [];
+var areaChartNames = [];
 
 window.addEventListener("load", (event) => {
     setupCommandBody();
@@ -58,6 +60,8 @@ $.get({
         try {
             settings = JSON.parse(data);
             messagetypes = settings.messagetypes;
+            setChartNameArrays();
+            console.log(settings);
         }
         catch(err) {
             console.log(err);
@@ -67,6 +71,23 @@ $.get({
         console.error(xhr.status, thrownError);
     }
 });
+
+function setChartNameArrays() {
+    // Full chart names
+    for (let i = 0; i < settings.fullchartlist.length; i++) {
+        let item = settings.fullchartlist[i][0];
+        if (item.includes("DDECUS")) {
+            item = settings.fullchartlist[i][2];
+        }
+        fullChartNames.push(item.replaceAll("_", " "));
+    }
+
+    // Area chart names
+    for (let i = 0; i < settings.areachartlist.length; i++) {
+        let item = settings.areachartlist[i];
+        areaChartNames.push(item.replaceAll("_", " "));
+    }
+};
 
 /**
  * Websocket connection and message handling
@@ -82,22 +103,23 @@ $.get({
             switch (message.type) {
                 case messagetypes.timing.type: 
                     blinkSendButton(false);
-                    postTimeTable(message);
+                    postTimingsMessaqe(message);
                     break;
                 case messagetypes.info.type:
-                    addMessageToCommandbody(message);
+                    updateCommandBody(message);
                     break;
+                case messagetypes.complete.type:
                 case messagetypes.running.type:
-                    addMessageToCommandbody(message);
+                    updateCommandBody(message);
                     break;
                 case messagetypes.response.type:
                     if (message.payload === 'success') {
                         message.payload = "Server response: chart processing has started...";
-                        addMessageToCommandbody(message);
+                        updateCommandBody(message);
                     }
                     else {
                         message.payload = "Server response: status unknown, possible command error";
-                        addMessageToCommandbody(message);
+                        updateCommandBody(message);
                     }
                     break;
                 case messagetypes.settings.type:
@@ -129,30 +151,12 @@ $.get({
     }
 });
 
-function setupCommandBody() {
-    inResponseView = false;
-    commandbody.innerText = "";
-    for (let i = 0; i < 53; i++) {
-        let tr = document.createElement("tr");
-        tr.setAttribute("tag", i.toString());
-        tr.className = "tablerow";
-        let td = document.createElement("td");
-        td.className = "tablecell";
-        tr.appendChild(td);
-        commandbody.appendChild(tr);
-    }
-}
-
-function postTimeTable(message) {
-    let msgtt = messagetypes.timing;
-    msgtt.payload = "Chart processing times:"
-    addMessageToCommandbody(msgtt);
-    let times = message.payload.processtimes;
-    for (let i = 0; i < times.length; i++) {
-        let lmsg = messagetypes.info;
-        lmsg.payload = times[i].timing;
-        addMessageToCommandbody(lmsg);
-    }
+function postTimingsMessaqe(message) {
+    let tr = commandbody.rows[0];
+    let td = tr.firstChild;
+    td.innerText = `Total time for all processing: ${message.payload}`;
+    resetCommandList(); 
+    resetChartList();  
 }
 
 function removeLastEntry() {
@@ -207,18 +211,56 @@ function addCommandRequest() {
             return;
         }
     }
-
-    let infomessage = settings.messagetypes.info;
-    infomessage.payload = command.value;
     
-    if (chart.value !== "") {
-        infomessage.payload += ` : ${chart.value}`
+    // If one of the "all charts" options has been selected, 
+    // initialize the list len number to match the option.
+    let listlen = 1; 
+    let isfullList = true;
+    let cmdtext = "";
+    let list = [];
+    switch (selectedcommand) {
+        case 0:
+            cmdtext = "Process area chart :";
+            list = areaChartNames;
+            isfullList = false;
+            break;
+        case 1:
+            cmdtext = "Process area chart :";
+            list = areaChartNames;
+            selectedcommand --;
+            selectedchart = 0;
+            break;
+        case 2:
+            cmdtext = "Process full chart :";
+            list = fullChartNames;
+            isfullList = false;
+            break;
+        case 3:
+            cmdtext = "Process full chart :";
+            list = fullChartNames;
+            selectedcommand --;
+            selectedchart = 0;
+            break;
     }
-    addMessageToCommandbody(infomessage);
     
     let idx = commands.commandlist.length;
-    let entry = { command: selectedcommand, chart: selectedchart };
-    commands.commandlist.push(entry); 
+    
+    for (let i = idx; i < idx + list.length; i++) {
+        let infomessage = settings.messagetypes.info;
+        let chartname = list[selectedchart];
+        infomessage.payload = `${cmdtext} ${chartname}` ;
+        updateCommandBody(infomessage);
+
+        let ridx = i + 1;
+        let entry = { command: selectedcommand, chart: selectedchart, rowindex: ridx };
+        commands.commandlist.push(entry); 
+        if (isfullList) {
+            selectedchart = selectedchart + 1; 
+        }
+        else {
+            break;
+        }
+    }
 
     selectedchart = -1;
     selectedcommand = -1;
@@ -231,34 +273,53 @@ function blinkSendButton(state) {
     if (state === true) {
         blinking = true;
         sendBtn.textContent = "Processing...";
-        sendBtn.classList.remove('stop-animation')
         sendBtn.classList.add('start-animation');
     }
     else {
         blinking = false;
         sendBtn.textContent = "Send Commands";
         sendBtn.classList.remove('start-animation');
-        sendBtn.classList.add('stop-animation')
         sendBtn.style.backgroundColor = "Blue";
     }
 }
 
-function addMessageToCommandbody(message) { //(line, usebold = false, colorclass = 'none') {
-    for (let i = 0; i < commandbody.rows.length; i++) {
-        let tr = commandbody.rows[i];
-        if (i > 0) {
-            let lastrow = commandbody.rows[i -1];
-            let lasttd = lastrow.firstChild;
-            if (lasttd.classList.contains("runningchart")) {
-                lasttd.classList.remove("runningchart");
-                lasttd.innerText = lasttd.innerText.replace("Now", "Finished");
-            };
-        }
+function updateCommandBody(message) { 
+    if (message.type === "response") {
+        let tr = commandbody.rows[0]; // First row reserved for static title text
         let td = tr.firstChild;
-        if (td.innerText === "") { 
-            td.classList.add(... message.css);
-            td.textContent = message.payload;
-            return;
+        td.classList.add(... message.css);
+        td.innerText = message.payload;
+    }
+    else {
+        if (message.type === "running") {
+            let rowidx = +message.rowindex;
+            let tr = commandbody.rows[rowidx];
+            let td = tr.children[0];
+            td.classList.add("running");
+            td = tr.children[1];
+            td.innerText = "* in progress *";
+            td.classList.add("running");
+        }
+        else if (message.type === "complete") {
+            let rowidx = +message.rowindex;
+            let tr = commandbody.rows[rowidx];
+            let td = tr.children[0];
+            td.classList.remove("running");
+            td = tr.children[1];
+            td.innerText = message.payload;
+            td.classList.remove("running");
+        }
+        else {
+            // Add the incoming message to the first empty row
+            for (let i = 1; i < commandbody.rows.length; i++) {
+                let tr = commandbody.rows[i];
+                let td = tr.firstChild;
+                if (td.innerText === "") { 
+                    td.classList.add(... message.css);
+                    td.innerText = message.payload;
+                    return;
+                }
+            }
         }
     }
 }
@@ -282,7 +343,7 @@ function populateChartList() {
         if (commandlist.options[i].value === item) {
             selectedcommand = i;
             break; 
-        }Red
+        }
     }
 
     if (selectedcommand == 0) {
@@ -321,6 +382,28 @@ function populateFullChartList() {
     }
 }
 
+function setupCommandBody() {
+    inResponseView = false;
+    commandbody.innerText = "";
+    for (let i = 0; i < 70; i++) {
+        let tr = document.createElement("tr");
+        tr.setAttribute("tag", i.toString());
+        tr.className = "tablerow";
+        let td = document.createElement("td");
+        td.className = "leftcell";
+        if (i === 0) {
+            td.setAttribute("colspan", "2");
+            td.innerText = "Command list";
+            td.classList.add("boldgreen");
+        }
+        tr.appendChild(td);
+        td = document.createElement("td");
+        td.className = "rightcell";
+        tr.appendChild(td);
+        commandbody.appendChild(tr);
+    }
+}
+
 function populateCommandsDropdown() {
     let alist = []; 
     for (let i = 0; i < 4; i++) {
@@ -338,13 +421,12 @@ function populateCommandsDropdown() {
 }
 
 function resetCommandList() {
-    commandlist.innerText = ""; 
     command.value = "";
     selectedcommand = -1;
     selectedchart = -1;
 }
 
 function resetChartList() {
-    chartlist.innerText = "";
     chart.value = "";
 }
+
