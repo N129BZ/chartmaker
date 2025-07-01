@@ -154,7 +154,7 @@ function setChartNameArrays() {
 function postTimingsMessaqe(message) {
     let tr = commandbody.rows[0];
     let td = tr.firstChild;
-    td.innerText = `Total time for all processing: ${message.payload}`;
+    td.innerText = `Total time for chart processing: ${message.payload}`;
     resetCommandList(); 
     resetChartList();  
 }
