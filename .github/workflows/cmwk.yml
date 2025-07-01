@@ -1,0 +1,20 @@
+name: Build and Test
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # Specifies the GitHub-hosted runner
+    steps:
+      - uses: actions/checkout/@v1.58  # Checks out your code
+      - name: Setup Node.js
+        uses: actions/setup-node@v1.58
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install
+      - name: Run perl script
+        run: ./perlinstall.sh
