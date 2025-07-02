@@ -6,6 +6,13 @@ html, body {
 @media screen and (max-width: 600px) {
   /* Apply styles here for screens 600px or narrower */
 }
+
+/* .application {
+    display: flex; 
+    justify-content: center; 
+}
+ */
+ 
 .header {
     font-family: Arial, Helvetica, sans-serif;
     font-size:x-large;
@@ -61,6 +68,23 @@ html, body {
     position: relative;
     width: 300px;
     height: 18px;
+}
+.undobutton {
+    width: 24px;
+    height: 24px;
+    top: 4px;
+    position:relative;
+    margin-right: 2px;
+    z-index: 0;
+}
+.udimage {
+    width: 24px;
+    height: 24px;
+    position: absolute;
+    left: -2px;
+    top: -3px;
+    margin-right: 2px;
+    z-index: 12;
 }
 .addbutton {
 	font-family: Arial, Helvetica, sans-serif;
@@ -157,7 +181,7 @@ html, body {
     position: relative;
     top: -10px;
     left: -18;
-    height: 301px;
+    height: 320px;
     width: 513px;
     overflow-x: hidden;
     overflow-y: scroll;

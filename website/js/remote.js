@@ -38,9 +38,14 @@ var inResponseView = false;
 var fullChartNames = [];
 var areaChartNames = [];
 
-window.addEventListener("load", (event) => {
+window.addEventListener("load", () => {
     setupCommandBody();
     populateCommandsDropdown();
+});
+
+window.addEventListener("resize", () => {
+    //confwindow.style.height = "60%";
+    console.log("windowresize event");
 });
 
 document.addEventListener('keydown', function(event) {
@@ -52,25 +57,21 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-$.get({
-    async: false,
-    type: "GET",
-    url: URL_GET_SETTINGS,
-    success: (data) => {
-        try {
-            settings = JSON.parse(data);
-            messagetypes = settings.messagetypes;
-            setChartNameArrays();
-            console.log(settings);
-        }
-        catch(err) {
-            console.log(err);
-        }
-    },
-    error: (xhr, ajaxOptions, thrownError) => {
-        console.error(xhr.status, thrownError);
+async function getSettingsFromServer() {
+    try {
+        const data = await $.get(URL_GET_SETTINGS);
+        settings = JSON.parse(data);
+        console.log(settings);
+        messagetypes = settings.messagetypes;
+        setChartNameArrays();
+        runWebsocketServer();
     }
-});
+    catch(err) {
+        console.log(err);
+    }
+}
+
+getSettingsFromServer();
 
 function setChartNameArrays() {
     // Full chart names
@@ -92,7 +93,7 @@ function setChartNameArrays() {
 /**
  * Websocket connection and message handling
  */
- $(() => { 
+function runWebsocketServer() { //} $(() => { 
     try {
         let wsurl = `${URL_WINSOCK}${settings.wsport}`;
         console.log(`OPENING: ${wsurl}`);
@@ -149,7 +150,7 @@ function setChartNameArrays() {
     catch (error) {
         console.log(error);
     }
-});
+};
 
 function postTimingsMessaqe(message) {
     let tr = commandbody.rows[0];
@@ -157,6 +158,15 @@ function postTimingsMessaqe(message) {
     td.innerText = `Total time for chart processing: ${message.payload}`;
     resetCommandList(); 
     resetChartList();  
+}
+
+function undoSelection(btn) {
+    if (btn.id === "ud0") {
+        command.value = "";
+    }
+    else { // assume "ud1"
+        chart.value = "";
+    }
 }
 
 function removeLastEntry() {
@@ -346,11 +356,15 @@ function populateChartList() {
         }
     }
 
-    if (selectedcommand == 0) {
-        populateAreaChartList();
-    }
-    else if(selectedcommand == 2) {
-        populateFullChartList();
+    switch (selectedcommand) {
+        case 0:
+        case 1:
+            populateAreaChartList();
+            break;
+        case 2:
+        case 3:
+            populateFullChartList();
+            break;
     }
 }
 
@@ -428,5 +442,6 @@ function resetCommandList() {
 
 function resetChartList() {
     chart.value = "";
+    chartlist.innerText = "";
 }
 
