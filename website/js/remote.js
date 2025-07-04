@@ -64,7 +64,7 @@ async function getSettingsFromServer() {
         console.log(settings);
         messagetypes = settings.messagetypes;
         setChartNameArrays();
-        runWebsocketServer();
+        startWebsocketClient();
     }
     catch(err) {
         console.log(err);
@@ -93,7 +93,7 @@ function setChartNameArrays() {
 /**
  * Websocket connection and message handling
  */
-function runWebsocketServer() { //} $(() => { 
+function startWebsocketClient() { 
     try {
         let wsurl = `${URL_WINSOCK}${settings.wsport}`;
         console.log(`OPENING: ${wsurl}`);
@@ -113,13 +113,14 @@ function runWebsocketServer() { //} $(() => {
                 case messagetypes.running.type:
                     updateCommandBody(message);
                     break;
-                case messagetypes.response.type:
+                case messagetypes.commandresponse.type:
                     if (message.payload === 'success') {
                         message.payload = "Server response: chart processing has started...";
                         updateCommandBody(message);
                     }
                     else {
                         message.payload = "Server response: status unknown, possible command error";
+                        message.css = ["boldred"];
                         updateCommandBody(message);
                     }
                     break;
@@ -131,7 +132,6 @@ function runWebsocketServer() { //} $(() => {
                 default:
                     console.log(message.payload);
                     break;
-                // end of case work
             }
         }
 
@@ -295,7 +295,7 @@ function blinkSendButton(state) {
 }
 
 function updateCommandBody(message) { 
-    if (message.type === "response") {
+    if (message.type === "commandresponse") {
         let tr = commandbody.rows[0]; // First row reserved for static title text
         let td = tr.firstChild;
         td.classList.add(... message.css);

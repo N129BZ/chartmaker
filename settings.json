@@ -127,8 +127,8 @@
                 "payload": "",
                 "css": ["timingheader"]
             },
-            "response": {
-                "type": "response",
+            "commandresponse": {
+                "type": "commandresponse",
                 "payload": "",
                 "css": ["boldgreen"]
             },

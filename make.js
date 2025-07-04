@@ -394,7 +394,7 @@ function processOneFull() {
 function processFulls(msgid = -1) {
     addmetabounds = true; 
     for (let idx = 0; idx < parray.length; idx++) { //forEach((index) => {
-        let chart = settings.fullchartlist[idx]; 
+        let chart = settings.fullchartlist[parray[idx]]; 
         let lcasename = chart[0].toLowerCase();
         let charttype = chart[1];
 
@@ -420,14 +420,16 @@ function processFulls(msgid = -1) {
             chartname = chartworkname;
             chartfolder = `${workarea}/${chartworkname}`;
         }
-        let runmsg = messagetypes.running;
-        runmsg.payload = `Now processing chart: ${chartname.replaceAll("_", " ")}`;
-        runmsg.id = msgid;
-        sendMessageToClients(runmsg);
+
         let cpt = new ProcessTime(chartname);
         timings.set(chartname, cpt);
-        runProcessing();
         console.log(`${cpt.totaltime}\n`);
+
+        runProcessing();
+
+        if (msgid > -1) {
+            return cpt;
+        }
     };
 }
 
@@ -1035,6 +1037,7 @@ function parseMakeCommand(message) {
     let opt = -1;
     let item = {};
     let list = message.commandlist;
+    
     try {
         inMakeLoop = true;
         outerloop: for (let i = 0; i < list.length; i++) {
@@ -1042,14 +1045,14 @@ function parseMakeCommand(message) {
             item = list[i];
             idx = Number(item.command);
             opt = Number(item.chart);
+            let mt = {};
             console.log(`command: ${idx}, chart: ${opt}`);
             switch (idx) {
                 case 0:
                     if (opt >= 0 && opt <= 52) {
                         parray.push(opt);
                         let ridx = i + 1;
-
-                        let mt = messagetypes.running;
+                        mt = messagetypes.running;
                         mt.rowindex = ridx;
                         sendMessageToClients(messagetypes.running);
 
@@ -1068,11 +1071,23 @@ function parseMakeCommand(message) {
                     break;
                 case 2:
                     if (opt >= 0 && opt <= 7) {
+                        let ridx = i + 1;
+                        parray.push(opt);
+                        mt = messagetypes.running;
+
                         let chart = settings.fullchartlist[opt][0].replace("_", " ");
                         if (chart === "DDECUS") chart = settings.fullchartlist[opt][2].replace("_", " ");
                         console.log(`Processing full chart: ${chart}`);
-                        parray.push(opt);
-                        processFulls(i);
+
+                        mt.rowindex = ridx;
+                        sendMessageToClients(mt);
+
+                        let cpt = processFulls(i);
+
+                        mt = messagetypes.complete;
+                        mt.rowindex = ridx;
+                        mt.payload = cpt.totaltime;
+                        sendMessageToClients(mt);
                     }
                     break;
                 case 3:
@@ -1087,7 +1102,7 @@ function parseMakeCommand(message) {
                     break outerloop;
             }
         }
-        let payload = reportProcessingTime(); //getTimingJsonObject();
+        let payload = reportProcessingTime(); 
         let timemsg = messagetypes.timing;
         timemsg.payload = payload;
         sendMessageToClients(timemsg);
@@ -1139,10 +1154,12 @@ function processCommandList(commands) {
                     let strcht = "";
                     switch (tclcmd) {
                         case 0:
-                            strcht = settings.areachartlist[tclcht].replaceAll("_", " ");
+                            strcht = settings.areachartlist[tclcht]
+                            strcht = strcht.replaceAll("_", " ");
                             break;
                         case 2:
-                            strcht = settings.fullchartlist[tclcht].replaceAll("_", " ");
+                            strcht = settings.fullchartlist[tclcht][0];
+                            strcht = strcht.replaceAll("_", " ");
                             break;
                         default:
                             strcht = "N/A";
@@ -1229,7 +1246,7 @@ function processCommandList(commands) {
                     let msgclist = processCommandList(message);
 
                     if (!inMakeLoop && !sendSettings) {
-                        msg = messagetypes.response;
+                        msg = messagetypes.commandresponse;
                         msg.payload = 'success';
                         ws.send(JSON.stringify(msg));
                         ws.send(JSON.stringify(msgclist));
