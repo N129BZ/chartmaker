@@ -1192,6 +1192,7 @@ function processCommandList(commands) {
             });
 
             var options = {
+                maxAge: 600000,
                 dotfiles: 'ignore',
                 etag: false,
                 extensions: ['html'],
@@ -1202,11 +1203,11 @@ function processCommandList(commands) {
                 }
             };
 
-            app.use(express.static(`${appdir}/website`, options));
-            app.use(favicon(`${appdir}/website/img/favicon.png`));
+            app.use(express.static(`${appdir}/public`, options));
+            app.use(favicon(`${appdir}/public/img/favicon.png`));
 
             app.get("/", (req, res) => {
-                res.send(fs.readFileSync(`${appdir}/website/index.html`, "utf-8"));
+                res.send(fs.readFileSync(`${appdir}/public/index.html`, "utf-8"));
                 res.end();
             });
 
