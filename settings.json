@@ -17,7 +17,7 @@
         "zoomrange" : "0-11",
         "centerzoomlevel": "7",
         "dbextension": "db",
-        "externaldbfolder": "",
+        "defaultdbfolder": "public/charts",
         "addoverviews": true,
         "usecommandline": true,
         "timezone": "America/Chicago",
@@ -140,6 +140,7 @@
             "complete": {
                 "type": "complete",
                 "payload": "",
+                "dbfilename": "",
                 "css":  "normal",
                 "rowindex": -1
             },
@@ -152,6 +153,11 @@
                 "type": "settings",
                 "payload": "",
                 "css": ["normal"]
+            },
+            "download": {
+                "type": "download",
+                "payload": "",
+                "css": ""
             }
         }
     }

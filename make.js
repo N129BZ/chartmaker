@@ -5,9 +5,9 @@ const { execSync } = require('child_process');
 const readlineSync = require('readline-sync');
 const path = require('path');
 const express = require('express');
+const basicAuth = require("express-basic-auth");
 const favicon = require('serve-favicon');
 const WebSocket = require('ws')
-
 
 class ProcessTime {
     constructor(processName) {
@@ -44,10 +44,9 @@ class WsMessage {
     };
 };
 
-// create winsock variables
+// create websocket variables
 var connections = new Map();
 var inMakeLoop = false;
-var sendSettings = false;
 var pingSenderId = 0;
 
 // set the base application folder, this will change if running in docker
@@ -81,10 +80,12 @@ function processPrompt(message) {
     return readlineSync.question(message); 
 }
 
-var timings = new Map();
 const settings = JSON.parse(fs.readFileSync(`${appdir}/settings.json`, "utf-8")).settings;
 const remotemenu = JSON.parse(fs.readFileSync(`${appdir}/remotemenu.json`, "utf-8"))
+const users = JSON.parse(fs.readFileSync(`${appdir}/users.json`, "utf-8")).users;
+
 var useWebServer = settings.webservermode;
+var timings = new Map();
 
 /** 
  *  Set the time zone of this process to the value in settings if it exists.
@@ -149,7 +150,7 @@ if (!fs.existsSync(workarea)) fs.mkdirSync(workarea)
 let chartcache = path.join(appdir, "chartcache");
 if (!fs.existsSync(chartcache)) fs.mkdirSync(chartcache);
 
-let dbfolder = path.join(appdir, "charts");
+let dbfolder = path.join(appdir, "public", "charts");
 if (!fs.existsSync(dbfolder)) fs.mkdirSync(dbfolder)
     
 if (isdocker) {
@@ -160,7 +161,7 @@ if (isdocker) {
     }
 }
 else {
-    let dbf = settings.externaldbfolder;
+    let dbf = settings.defaultdbfolder;
     if ((dbf.length > 0) && (fs.existsSync(dbf))) {
         dbfolder = dbf;
     }
@@ -1060,9 +1061,9 @@ function parseMakeCommand(message) {
 
                         mt = messagetypes.complete;
                         mt.rowindex = ridx;
-                        let mtcomplete = messagetypes.complete;
-                        mtcomplete.payload = cpt.totaltime;
-                        sendMessageToClients(mtcomplete);
+                        mt.dbfilename = `${chartname}.${settings.dbextension}`;
+                        mt.payload = cpt.totaltime;
+                        sendMessageToClients(mt);
                     }
                     break;
                 case 1:
@@ -1137,19 +1138,23 @@ function resetGlobalVariables() {
     nm = 0;
 }
 
-function processCommandList(commands) {
+function processCommandMessage(message) {
     let clist = messagetypes.command;
     clist.payload =  {commandlist: []};
     try {
-        if (commands.type === messagetypes.settings.type) {
-            sendSettings = true;
+        if (message.type === messagetypes.settings.type) {
+            console.log("Settings command received");
+            return;
+        }
+        else if(message.type === messagetypes.download.type) {
+            console.log("Download command received");
             return;
         }
         else {
-            if (commands.commandlist.length > 0) {
-                for (let i = 0; i < commands.commandlist.length; i++) {
-                    let tclcmd = +commands.commandlist[i].command;
-                    let tclcht = +commands.commandlist[i].chart;
+            if (message.commandlist.length > 0) {
+                for (let i = 0; i < message.commandlist.length; i++) {
+                    let tclcmd = +message.commandlist[i].command;
+                    let tclcht = +message.commandlist[i].chart;
                     let strcmd = remotemenu.menuitems[tclcmd];
                     let strcht = "";
                     switch (tclcmd) {
@@ -1205,6 +1210,7 @@ function processCommandList(commands) {
 
             app.use(express.static(`${appdir}/public`, options));
             app.use(favicon(`${appdir}/public/img/favicon.png`));
+            app.use(authentication);
 
             app.get("/", (req, res) => {
                 res.send(fs.readFileSync(`${appdir}/public/index.html`, "utf-8"));
@@ -1216,6 +1222,15 @@ function processCommandList(commands) {
                 res.end();
             });
             
+            app.get("/download", (req, res) => {
+                let fname = `${appdir}/${req.query.file}`;
+                res.download(fname);
+                // let respjson = messagetypes.download;
+                // respjson.payload = "success";
+                // res.send(JSON.stringify(respjson));
+                res.end();
+            });
+
             const wss = new WebSocket.Server({ port: settings.wsport });
             console.log(`Websocket listening on port ${settings.wsport}`);
             let msg = {};
@@ -1244,21 +1259,23 @@ function processCommandList(commands) {
 
                 ws.onmessage = (event) => {
                     let message = JSON.parse(event.data);
-                    let msgclist = processCommandList(message);
-
-                    if (!inMakeLoop && !sendSettings) {
-                        msg = messagetypes.commandresponse;
-                        msg.payload = 'success';
-                        ws.send(JSON.stringify(msg));
-                        ws.send(JSON.stringify(msgclist));
-                        parseMakeCommand(message);
+                    if (message.type === messagetypes.download.type) {
+                        console.log("call a download file manager from here, line 1254")
                     }
-                    else if (sendSettings) {
-                        sendSettings = false;
+                    else if (message.type === messagetypes.settings.type) {
                         let rs = fs.readFileSync(`${appdir}/settings.json`, "utf-8");
-                        msg = messagetypes.settings;
-                        msg.payload = rs;
-                        ws.send(JSON.stringify(msg));
+                        message.payload = rs;
+                        ws.send(JSON.stringify(message));
+                    }
+                    else {
+                        let msgclist = processCommandMessage(message);
+                        if (!inMakeLoop) {
+                            msg = messagetypes.commandresponse;
+                            msg.payload = 'success';
+                            ws.send(JSON.stringify(msg));
+                            ws.send(JSON.stringify(msgclist));
+                            parseMakeCommand(message);
+                        }
                     }
                 };
             });
@@ -1271,3 +1288,34 @@ function processCommandList(commands) {
         
     }
 })();
+
+function authentication(req, res, next) {
+    const authheader = req.headers.authorization;
+    //console.log(req.headers);
+
+    if (!authheader) {
+        let err = new Error('You are not authenticated!');
+        res.setHeader('WWW-Authenticate', 'Basic');
+        err.status = 401;
+        return next(err)
+    }
+    
+    const b64data = authheader.split(' ')[1];
+    let ufound = false;
+    for (let i = 0; i < users.length; i++) {
+        if (users[i] === b64data) {
+            ufound = true;
+            break;
+        }
+    }
+    
+    if (ufound) {
+        return next();
+    }
+    else {
+        let err = new Error('You are not authenticated!');
+        res.setHeader('WWW-Authenticate', 'Basic');
+        err.status = 401;
+        return next(err);
+    }
+}

@@ -13,6 +13,7 @@ let URL_WINSOCK             = `ws://${URL_LOCATION}:`;
 let URL_GET_SETTINGS        = `${URL_SERVER}/settings`;
 let URL_GET_STATUS          = `${URL_SERVER}/status`;
 let URL_POST_DATA           = `${URL_SERVER}/data`;
+let URL_GET_DOWNLOAD        = `${URL_SERVER}/download`;
 
 var messagetypes = {};
 
@@ -25,10 +26,13 @@ var commandlist = document.getElementById("commandlist");
 var chartlist = document.getElementById("chartlist");
 let sendBtn = document.getElementById("send");
 let commandbody = document.getElementById("commandbody");
+let download = document.getElementById("download");
+
 
 var websocket;
 var indexlist = [];
 var commands = {"commandlist": []};
+var downloads = [];
 var confcommands = [];
 var settings = {};
 var selectedcommand = -1;
@@ -44,7 +48,6 @@ window.addEventListener("load", () => {
 });
 
 window.addEventListener("resize", () => {
-    //confwindow.style.height = "60%";
     console.log("windowresize event");
 });
 
@@ -57,17 +60,30 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
+function downloadFile(dbfilename) {
+    const link = document.createElement('a'); 
+    let url = `${URL_GET_DOWNLOAD}/?file=${dbfilename}`;
+    link.href = url;
+    link.download(dbfilename);
+    document.body.appendChild(link); 
+    link.click(); 
+    document.body.removeChild(link); 
+}
+
 async function getSettingsFromServer() {
     try {
-        const data = await $.get(URL_GET_SETTINGS);
-        settings = JSON.parse(data);
+        const data = await fetch(URL_GET_SETTINGS);
+        if (!data.ok) {
+            throw new Error(`HTTP error! status: ${data.status}`);
+        } 
+        settings = await data.json();
         console.log(settings);
         messagetypes = settings.messagetypes;
         setChartNameArrays();
         startWebsocketClient();
     }
     catch(err) {
-        console.log(err);
+        console.log(err.message);
     }
 }
 
@@ -104,7 +120,7 @@ function startWebsocketClient() {
             switch (message.type) {
                 case messagetypes.timing.type: 
                     blinkSendButton(false);
-                    postTimingsMessaqe(message);
+                    postTimingMessaqe(message);
                     break;
                 case messagetypes.info.type:
                     updateCommandBody(message);
@@ -152,13 +168,27 @@ function startWebsocketClient() {
     }
 };
 
-function postTimingsMessaqe(message) {
+function postTimingMessaqe(message) {
     let tr = commandbody.rows[0];
     let td = tr.firstChild;
     td.classList.add( ... message.css);
     td.innerText = `Total time for chart processing: ${message.payload}`;
     resetCommandList(); 
-    resetChartList();  
+    resetChartList(); 
+    commands = {"commandlist": []};
+    
+    for (let i = 0; i < downloads.length; i++) {
+        let msg = downloads[i];
+        let tr = commandbody.rows[msg.rowindex];
+        let td = tr.lastChild; 
+        let btn = document.createElement("button");
+        btn.className = "dlbutton";
+        btn.textContent = "...";
+        btn.addEventListener('click', function() {
+            downloadFile(msg.dbfilename);
+        });
+        td.appendChild(btn);
+    }
 }
 
 function undoSelection(btn) {
@@ -200,7 +230,6 @@ function submitCommands() {
         inResponseView = true;
         blinkSendButton(true);
         websocket.send(JSON.stringify(commands));
-        commands = {"commandlist": []};
         resetCommandList();
         resetChartList();  
     }
@@ -319,6 +348,7 @@ function updateCommandBody(message) {
             td = tr.children[1];
             td.innerText = message.payload;
             td.classList.remove("running");
+            downloads.push(message);
         }
         else {
             // Add the incoming message to the first empty row
@@ -412,9 +442,11 @@ function setupCommandBody() {
             td.classList.add("boldgreen");
         }
         tr.appendChild(td);
+
         td = document.createElement("td");
         td.className = "rightcell";
         tr.appendChild(td);
+        
         commandbody.appendChild(tr);
     }
 }
