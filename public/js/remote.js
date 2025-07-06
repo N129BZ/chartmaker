@@ -41,6 +41,7 @@ var blinking = false;
 var inResponseView = false;
 var fullChartNames = [];
 var areaChartNames = [];
+var downloadInProgress = false;
 
 window.addEventListener("load", () => {
     setupCommandBody();
@@ -59,25 +60,6 @@ document.addEventListener('keydown', function(event) {
         }
     }
 });
-
-function downloadFile(dbfilename) {
-    try {
-        const url = `${URL_GET_DOWNLOAD}/?file=${dbfilename}`;
-        const data = fetch(url)
-        .then(response => {;
-            if (!data.ok) {
-                throw new Error(`HTTP error! status: ${data.status}`);
-            }
-            return response;
-        })
-        .then(data => {
-            console.log(data);
-        }); 
-    }
-    catch(err) {
-        console.log(err.message);
-    } 
-}
 
 async function getSettingsFromServer() {
     try {
@@ -126,37 +108,42 @@ function startWebsocketClient() {
 
         websocket.onmessage = (evt) => {
             let message = JSON.parse(evt.data);
-            switch (message.type) {
-                case messagetypes.timing.type: 
-                    blinkSendButton(false);
-                    postTimingMessaqe(message);
-                    break;
-                case messagetypes.info.type:
-                    updateCommandBody(message);
-                    break;
-                case messagetypes.complete.type:
-                case messagetypes.running.type:
-                    updateCommandBody(message);
-                    break;
-                case messagetypes.commandresponse.type:
-                    if (message.payload === 'success') {
-                        message.payload = "Server response: chart processing has started...";
+            if (downloadInProgress) {
+                addDownloadChunks(message);
+            }
+            else {
+                switch (message.type) {
+                    case messagetypes.timing.type: 
+                        blinkSendButton(false);
+                        postTimingMessaqe(message);
+                        break;
+                    case messagetypes.info.type:
                         updateCommandBody(message);
-                    }
-                    else {
-                        message.payload = "Server response: status unknown, possible command error";
-                        message.css = ["boldred"];
+                        break;
+                    case messagetypes.complete.type:
+                    case messagetypes.running.type:
                         updateCommandBody(message);
-                    }
-                    break;
-                case messagetypes.settings.type:
-                    let payload = JSON.parse(message.payload);
-                    console.log(payload);
-                    break;
-                case messagetypes.command.type:
-                default:
-                    console.log(message.payload);
-                    break;
+                        break;
+                    case messagetypes.commandresponse.type:
+                        if (message.payload === 'success') {
+                            message.payload = "Server response: chart processing has started...";
+                            updateCommandBody(message);
+                        }
+                        else {
+                            message.payload = "Server response: status unknown, possible command error";
+                            message.css = ["boldred"];
+                            updateCommandBody(message);
+                        }
+                        break;
+                    case messagetypes.settings.type:
+                        let payload = JSON.parse(message.payload);
+                        console.log(payload);
+                        break;
+                    case messagetypes.command.type:
+                    default:
+                        console.log(message.payload);
+                        break;
+                }
             }
         }
 
@@ -194,10 +181,18 @@ function postTimingMessaqe(message) {
         btn.className = "dlbutton";
         btn.textContent = "...";
         btn.addEventListener('click', function() {
-            downloadFile(msg.dbfilename);
+            downloadFileInChunks(msg.dbfilename);
         });
         td.appendChild(btn);
     }
+}
+
+function downloadFile(dbfilename) {
+    const msg = messagetypes.download;
+    msg.filename = dbfilename;
+    // After this send, we expect chunks of file back
+    downloadInProgress = true;
+    websocket.send(JSON.stringify(msg));
 }
 
 function undoSelection(btn) {
@@ -485,5 +480,48 @@ function resetCommandList() {
 function resetChartList() {
     chart.value = "";
     chartlist.innerText = "";
+}
+
+async function downloadFileInChunks(filename) {
+    try {
+        const url = `${URL_GET_DOWNLOAD}/:${filename}`;
+        const response = await fetch(url); // Fetch the file from the URL
+        const stream = response.body; // Get the ReadableStream
+
+        const reader = stream.getReader();
+        const chunks = [];
+
+        function pump() {
+            return reader.read().then(({ done, value }) => {
+                if (done) {
+                    processChunks(chunks, filename);
+                    return;
+                }
+                chunks.push(value);
+                return pump();
+            });
+        }
+
+        await pump();
+    } 
+    catch (err) {
+        console.error("Download failed:", err.message);
+    }
+}
+
+function processChunks(chunks, filename) {
+    const blob = new Blob(chunks);
+    const fileURL = URL.createObjectURL(blob);
+
+    const downloadLink = document.createElement("a");
+    downloadLink.style.display = "none"; 
+    downloadLink.href = fileURL;
+    downloadLink.download = filename;
+
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+
+    URL.revokeObjectURL(fileURL);
+    document.body.removeChild(downloadLink);
 }
 

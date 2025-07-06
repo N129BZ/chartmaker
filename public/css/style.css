@@ -323,7 +323,7 @@ html, body {
 }
 
 @keyframes runningChart {
-    0% { background-color: white; color: black; }
+    0% { background-color: yellow; color: black; }
     50% { background-color: lightgreen; color: black; }
-    100% { background-color: white; color: black; }
+    100% { background-color: yellow; color: black; }
 }

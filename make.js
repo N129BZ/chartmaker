@@ -1222,13 +1222,17 @@ function processCommandMessage(message) {
                 res.end();
             });
             
-            app.get("/download", (req, res) => {
-                let fname = `${appdir}/public/charts/${req.query.file}`;
-                res.download(fname);
-                // let respjson = messagetypes.download;
-                // respjson.payload = "success";
-                // res.send(JSON.stringify(respjson));
-                res.end();
+            app.get("/download/:filename", (req, res) => {
+                let filename = req.params.filename;
+                let filepath = `${appdir}/public/charts/${filename}`;
+                res.download(filepath, filename, (err) => { 
+                    if (err) {
+                        console.error('File download failed:', err);
+                    } 
+                    else {
+                        console.log('File downloaded successfully.');
+                    }
+                });
             });
 
             const wss = new WebSocket.Server({ port: settings.wsport });
@@ -1260,7 +1264,8 @@ function processCommandMessage(message) {
                 ws.onmessage = (event) => {
                     let message = JSON.parse(event.data);
                     if (message.type === messagetypes.download.type) {
-                        console.log("call a download file manager from here, line 1254")
+                        console.log("calling the download file manager from here, line 1254")
+                        downloadFile(ws, message.filename);
                     }
                     else if (message.type === messagetypes.settings.type) {
                         let rs = fs.readFileSync(`${appdir}/settings.json`, "utf-8");
@@ -1288,6 +1293,25 @@ function processCommandMessage(message) {
         
     }
 })();
+
+function downloadFile(ws, filename) {
+    const filePath = path.join(appdir, "public", "charts", filename);
+    const readStream = fs.createReadStream(filePath, { highWaterMark: 64 * 1024 }); // 64KB chunks
+
+    readStream.on('data', chunk => {
+        ws.send(chunk); // Send each chunk over the WebSocket
+    });
+
+    readStream.on('end', () => {
+        ws.send('FILE_TRANSFER_COMPLETE'); // Signal end of transfer
+        console.log('File sent successfully');
+    });
+
+    readStream.on('error', err => {
+        console.error('Error reading file:', err);
+        ws.send('ERROR_TRANSFERRING_FILE');
+    });
+}
 
 function authentication(req, res, next) {
     const authheader = req.headers.authorization;

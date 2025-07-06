@@ -156,8 +156,7 @@
             },
             "download": {
                 "type": "download",
-                "payload": "",
-                "css": ""
+                "filename": ""
             }
         }
     }
