@@ -1222,7 +1222,7 @@ function processCommandMessage(message) {
                 res.end();
             });
             
-            app.get("/download/:filename", (req, res) => {
+            app.get("/download/filename", (req, res) => {
                 let filename = req.params.filename;
                 let filepath = `${appdir}/public/charts/${filename}`;
                 res.download(filepath, filename, (err) => { 

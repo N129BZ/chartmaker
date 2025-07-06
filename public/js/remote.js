@@ -484,7 +484,7 @@ function resetChartList() {
 
 async function downloadFileInChunks(filename) {
     try {
-        const url = `${URL_GET_DOWNLOAD}/:${filename}`;
+        const url = `${URL_GET_DOWNLOAD}/${filename}`;
         const response = await fetch(url); // Fetch the file from the URL
         const stream = response.body; // Get the ReadableStream
 
