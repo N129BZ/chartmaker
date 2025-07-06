@@ -1210,7 +1210,7 @@ function processCommandMessage(message) {
 
             app.use(express.static(`${appdir}/public`, options));
             app.use(favicon(`${appdir}/public/img/favicon.png`));
-            app.use(authentication);
+            //app.use(authentication);
 
             app.get("/", (req, res) => {
                 res.send(fs.readFileSync(`${appdir}/public/index.html`, "utf-8"));
@@ -1223,7 +1223,7 @@ function processCommandMessage(message) {
             });
             
             app.get("/download", (req, res) => {
-                let fname = `${appdir}/${req.query.file}`;
+                let fname = `${appdir}/public/charts/${req.query.file}`;
                 res.download(fname);
                 // let respjson = messagetypes.download;
                 // respjson.payload = "success";

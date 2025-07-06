@@ -61,13 +61,22 @@ document.addEventListener('keydown', function(event) {
 });
 
 function downloadFile(dbfilename) {
-    const link = document.createElement('a'); 
-    let url = `${URL_GET_DOWNLOAD}/?file=${dbfilename}`;
-    link.href = url;
-    link.download(dbfilename);
-    document.body.appendChild(link); 
-    link.click(); 
-    document.body.removeChild(link); 
+    try {
+        const url = `${URL_GET_DOWNLOAD}/?file=${dbfilename}`;
+        const data = fetch(url)
+        .then(response => {;
+            if (!data.ok) {
+                throw new Error(`HTTP error! status: ${data.status}`);
+            }
+            return response;
+        })
+        .then(data => {
+            console.log(data);
+        }); 
+    }
+    catch(err) {
+        console.log(err.message);
+    } 
 }
 
 async function getSettingsFromServer() {
