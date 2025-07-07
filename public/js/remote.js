@@ -179,8 +179,7 @@ function postTimingMessaqe(message) {
     resetCommandList(); 
     resetChartList(); 
     commands = {"commandlist": []};
-    dlbutton.style.visibility = "visible";
-
+    
     for (let i = 0; i < processitems.length; i++) {
         let msg = processitems[i];
         let rcell = document.getElementById(`rightcell-${msg.rowindex}`);
@@ -188,6 +187,19 @@ function postTimingMessaqe(message) {
         let ckbid = `${dlchkPrefix}-${msg.rowindex}`;
         let ckb = document.getElementById(ckbid);
         ckb.style.display = "inline";
+        ckb.addEventListener("change", () => {
+            let found = false;
+            processitems.forEach((item) =>{
+                if (ckb.checked) {
+                    found = true;
+                    dlbutton.style.visibility = "visible";
+                }
+            });
+
+            if (!found) {
+                dlbutton.style.visibility = "hidden";
+            }
+        });
     }
 }
 
@@ -491,7 +503,6 @@ function setupCommandBody() {
             ckb.id = nmid;
             ckb.type = "checkbox";
             ckb.className = "dlcheckbox";
-            //ckb.addEventListener('change', handleCheckboxChange(nmid));
             td.appendChild(ckb);
         }
         tr.appendChild(td);

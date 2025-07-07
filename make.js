@@ -1205,6 +1205,7 @@ function processCommandMessage(message) {
                 redirect: false,
                 setHeaders: function (res, path, stat) {
                     res.set('x-timestamp', Date.now());
+                    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
                 }
             };
 
