@@ -1226,7 +1226,7 @@ function processCommandMessage(message) {
                 const decoded = decodeURIComponent(req.query.items);
                 const jsonobject = JSON.parse(decoded);
     
-                let zipfilename = settings.downloadzipfilename;
+                let zipfilename = settings.zipfilename;
                 let zippath = `${appdir}/public/charts/${zipfilename}`;
                 
                 jsonobject.charts.forEach(function(chart) {

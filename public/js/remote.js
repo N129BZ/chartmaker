@@ -542,7 +542,7 @@ async function downloadZipInChunks(dlitems) {
         const urlencoded = encodeURIComponent(jsonstring);
         var url = `${URL_GET_DOWNLOAD}?items=${urlencoded}`;
         
-        const filename = settings.downloadzipfilename;
+        const zipfilename = settings.zipfilename;
         const response = await fetch(url); 
         const stream = response.body;
         const reader = stream.getReader();
@@ -551,7 +551,7 @@ async function downloadZipInChunks(dlitems) {
         function pump() {
             return reader.read().then(({ done, value }) => {
                 if (done) {
-                    processChunks(chunks, filename);
+                    processChunks(chunks);
                     return;
                 }
                 chunks.push(value);
@@ -565,15 +565,14 @@ async function downloadZipInChunks(dlitems) {
     }
 }
 
-function processChunks(chunks, filename) {
+function processChunks(chunks) {
     const blob = new Blob(chunks);
     const fileURL = URL.createObjectURL(blob);
 
     const downloadLink = document.createElement("a");
     downloadLink.style.display = "none"; 
     downloadLink.href = fileURL;
-    let zipfile = filename.replace(`.${settings.dbextension}`, ".zip" );
-    downloadLink.download = zipfile;
+    downloadLink.download = settings.zipfilename;
 
     document.body.appendChild(downloadLink);
     downloadLink.click();
