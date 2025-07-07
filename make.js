@@ -1229,7 +1229,16 @@ function processCommandMessage(message) {
                 let zipfilename = settings.zipfilename;
                 let zippath = `${appdir}/public/charts/${zipfilename}`;
                 
+                // If a previous zip file exists, remove it...
+                if (fs.existsSync(zippath)) {
+                    fs.rmSync(zippath);
+                }
+
+                // Add each chart to a new zip file
                 jsonobject.charts.forEach(function(chart) {
+                    let msg = messagetypes.download;
+                    msg.filename = chart;
+                    sendMessageToClients(msg);
                     let addfilepath = `${appdir}/public/charts/${chart}`;
                     cmd = `zip -j -u ${zippath} ${addfilepath}`;
                     execSync(cmd);

@@ -27,12 +27,13 @@ var chartlist = document.getElementById("chartlist");
 let sendBtn = document.getElementById("send");
 let commandbody = document.getElementById("commandbody");
 let download = document.getElementById("download");
-
+let conflabel = document.getElementById("conflabel");
+let dlbutton = document.getElementById("dlbutton");
 
 var websocket;
 var indexlist = [];
 var commands = {"commandlist": []};
-var downloads = [];
+var processitems = [];
 var confcommands = [];
 var settings = {};
 var selectedcommand = -1;
@@ -137,6 +138,10 @@ function startWebsocketClient() {
                             updateCommandBody(message);
                         }
                         break;
+                    case messagetypes.download.type:
+                        // server is now zipping up the message.filename 
+                        conflabel.textContent = `Adding to zip file: ${message.filename}`;
+                        break;
                     case messagetypes.settings.type:
                         let payload = JSON.parse(message.payload);
                         console.log(payload);
@@ -174,11 +179,10 @@ function postTimingMessaqe(message) {
     resetCommandList(); 
     resetChartList(); 
     commands = {"commandlist": []};
-    let dlbutton = document.getElementById("dlbutton");
     dlbutton.style.visibility = "visible";
 
-    for (let i = 0; i < downloads.length; i++) {
-        let msg = downloads[i];
+    for (let i = 0; i < processitems.length; i++) {
+        let msg = processitems[i];
         let rcell = document.getElementById(`rightcell-${msg.rowindex}`);
         console.log(rcell);
         let ckbid = `${dlchkPrefix}-${msg.rowindex}`;
@@ -188,9 +192,9 @@ function postTimingMessaqe(message) {
 }
 
 function downloadCheckedItems() {
-    let dlitems = { charts: [] };
-    for (let i = 0; i < downloads.length; i++) {
-        let msg = downloads[i];
+    let dlitems = {  charts: [] };
+    for (let i = 0; i < processitems.length; i++) {
+        let msg = processitems[i];
         let ckbid = `${dlchkPrefix}-${msg.rowindex}`;
         let ckb = document.getElementById(ckbid);
         if (ckb.checked) {
@@ -202,14 +206,8 @@ function downloadCheckedItems() {
         console.log(dlitems);
         downloadZipInChunks(dlitems);
     }
-}
 
-function downloadFile(dbfilename) {
-    const msg = messagetypes.download;
-    msg.filename = dbfilename;
-    // After this send, we expect chunks of file back
-    downloadInProgress = true;
-    websocket.send(JSON.stringify(msg));
+    conflabel.textContent = "Confirmed command list:";
 }
 
 function undoSelection(btn) {
@@ -241,6 +239,7 @@ function resetEverything() {
     resetCommandList(); 
     resetChartList();  
     setupCommandBody();
+    dlbutton.style.visibility = "hidden";
     blinking = false;
     sendBtn.innerText = "Send Commands";
     sendBtn.style.backgroundColor = "Blue";
@@ -258,8 +257,6 @@ function submitCommands() {
 
 function addCommandRequest() {
     if (inResponseView) {
-        let dlbutton = document.getElementById("dlbutton");
-        dlbutton.style.visibility = "hidden";
         setupCommandBody();
     }
 
@@ -373,7 +370,7 @@ function updateCommandBody(message) {
             let span = td.firstChild;
             span.textContent = message.payload;
             td.classList.remove("running");
-            downloads.push(message);
+            processitems.push(message);
         }
         else {
             // Add the incoming message to the first empty row
@@ -454,6 +451,7 @@ function populateFullChartList() {
 
 function setupCommandBody() {
     inResponseView = false;
+    conflabel.textContent = "Confirmed command list:"
     commandbody.innerText = "";
     for (let i = 0; i < 70; i++) {
         let tr = document.createElement("tr");

@@ -174,7 +174,7 @@ html, body {
     height:40px;
     width: 480px;
 }
-.downloadbutton {
+.dlbutton {
     font-family: Arial, Helvetica, sans-serif;
     font-size: medium;
     font-weight: bold;
@@ -190,7 +190,7 @@ html, body {
     width: 230px;
 	visibility: hidden;
 }
-.downloadbutton:active {
+.dlbutton:active {
   transform: translateY(2px);
   box-shadow: 0 5px #666;
 }
