@@ -1222,10 +1222,20 @@ function processCommandMessage(message) {
                 res.end();
             });
             
-            app.get("/download/filename", (req, res) => {
-                let filename = req.params.filename;
-                let filepath = `${appdir}/public/charts/${filename}`;
-                res.download(filepath, filename, (err) => { 
+            app.get("/download", (req, res) => {
+                const decoded = decodeURIComponent(req.query.items);
+                const jsonobject = JSON.parse(decoded);
+    
+                let zipfilename = settings.downloadzipfilename;
+                let zippath = `${appdir}/public/charts/${zipfilename}`;
+                
+                jsonobject.charts.forEach(function(chart) {
+                    let addfilepath = `${appdir}/public/charts/${chart}`;
+                    cmd = `zip -j -u ${zippath} ${addfilepath}`;
+                    execSync(cmd);
+                });
+                
+                res.download(zippath, zipfilename, (err) => { 
                     if (err) {
                         console.error('File download failed:', err);
                     } 

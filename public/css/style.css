@@ -183,11 +183,12 @@ html, body {
     border-radius:10px; 
     border-width: 1px;
     padding:0px;
-    position: relative;
-    top: 0px;
-    left: 0px;
+    position: absolute;
+    top: -25px;
+    left: 285px;
     height: 38px;
-    width: 200px;
+    width: 230px;
+	visibility: hidden;
 }
 .downloadbutton:active {
   transform: translateY(2px);
@@ -257,21 +258,28 @@ html, body {
     height: 20px;
     width: 35%;
 }
-.dlbutton {
+.resultspan {
     font-family: Arial, Helvetica, sans-serif;
     font-size: medium;
-    font-weight: bold;
     text-align: center;
-    float: right;
-    height: 20px;
-    width: 24px;
-    background-color: lightgray;
+    vertical-align: middle;
+    padding: 0px;
     color: black;
-    border-width: 1px;
-    padding:0px;
+    overflow-y: hidden;
+    height: 20px;
+}
+.dlcheckbox {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: medium; 
     position: relative;
     top: 0px;
     left: 0px;
+    float: right;
+    height: 16px;
+    width: 16px;
+    padding:0px;
+    outline: 1px solid black;
+    display: none;
 }
 .normal {
     font-family: Arial, Helvetica, sans-serif;

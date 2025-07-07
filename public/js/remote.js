@@ -43,6 +43,8 @@ var fullChartNames = [];
 var areaChartNames = [];
 var downloadInProgress = false;
 
+const dlchkPrefix = "dlchk";
+
 window.addEventListener("load", () => {
     setupCommandBody();
     populateCommandsDropdown();
@@ -172,18 +174,33 @@ function postTimingMessaqe(message) {
     resetCommandList(); 
     resetChartList(); 
     commands = {"commandlist": []};
-    
+    let dlbutton = document.getElementById("dlbutton");
+    dlbutton.style.visibility = "visible";
+
     for (let i = 0; i < downloads.length; i++) {
         let msg = downloads[i];
-        let tr = commandbody.rows[msg.rowindex];
-        let td = tr.lastChild; 
-        let btn = document.createElement("button");
-        btn.className = "dlbutton";
-        btn.textContent = "...";
-        btn.addEventListener('click', function() {
-            downloadFileInChunks(msg.dbfilename);
-        });
-        td.appendChild(btn);
+        let rcell = document.getElementById(`rightcell-${msg.rowindex}`);
+        console.log(rcell);
+        let ckbid = `${dlchkPrefix}-${msg.rowindex}`;
+        let ckb = document.getElementById(ckbid);
+        ckb.style.display = "inline";
+    }
+}
+
+function downloadCheckedItems() {
+    let dlitems = { charts: [] };
+    for (let i = 0; i < downloads.length; i++) {
+        let msg = downloads[i];
+        let ckbid = `${dlchkPrefix}-${msg.rowindex}`;
+        let ckb = document.getElementById(ckbid);
+        if (ckb.checked) {
+            dlitems.charts.push(msg.dbfilename);
+        }
+    }
+
+    if (dlitems.charts.length > 0) {
+        console.log(dlitems);
+        downloadZipInChunks(dlitems);
     }
 }
 
@@ -241,6 +258,8 @@ function submitCommands() {
 
 function addCommandRequest() {
     if (inResponseView) {
+        let dlbutton = document.getElementById("dlbutton");
+        dlbutton.style.visibility = "hidden";
         setupCommandBody();
     }
 
@@ -340,8 +359,9 @@ function updateCommandBody(message) {
             let tr = commandbody.rows[rowidx];
             let td = tr.children[0];
             td.classList.add("running");
-            td = tr.children[1];
-            td.innerText = "* in progress *";
+            td = tr.children[1]; // rightcell
+            let span = td.firstChild;
+            span.textContent = "* in progress *";
             td.classList.add("running");
         }
         else if (message.type === "complete") {
@@ -350,7 +370,8 @@ function updateCommandBody(message) {
             let td = tr.children[0];
             td.classList.remove("running");
             td = tr.children[1];
-            td.innerText = message.payload;
+            let span = td.firstChild;
+            span.textContent = message.payload;
             td.classList.remove("running");
             downloads.push(message);
         }
@@ -438,21 +459,54 @@ function setupCommandBody() {
         let tr = document.createElement("tr");
         tr.setAttribute("tag", i.toString());
         tr.className = "tablerow";
+
         let td = document.createElement("td");
+        let nmid = `leftcell-${i}`;
+        td.name = nmid;
+        td.id = nmid;
         td.className = "leftcell";
         if (i === 0) {
             td.setAttribute("colspan", "2");
             td.innerText = "Command list";
             td.classList.add("boldgreen");
-        }
+        }   
         tr.appendChild(td);
 
         td = document.createElement("td");
+        nmid = `rightcell-${i}`;
+        td.name = nmid;
+        td.id = nmid;
         td.className = "rightcell";
+        // Add a checkbox on the right side of the <td> element
+        if (i > 0) {
+            // create the <span> text container
+            let span = document.createElement("span");
+            nmid = `span-${i}`;
+            span.id = nmid;
+            span.name = nmid;
+            span.className = "resultspan";
+            td.appendChild(span)
+            // create the hidden checkbox
+            let ckb = document.createElement("input");
+            nmid = `${dlchkPrefix}-${i}`;
+            ckb.name = nmid;
+            ckb.id = nmid;
+            ckb.type = "checkbox";
+            ckb.className = "dlcheckbox";
+            //ckb.addEventListener('change', handleCheckboxChange(nmid));
+            td.appendChild(ckb);
+        }
         tr.appendChild(td);
-        
+
+        // Now append the new <tr> to the command body
         commandbody.appendChild(tr);
     }
+
+    const children = document.childNodes;
+    for (let i = 0; i < children.length; i++) {
+        const child = children[i];
+    }
+    console.log("finished element iteration!");
 }
 
 function populateCommandsDropdown() {
@@ -482,12 +536,15 @@ function resetChartList() {
     chartlist.innerText = "";
 }
 
-async function downloadFileInChunks(filename) {
+async function downloadZipInChunks(dlitems) {
     try {
-        const url = `${URL_GET_DOWNLOAD}/${filename}`;
-        const response = await fetch(url); // Fetch the file from the URL
-        const stream = response.body; // Get the ReadableStream
-
+        const jsonstring = JSON.stringify(dlitems);
+        const urlencoded = encodeURIComponent(jsonstring);
+        var url = `${URL_GET_DOWNLOAD}?items=${urlencoded}`;
+        
+        const filename = settings.downloadzipfilename;
+        const response = await fetch(url); 
+        const stream = response.body;
         const reader = stream.getReader();
         const chunks = [];
 
@@ -501,7 +558,6 @@ async function downloadFileInChunks(filename) {
                 return pump();
             });
         }
-
         await pump();
     } 
     catch (err) {
@@ -516,7 +572,8 @@ function processChunks(chunks, filename) {
     const downloadLink = document.createElement("a");
     downloadLink.style.display = "none"; 
     downloadLink.href = fileURL;
-    downloadLink.download = filename;
+    let zipfile = filename.replace(`.${settings.dbextension}`, ".zip" );
+    downloadLink.download = zipfile;
 
     document.body.appendChild(downloadLink);
     downloadLink.click();
