@@ -184,8 +184,8 @@ html, body {
     border-width: 1px;
     padding: 0px;
     position: absolute;
-    top: 240px;
-    left: 469px;
+    top: 228px;
+    left: 483px;
     height: 38px;
     width: 230px;
     visibility: hidden;
@@ -216,6 +216,21 @@ html, body {
     width: 490px;
     margin: 10px;
     padding: 0px;
+    display:block;
+}
+.downloadmessage {
+    position: relative;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: large;
+    text-align: center;
+    align-content: center;
+    top: 0px;
+    left: 0px;
+    height: 300px;
+    width: 490px;
+    margin: 10px;
+    padding: 0px;
+    display: none;
 }
 .tablerow {
     font-family: Arial, Helvetica, sans-serif;
@@ -311,11 +326,17 @@ html, body {
     background-color: lightgreen;
     color: black;
 }
+
 .running {
     animation: runningChart 3s infinite
 }
+
 .start-animation {
     animation: colorChange 4s infinite; 
+}
+
+.downloading {
+    animation: downloadingCharts 2s infinite;
 }
 
 .stop-animation {
@@ -334,4 +355,10 @@ html, body {
     0% { background-color: yellow; color: black; }
     50% { background-color: lightgreen; color: black; }
     100% { background-color: yellow; color: black; }
+}
+
+@keyframes downloadingCharts {
+    0% { background-color: white ; color: black;}
+    50% { background-color: white; color: red; }
+    100% { background-color: white; color: black;}
 }

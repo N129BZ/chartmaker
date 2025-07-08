@@ -27,7 +27,6 @@ var chartlist = document.getElementById("chartlist");
 let sendBtn = document.getElementById("send");
 let commandbody = document.getElementById("commandbody");
 let download = document.getElementById("download");
-let conflabel = document.getElementById("conflabel");
 let dlbutton = document.getElementById("dlbutton");
 
 var websocket;
@@ -139,8 +138,13 @@ function startWebsocketClient() {
                         }
                         break;
                     case messagetypes.download.type:
-                        // server is now zipping up the message.filename 
-                        conflabel.textContent = `Adding to zip file: ${message.filename}`;
+                        if (message.completed) {
+                            resetFromDownloadState();
+                        }
+                        else {
+                            // server is now zipping up the message.filename 
+                            //conflabel.textContent = `Adding to zip file: ${message.filename}`;
+                        }
                         break;
                     case messagetypes.settings.type:
                         let payload = JSON.parse(message.payload);
@@ -171,6 +175,16 @@ function startWebsocketClient() {
     }
 };
 
+function resetFromDownloadState() {
+    console.log("RESET FROM DOWNLOAD HERE: LINE 181");
+    processitems.forEach((item) =>{
+        let ckbid = `${dlchkPrefix}-${item.rowindex}`;
+        let ckb = document.getElementById(ckbid);
+        ckb.checked = false;
+    });
+    setDownloadButtonVisible(false);
+}
+
 function postTimingMessaqe(message) {
     let tr = commandbody.rows[0];
     let td = tr.firstChild;
@@ -180,54 +194,75 @@ function postTimingMessaqe(message) {
     resetChartList(); 
     commands = {"commandlist": []};
     
-    for (let i = 0; i < processitems.length; i++) {
-        let msg = processitems[i];
-        let rcell = document.getElementById(`rightcell-${msg.rowindex}`);
-        console.log(rcell);
-        let ckbid = `${dlchkPrefix}-${msg.rowindex}`;
+    processitems.forEach((item) => {
+        let ckbid = `${dlchkPrefix}-${item.rowindex}`;
         let ckb = document.getElementById(ckbid);
         ckb.style.display = "inline";
-        ckb.addEventListener("change", () => {
-            let found = false;
-            processitems.forEach((item) =>{
-                if (ckb.checked) {
-                    found = true;
-                    dlbutton.style.visibility = "visible";
-                }
-            });
+        ckb.addEventListener("change", handleCheckboxChange); 
+    });
+}
 
-            if (!found) {
-                dlbutton.style.visibility = "hidden";
-            }
-        });
-    }
+function handleCheckboxChange() {
+    // We want to iterate ALL checkboxes and set the state
+    // of the download button if ANY checkbox is checked.
+    let found = false;
+    processitems.forEach((item) => {
+        let ckbid = `${dlchkPrefix}-${item.rowindex}`;
+        let ckb = document.getElementById(ckbid);
+        if (ckb.checked) {
+            found = true;
+        }
+    });
+    setDownloadButtonVisible(found);
 }
 
 function downloadCheckedItems() {
     let dlitems = {  charts: [] };
-    for (let i = 0; i < processitems.length; i++) {
-        let msg = processitems[i];
-        let ckbid = `${dlchkPrefix}-${msg.rowindex}`;
+    processitems.forEach((item) => {
+        let ckbid = `${dlchkPrefix}-${item.rowindex}`;
         let ckb = document.getElementById(ckbid);
         if (ckb.checked) {
-            dlitems.charts.push(msg.dbfilename);
+            dlitems.charts.push(item.dbfilename);
         }
-    }
-
+    });
     if (dlitems.charts.length > 0) {
         console.log(dlitems);
-        downloadZipInChunks(dlitems);
+        downloadZipfile(dlitems);
     }
 
-    conflabel.textContent = "Confirmed command list:";
+    // now reset all checkboxes to not checked and disable download button
+    processitems.forEach((item) => {
+        let ckbid = `${dlchkPrefix}-${item.rowindex}`;
+        let ckb = document.getElementById(ckbid);
+        ckb.checked = false;
+    });
+    setDownloadButtonVisible(false);
 }
 
-function undoSelection(btn) {
-    if (btn.id === "ud0") {
-        command.value = "";
+/* 
+function setDownloadMessageDisplay(isVisible) {
+    // for controlling downloading status message
+    let commandwindow = document.getElementById("commandtable");
+    let dlmessage = document.getElementById("downloadmessage");
+    if (isVisible) {
+        commandwindow.style.display = "none";
+        dlmessage.style.display = "block";
+        dlmessage.classList.add("downloading");
     }
-    else { // assume "ud1"
-        chart.value = "";
+    else {
+        dlmessage.classList.remove("downloading");
+        dlmessage.style.display = "none";
+        commandwindow.style.display = "block;"
+    }
+} 
+*/
+
+function setDownloadButtonVisible(isVisible) {
+    if (isVisible) {
+        dlbutton.style.visibility = "visible";
+    }
+    else {
+        dlbutton.style.visibility = "hidden";
     }
 }
 
@@ -248,10 +283,11 @@ function removeLastEntry() {
 function resetEverything() {
     selectedchart = -1;
     selectedcommand = -1;
+    processitems = [];
     resetCommandList(); 
     resetChartList();  
     setupCommandBody();
-    dlbutton.style.visibility = "hidden";
+    setDownloadButtonVisible(false);
     blinking = false;
     sendBtn.innerText = "Send Commands";
     sendBtn.style.backgroundColor = "Blue";
@@ -463,7 +499,7 @@ function populateFullChartList() {
 
 function setupCommandBody() {
     inResponseView = false;
-    conflabel.textContent = "Confirmed command list:"
+    //conflabel.textContent = "Confirmed command list:"
     commandbody.innerText = "";
     for (let i = 0; i < 70; i++) {
         let tr = document.createElement("tr");
@@ -496,6 +532,7 @@ function setupCommandBody() {
             span.name = nmid;
             span.className = "resultspan";
             td.appendChild(span)
+            
             // create the hidden checkbox
             let ckb = document.createElement("input");
             nmid = `${dlchkPrefix}-${i}`;
@@ -545,7 +582,7 @@ function resetChartList() {
     chartlist.innerText = "";
 }
 
-async function downloadZipInChunks(dlitems) {
+async function downloadZipfile(dlitems) {
     try {
         const jsonstring = JSON.stringify(dlitems);
         const urlencoded = encodeURIComponent(jsonstring);

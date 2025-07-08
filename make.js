@@ -1224,6 +1224,7 @@ function processCommandMessage(message) {
             });
             
             app.get("/download", (req, res) => {
+                console.log("Download requested!");
                 const decoded = decodeURIComponent(req.query.items);
                 const jsonobject = JSON.parse(decoded);
     
@@ -1250,7 +1251,10 @@ function processCommandMessage(message) {
                         console.error('File download failed:', err);
                     } 
                     else {
-                        console.log('File downloaded successfully.');
+                        console.log('Zip file downloaded successfully.');
+                        let msg = messagetypes.download;
+                        msg.completed = true;
+                        sendMessageToClients(msg);
                     }
                 });
             });

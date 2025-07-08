@@ -157,6 +157,7 @@
             },
             "download": {
                 "type": "download",
+                "completed": false,
                 "filename": ""
             }
         }
