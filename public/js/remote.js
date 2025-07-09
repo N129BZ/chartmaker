@@ -140,9 +140,9 @@ function startWebsocketClient() {
                         break;
                     case messagetypes.download.type:
                         if (message.completed) {
-                            //dlbutton.classList.remove("running");
-                            //dlbutton.innerText = "Download Checked Items";
-                            //dlbutton.style.visibility = "hidden"; //setDownloadButtonVisible(false);
+                            dlbutton.classList.remove("running");
+                            dlbutton.innerText = "Download Checked Items";
+                            dlbutton.style.visibility = "hidden"; //setDownloadButtonVisible(false);
                         }
                         else {
                             console.log("Zip in progress: ", message)
@@ -232,6 +232,7 @@ function downloadCheckedItems() {
             dlitems.charts.push(item.dbfilename);
         }
     });
+
     if (dlitems.charts.length > 0) {
         let msg = messagetypes.download;
         msg.items = dlitems;
@@ -247,28 +248,7 @@ function downloadCheckedItems() {
         let ckb = document.getElementById(ckbid);
         ckb.checked = false;
     });
-    // dlbutton.classList.remove("running");
-    // dlbutton.innerText = "Download Checked Items";
-    // setDownloadButtonVisible(false);
 }
-
-/* 
-function setDownloadMessageDisplay(isVisible) {
-    // for controlling downloading status message
-    let commandwindow = document.getElementById("commandtable");
-    let dlmessage = document.getElementById("downloadmessage");
-    if (isVisible) {
-        commandwindow.style.display = "none";
-        dlmessage.style.display = "block";
-        dlmessage.classList.add("downloading");
-    }
-    else {
-        dlmessage.classList.remove("downloading");
-        dlmessage.style.display = "none";
-        commandwindow.style.display = "block;"
-    }
-} 
-*/
 
 function setDownloadButtonVisible(isVisible) {
     if (isVisible) {
@@ -276,7 +256,7 @@ function setDownloadButtonVisible(isVisible) {
     }
     else {
         console.trace();
-        //dlbutton.style.visibility = "hidden";
+        dlbutton.style.visibility = "hidden";
     }
 }
 
@@ -600,8 +580,11 @@ async function downloadZipfile(dlitems) {
         const urlencoded = encodeURIComponent(jsonstring);
         var url = `${URL_GET_DOWNLOAD}?items=${urlencoded}`;
         
-        const zipfilename = settings.zipfilename;
+        //const zipfilename = settings.zipfilename;
         const response = await fetch(url); 
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${data.status}`);
+        } 
         const stream = response.body;
         const reader = stream.getReader();
         const chunks = [];

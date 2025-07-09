@@ -1345,13 +1345,13 @@ function downloadFile(ws, filename) {
     });
 
     readStream.on('end', () => {
-        ws.send('FILE_TRANSFER_COMPLETE'); // Signal end of transfer
+        //ws.send('FILE_TRANSFER_COMPLETE'); // Signal end of transfer
         console.log('File sent successfully');
     });
 
     readStream.on('error', err => {
         console.error('Error reading file:', err);
-        ws.send('ERROR_TRANSFERRING_FILE');
+        //ws.send('ERROR_TRANSFERRING_FILE');
     });
 }
 
