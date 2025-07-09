@@ -29,6 +29,7 @@ let commandbody = document.getElementById("commandbody");
 let download = document.getElementById("download");
 let dlbutton = document.getElementById("dlbutton");
 
+var thisUserId = "";
 var websocket;
 var indexlist = [];
 var commands = {"commandlist": []};
@@ -139,17 +140,21 @@ function startWebsocketClient() {
                         break;
                     case messagetypes.download.type:
                         if (message.completed) {
-                            resetFromDownloadState();
+                            //dlbutton.classList.remove("running");
+                            //dlbutton.innerText = "Download Checked Items";
+                            //dlbutton.style.visibility = "hidden"; //setDownloadButtonVisible(false);
                         }
                         else {
-                            // server is now zipping up the message.filename 
-                            //conflabel.textContent = `Adding to zip file: ${message.filename}`;
+                            console.log("Zip in progress: ", message)
                         }
                         break;
                     case messagetypes.settings.type:
                         let payload = JSON.parse(message.payload);
                         console.log(payload);
                         break;
+                    case messagetypes.connection.type:
+                        thisUserId = message.uid;
+                        break; 
                     case messagetypes.command.type:
                     default:
                         console.log(message.payload);
@@ -217,7 +222,9 @@ function handleCheckboxChange() {
 }
 
 function downloadCheckedItems() {
-    let dlitems = {  charts: [] };
+    let dlitems = { charts: [] };
+    dlbutton.classList.add("running");
+    dlbutton.innerText = "Download in progress...";
     processitems.forEach((item) => {
         let ckbid = `${dlchkPrefix}-${item.rowindex}`;
         let ckb = document.getElementById(ckbid);
@@ -226,6 +233,10 @@ function downloadCheckedItems() {
         }
     });
     if (dlitems.charts.length > 0) {
+        let msg = messagetypes.download;
+        msg.items = dlitems;
+        msg.uid = thisUserId;
+        websocket.send(JSON.stringify(msg));
         console.log(dlitems);
         downloadZipfile(dlitems);
     }
@@ -236,7 +247,9 @@ function downloadCheckedItems() {
         let ckb = document.getElementById(ckbid);
         ckb.checked = false;
     });
-    setDownloadButtonVisible(false);
+    // dlbutton.classList.remove("running");
+    // dlbutton.innerText = "Download Checked Items";
+    // setDownloadButtonVisible(false);
 }
 
 /* 
@@ -262,7 +275,8 @@ function setDownloadButtonVisible(isVisible) {
         dlbutton.style.visibility = "visible";
     }
     else {
-        dlbutton.style.visibility = "hidden";
+        console.trace();
+        //dlbutton.style.visibility = "hidden";
     }
 }
 
@@ -287,7 +301,7 @@ function resetEverything() {
     resetCommandList(); 
     resetChartList();  
     setupCommandBody();
-    setDownloadButtonVisible(false);
+    dlbutton.style.visibility = "hidden"; //setDownloadButtonVisible(false);
     blinking = false;
     sendBtn.innerText = "Send Commands";
     sendBtn.style.backgroundColor = "Blue";
@@ -499,7 +513,6 @@ function populateFullChartList() {
 
 function setupCommandBody() {
     inResponseView = false;
-    //conflabel.textContent = "Confirmed command list:"
     commandbody.innerText = "";
     for (let i = 0; i < 70; i++) {
         let tr = document.createElement("tr");
@@ -552,7 +565,6 @@ function setupCommandBody() {
     for (let i = 0; i < children.length; i++) {
         const child = children[i];
     }
-    console.log("finished element iteration!");
 }
 
 function populateCommandsDropdown() {

@@ -7,12 +7,13 @@ html, body {
   /* Apply styles here for screens 600px or narrower */
 }
 
-/* .application {
-    display: flex; 
-    justify-content: center; 
+#application {
+    width: 600px;
+    margin: 0 auto;
+    padding-left: 90px;
+    overflow-x: hidden;
+    overflow-y: scroll;
 }
- */
- 
 .header {
     font-family: Arial, Helvetica, sans-serif;
     font-size:x-large;
@@ -183,9 +184,9 @@ html, body {
     border-radius: 10px;
     border-width: 1px;
     padding: 0px;
-    position: absolute;
-    top: 228px;
-    left: 483px;
+    position: relative;
+    top: -20px;
+    left: 286px;
     height: 38px;
     width: 230px;
     visibility: hidden;

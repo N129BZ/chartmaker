@@ -158,7 +158,13 @@
             "download": {
                 "type": "download",
                 "completed": false,
-                "filename": ""
+                "items": [],
+                "filename": "",
+                "uid": ""
+            },
+            "connection": {
+                "type": "connection",
+                "uid": ""
             }
         }
     }

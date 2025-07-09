@@ -974,9 +974,11 @@ function enterWebserverMode() {
  * Iterate through any/all connected clients and send data
  * @param {message} json message object 
  */
-async function sendMessageToClients(message) {
+async function sendMessageToClients(message, userid = "") {
     [...connections.keys()].forEach((client) => {
-        client.send(JSON.stringify(message));
+        if (userid === client.tag.uid || userid === "") {
+            client.send(JSON.stringify(message));
+        }
     });
 }
 
@@ -1033,7 +1035,7 @@ process.on('SIGINT', () => {
  * 4 = Return the settings.json file
  * @param {*} message JSON object message
  */
-function parseMakeCommand(message) {
+function parseMakeCommand(message, userid = "") {
     let idx = -1;
     let opt = -1;
     let item = {};
@@ -1055,7 +1057,7 @@ function parseMakeCommand(message) {
                         let ridx = i + 1;
                         mt = messagetypes.running;
                         mt.rowindex = ridx;
-                        sendMessageToClients(messagetypes.running);
+                        sendMessageToClients(messagetypes.running, userid);
 
                         let cpt = processSingles(i);
 
@@ -1063,7 +1065,7 @@ function parseMakeCommand(message) {
                         mt.rowindex = ridx;
                         mt.dbfilename = `${chartname}.${settings.dbextension}`;
                         mt.payload = cpt.totaltime;
-                        sendMessageToClients(mt);
+                        sendMessageToClients(mt, userid);
                     }
                     break;
                 case 1:
@@ -1081,14 +1083,14 @@ function parseMakeCommand(message) {
                         console.log(`Processing full chart: ${chart}`);
 
                         mt.rowindex = ridx;
-                        sendMessageToClients(mt);
+                        sendMessageToClients(mt, userid);
 
                         let cpt = processFulls(i);
 
                         mt = messagetypes.complete;
                         mt.rowindex = ridx;
                         mt.payload = cpt.totaltime;
-                        sendMessageToClients(mt);
+                        sendMessageToClients(mt, userid);
                     }
                     break;
                 case 3:
@@ -1106,7 +1108,7 @@ function parseMakeCommand(message) {
         let payload = reportProcessingTime(); 
         let timemsg = messagetypes.timing;
         timemsg.payload = payload;
-        sendMessageToClients(timemsg);
+        sendMessageToClients(timemsg, userid);
     }
     catch(err){
         console.log(`Error:\r\n ${err}`);
@@ -1182,6 +1184,10 @@ function processCommandMessage(message) {
     return clist;
 }
 
+function getUniqueUserId(){
+    return `${Date.now()}-${Math.random().toString(36)}`;
+}
+
 /**
  * Start the express web server
  */
@@ -1227,7 +1233,7 @@ function processCommandMessage(message) {
                 console.log("Download requested!");
                 const decoded = decodeURIComponent(req.query.items);
                 const jsonobject = JSON.parse(decoded);
-    
+                let uid = jsonobject.uid;
                 let zipfilename = settings.zipfilename;
                 let zippath = `${appdir}/public/charts/${zipfilename}`;
                 
@@ -1240,7 +1246,7 @@ function processCommandMessage(message) {
                 jsonobject.charts.forEach(function(chart) {
                     let msg = messagetypes.download;
                     msg.filename = chart;
-                    sendMessageToClients(msg);
+                    sendMessageToClients(msg, uid);
                     let addfilepath = `${appdir}/public/charts/${chart}`;
                     cmd = `zip -j -u ${zippath} ${addfilepath}`;
                     execSync(cmd);
@@ -1254,7 +1260,7 @@ function processCommandMessage(message) {
                         console.log('Zip file downloaded successfully.');
                         let msg = messagetypes.download;
                         msg.completed = true;
-                        sendMessageToClients(msg);
+                        sendMessageToClients(msg, uid);
                     }
                 });
             });
@@ -1264,9 +1270,7 @@ function processCommandMessage(message) {
             let msg = {};
 
             wss.on('connection', (ws) => {
-                const id = Date.now();
-                ws.tag = id;
-                var helloSent = false;
+                ws.tag = { sent: false, uid: "" };
                 ws.ping();
                 
                 console.log(`Websocket connected, id: ${ws.tag}`);
@@ -1277,7 +1281,18 @@ function processCommandMessage(message) {
                 });
 
                 ws.on('pong', () => {
-                    connections.set(ws, true);
+                    if (ws.tag.sent === false && ws.tag.uid === "") {
+                        let uid = getUniqueUserId();
+                        ws.tag.uid = uid;
+                        ws.tag.sent = true;
+                        // Add the client ws to the connections dictionary
+                        connections.set(ws, uid);   
+
+                        // Send a confirmation message back to the client
+                        let msg = messagetypes.connection;
+                        msg.uid = uid;
+                        sendMessageToClients(msg, uid);
+                    }
                 });
 
                 ws.on('error', (error) => {
@@ -1287,24 +1302,27 @@ function processCommandMessage(message) {
 
                 ws.onmessage = (event) => {
                     let message = JSON.parse(event.data);
-                    if (message.type === messagetypes.download.type) {
-                        console.log("calling the download file manager from here, line 1254")
-                        downloadFile(ws, message.filename);
-                    }
-                    else if (message.type === messagetypes.settings.type) {
-                        let rs = fs.readFileSync(`${appdir}/settings.json`, "utf-8");
-                        message.payload = rs;
-                        ws.send(JSON.stringify(message));
-                    }
-                    else {
-                        let msgclist = processCommandMessage(message);
-                        if (!inMakeLoop) {
-                            msg = messagetypes.commandresponse;
-                            msg.payload = 'success';
-                            ws.send(JSON.stringify(msg));
-                            ws.send(JSON.stringify(msgclist));
-                            parseMakeCommand(message);
-                        }
+
+                    switch (message.type) {
+                        case messagetypes.download.type: 
+                            console.log("calling the download file manager from here, line 1254")
+                            downloadFile(ws, message.filename);
+                            break;     
+                        case messagetypes.settings.type:
+                            let rs = fs.readFileSync(`${appdir}/settings.json`, "utf-8");
+                            message.payload = rs;
+                            ws.send(JSON.stringify(message));
+                            break;
+                        default:
+                            let msgclist = processCommandMessage(message);
+                            if (!inMakeLoop) {
+                                msg = messagetypes.commandresponse;
+                                msg.payload = 'success';
+                                ws.send(JSON.stringify(msg));
+                                ws.send(JSON.stringify(msgclist));
+                                parseMakeCommand(message);
+                            }
+                        break;
                     }
                 };
             });
