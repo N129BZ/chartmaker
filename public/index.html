@@ -38,7 +38,15 @@
                 </tr>
             </tbody>
         </table>
-        <button id="dlbutton" class="dlbutton" onclick="downloadCheckedItems()">Download Checked Items</button><br>
+        <div class="downloadarea" id="downloadarea">Select download file format:<br>
+            <form class="options" id="options" name="options">
+                <label for="zipoption">zip:</label>
+                <input type="radio" id="option.zip" name="archiveoptions" value="zip">
+                <label for="taroption">&nbsp;&nbsp;&nbsp;tar.gz:</label>
+                <input type="radio" id="option.tar.gz" name="archiveoptions" value="tar.gz">
+            </form>
+            <button id="dlbutton" class="downloadbutton" onclick="downloadCheckedItems()">Download Checked Items</button><br>
+        </div>
         <div class="confwindow" id="confwindow">
             <table class="commandtable" id="commandtable"><tbody id="commandbody"></tbody></table>
         </div>

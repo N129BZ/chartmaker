@@ -4,8 +4,8 @@
   "description": "Generate FAA Chart Maps From Digital Images",
   "main": "make.js",
   "dependencies": {
+    "archiver": "^7.0.1",
     "child_process": "^1.0.2",
-    "cors": "^2.8.5",
     "express": "^5.1.0",
     "express-basic-auth": "^1.2.1",
     "fs": "0.0.1-security",

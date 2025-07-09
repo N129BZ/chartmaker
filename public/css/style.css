@@ -175,23 +175,22 @@ html, body {
     height:40px;
     width: 480px;
 }
-.dlbutton {
+.downloadbutton {
     font-family: Arial, Helvetica, sans-serif;
     font-size: medium;
     font-weight: bold;
-    background-color: lightgray;
-    color: black;
+    background-color: blue;
+    color: white;
     border-radius: 10px;
     border-width: 1px;
     padding: 0px;
-    position: relative;
-    top: -20px;
+    position: absolute;
+    top: 0px;
     left: 286px;
     height: 38px;
     width: 230px;
-    visibility: hidden;
 }
-.dlbutton:active {
+.downloadbutton:active {
   transform: translateY(2px);
   box-shadow: 0 5px #666;
 }
@@ -219,19 +218,19 @@ html, body {
     padding: 0px;
     display:block;
 }
-.downloadmessage {
-    position: relative;
+.downloadarea {
     font-family: Arial, Helvetica, sans-serif;
-    font-size: large;
-    text-align: center;
-    align-content: center;
-    top: 0px;
-    left: 0px;
-    height: 300px;
-    width: 490px;
-    margin: 10px;
+    font-size: medium;
+    font-weight: bold;
+    background-color: white;
+    color: black;
     padding: 0px;
-    display: none;
+    position: relative;
+    top: -21px;
+    left: 0px;
+    height: 38px;
+    width: 513px;
+    visibility: visible;
 }
 .tablerow {
     font-family: Arial, Helvetica, sans-serif;
@@ -327,39 +326,24 @@ html, body {
     background-color: lightgreen;
     color: black;
 }
-
 .running {
-    animation: runningChart 3s infinite
+    animation: runningProcess 3s infinite
 }
-
 .start-animation {
     animation: colorChange 4s infinite; 
 }
-
-.downloading {
-    animation: downloadingCharts 2s infinite;
-}
-
 .stop-animation {
   animation:  none !important;
   transition: none !important;
 }
-
 /* For animations */
 @keyframes colorChange {
     0% { background-color: darkgreen ; color: white;}
     50% { background-color: yellow; color: black; }
     100% { background-color: darkgreen; color: white;}
 }
-
-@keyframes runningChart {
+@keyframes runningProcess {
     0% { background-color: yellow; color: black; }
     50% { background-color: lightgreen; color: black; }
     100% { background-color: yellow; color: black; }
-}
-
-@keyframes downloadingCharts {
-    0% { background-color: white ; color: black;}
-    50% { background-color: white; color: red; }
-    100% { background-color: white; color: black;}
 }

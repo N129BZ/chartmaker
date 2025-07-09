@@ -5,9 +5,10 @@ const { execSync } = require('child_process');
 const readlineSync = require('readline-sync');
 const path = require('path');
 const express = require('express');
-const basicAuth = require("express-basic-auth");
+const basicAuth = require('express-basic-auth');
 const favicon = require('serve-favicon');
 const WebSocket = require('ws')
+const archiver = require('archiver');
 
 class ProcessTime {
     constructor(processName) {
@@ -1229,40 +1230,9 @@ function getUniqueUserId(){
                 res.end();
             });
             
-            app.get("/download", (req, res) => {
+            app.get("/download", async (req, res) => {
                 console.log("Download requested!");
-                const decoded = decodeURIComponent(req.query.items);
-                const jsonobject = JSON.parse(decoded);
-                let uid = jsonobject.uid;
-                let zipfilename = settings.zipfilename;
-                let zippath = `${appdir}/public/charts/${zipfilename}`;
-                
-                // If a previous zip file exists, remove it...
-                if (fs.existsSync(zippath)) {
-                    fs.rmSync(zippath);
-                }
-
-                // Add each chart to a new zip file
-                jsonobject.charts.forEach(function(chart) {
-                    let msg = messagetypes.download;
-                    msg.filename = chart;
-                    sendMessageToClients(msg, uid);
-                    let addfilepath = `${appdir}/public/charts/${chart}`;
-                    cmd = `zip -j -u ${zippath} ${addfilepath}`;
-                    execSync(cmd);
-                });
-                
-                res.download(zippath, zipfilename, (err) => { 
-                    if (err) {
-                        console.error('File download failed:', err);
-                    } 
-                    else {
-                        console.log('Zip file downloaded successfully.');
-                        let msg = messagetypes.download;
-                        msg.completed = true;
-                        sendMessageToClients(msg, uid);
-                    }
-                });
+                await createAndUploadArchive(req, res);
             });
 
             const wss = new WebSocket.Server({ port: settings.wsport });
@@ -1335,6 +1305,80 @@ function getUniqueUserId(){
         
     }
 })();
+
+async function createAndUploadArchive(req, res) { 
+    const decoded = decodeURIComponent(req.query.package);
+    const jsonobject = JSON.parse(decoded);
+    const filelist = jsonobject.charts;
+    const uid = jsonobject.uid;
+    const archiveformat = jsonobject.format;
+    const archivefilename = `${settings.archivefilename}.${archiveformat}`;
+    const archivefilepath = `${appdir}/public/charts/${archivefilename}`;
+    
+    // If a previous zip file exists, remove it...
+    if (fs.existsSync(archivefilepath)) {
+        fs.rmSync(archivefilepath);
+    }
+
+    const output = fs.createWriteStream(archivefilepath);
+    const archive = archiveformat === "zip" ? 
+                                       archiver('zip', { zlib: { level: 9 }}) : 
+                                       archiver('tar', { store: true, gzip: true }); 
+
+    output.on("close", function () {
+        console.log(archive.pointer() + " total bytes");
+        console.log("Archiver has been finalized and the output file descriptor has closed.");
+
+        res.download(archivefilepath, archivefilename, (err) => { 
+            if (err) {
+                console.error('File download failed:', err);
+            } 
+            else {
+                console.log('Archive file downloaded successfully.');
+                let msg = messagetypes.download;
+                msg.completed = true;
+                sendMessageToClients(msg, uid);
+            }
+        });
+    });
+
+    output.on("end", function () {
+        console.log("Data has been drained");
+    });
+    
+    // Catch warnings (ie stat failures and other non-blocking errors)
+    archive.on("warning", function (err) {
+        if (err.code === "ENOENT") {
+            // log warning
+        } 
+        else {
+            throw err;
+        }
+    });
+
+    // Catch this error explicitly
+    archive.on("error", function (err) {
+        throw err;
+    });
+
+    archive.on("entry", function() {
+        console.log("Archiver entry event fired!")
+    })
+
+    archive.pipe(output);
+
+    // Add each chart to the new zip file
+    filelist.charts.forEach(function(chart) {
+        let msg = messagetypes.download;
+        msg.filename = chart;
+        sendMessageToClients(msg, uid);
+
+        let addfilepath = `${appdir}/public/charts/${chart}`;
+        archive.append(fs.createReadStream(addfilepath), { name: chart });
+    });
+
+    archive.finalize();
+}
 
 function downloadFile(ws, filename) {
     const filePath = path.join(appdir, "public", "charts", filename);

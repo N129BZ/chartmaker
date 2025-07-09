@@ -28,6 +28,7 @@ let sendBtn = document.getElementById("send");
 let commandbody = document.getElementById("commandbody");
 let download = document.getElementById("download");
 let dlbutton = document.getElementById("dlbutton");
+let downloadarea = document.getElementById("downloadarea");
 
 var thisUserId = "";
 var websocket;
@@ -43,6 +44,7 @@ var inResponseView = false;
 var fullChartNames = [];
 var areaChartNames = [];
 var downloadInProgress = false;
+var archiveformat = "zip"; // default 
 
 const dlchkPrefix = "dlchk";
 
@@ -73,6 +75,8 @@ async function getSettingsFromServer() {
         settings = await data.json();
         console.log(settings);
         messagetypes = settings.messagetypes;
+        
+        setDefaultArchiveFormat();
         setChartNameArrays();
         startWebsocketClient();
     }
@@ -82,6 +86,25 @@ async function getSettingsFromServer() {
 }
 
 getSettingsFromServer();
+
+function setDefaultArchiveFormat() {
+    archiveformat = settings.archiveformats[settings.archiveformatindex];
+    let oid = `option.${archiveformat}`;
+    let rbtn = document.getElementById(oid);
+    rbtn.checked = true;
+
+    var rad = document.options.archiveoptions;
+    var prev = null;
+    for (var i = 0; i < rad.length; i++) {
+        rad[i].addEventListener('change', function() {
+            if (this !== prev) {
+                prev = this;
+            }
+            console.log(`New archive format selected: ${this.value}`)
+            settings.archiveformatindex = this.value === "zip" ? 0 : 1;
+        });
+    }
+}
 
 function setChartNameArrays() {
     // Full chart names
@@ -142,7 +165,6 @@ function startWebsocketClient() {
                         if (message.completed) {
                             dlbutton.classList.remove("running");
                             dlbutton.innerText = "Download Checked Items";
-                            dlbutton.style.visibility = "hidden"; //setDownloadButtonVisible(false);
                         }
                         else {
                             console.log("Zip in progress: ", message)
@@ -187,7 +209,7 @@ function resetFromDownloadState() {
         let ckb = document.getElementById(ckbid);
         ckb.checked = false;
     });
-    setDownloadButtonVisible(false);
+    setDownloadAreaVisible(false);
 }
 
 function postTimingMessaqe(message) {
@@ -218,11 +240,13 @@ function handleCheckboxChange() {
             found = true;
         }
     });
-    setDownloadButtonVisible(found);
+    setDownloadAreaVisible(found);
 }
 
 function downloadCheckedItems() {
-    let dlitems = { charts: [] };
+    let dlitems = { uid: thisUserId, 
+                    format: archiveformat, 
+                    charts: [] };
     dlbutton.classList.add("running");
     dlbutton.innerText = "Download in progress...";
     processitems.forEach((item) => {
@@ -241,23 +265,10 @@ function downloadCheckedItems() {
         console.log(dlitems);
         downloadZipfile(dlitems);
     }
-
-    // now reset all checkboxes to not checked and disable download button
-    processitems.forEach((item) => {
-        let ckbid = `${dlchkPrefix}-${item.rowindex}`;
-        let ckb = document.getElementById(ckbid);
-        ckb.checked = false;
-    });
 }
 
-function setDownloadButtonVisible(isVisible) {
-    if (isVisible) {
-        dlbutton.style.visibility = "visible";
-    }
-    else {
-        console.trace();
-        dlbutton.style.visibility = "hidden";
-    }
+function setDownloadAreaVisible(isVisible) {
+    downloadarea.style.visibility = isVisible ? "visible" : "hidden";
 }
 
 function removeLastEntry() {
@@ -281,7 +292,7 @@ function resetEverything() {
     resetCommandList(); 
     resetChartList();  
     setupCommandBody();
-    dlbutton.style.visibility = "hidden"; //setDownloadButtonVisible(false);
+    setDownloadAreaVisible(false);
     blinking = false;
     sendBtn.innerText = "Send Commands";
     sendBtn.style.backgroundColor = "Blue";
@@ -363,10 +374,8 @@ function addCommandRequest() {
             break;
         }
     }
-
     selectedchart = -1;
     selectedcommand = -1;
-    
     command.value = "";
     chart.value = "";
 }
@@ -578,9 +587,8 @@ async function downloadZipfile(dlitems) {
     try {
         const jsonstring = JSON.stringify(dlitems);
         const urlencoded = encodeURIComponent(jsonstring);
-        var url = `${URL_GET_DOWNLOAD}?items=${urlencoded}`;
+        var url = `${URL_GET_DOWNLOAD}?package=${urlencoded}`;
         
-        //const zipfilename = settings.zipfilename;
         const response = await fetch(url); 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${data.status}`);
