@@ -25,10 +25,8 @@
         "httpport": 1962,
         "wsport": 1970,
         "webservermode": true,
-        "archivefilename": "Charts",
-        "archiveformats": ["zip","tar.gz"],
-        "archiveformatindex": 1, 
-
+        "zipfilename": "Charts.zip",
+        
         "chartprocessindexes": [0,1,2,3,4,5,6,7],
         "fullchartlist": [
             ["Sectional", "vfr", ""],

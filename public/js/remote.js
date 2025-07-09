@@ -44,7 +44,6 @@ var inResponseView = false;
 var fullChartNames = [];
 var areaChartNames = [];
 var downloadInProgress = false;
-var archiveformat = "zip"; // default 
 
 const dlchkPrefix = "dlchk";
 
@@ -76,7 +75,6 @@ async function getSettingsFromServer() {
         console.log(settings);
         messagetypes = settings.messagetypes;
         
-        setDefaultArchiveFormat();
         setChartNameArrays();
         startWebsocketClient();
     }
@@ -86,25 +84,6 @@ async function getSettingsFromServer() {
 }
 
 getSettingsFromServer();
-
-function setDefaultArchiveFormat() {
-    archiveformat = settings.archiveformats[settings.archiveformatindex];
-    let oid = `option.${archiveformat}`;
-    let rbtn = document.getElementById(oid);
-    rbtn.checked = true;
-
-    var rad = document.options.archiveoptions;
-    var prev = null;
-    for (var i = 0; i < rad.length; i++) {
-        rad[i].addEventListener('change', function() {
-            if (this !== prev) {
-                prev = this;
-            }
-            console.log(`New archive format selected: ${this.value}`)
-            settings.archiveformatindex = this.value === "zip" ? 0 : 1;
-        });
-    }
-}
 
 function setChartNameArrays() {
     // Full chart names
@@ -133,55 +112,62 @@ function startWebsocketClient() {
         websocket = new WebSocket(wsurl);
 
         websocket.onmessage = (evt) => {
-            let message = JSON.parse(evt.data);
-            if (downloadInProgress) {
-                addDownloadChunks(message);
-            }
-            else {
-                switch (message.type) {
-                    case messagetypes.timing.type: 
-                        blinkSendButton(false);
-                        postTimingMessaqe(message);
-                        break;
-                    case messagetypes.info.type:
-                        updateCommandBody(message);
-                        break;
-                    case messagetypes.complete.type:
-                    case messagetypes.running.type:
-                        updateCommandBody(message);
-                        break;
-                    case messagetypes.commandresponse.type:
-                        if (message.payload === 'success') {
-                            message.payload = "Server response: chart processing has started...";
-                            updateCommandBody(message);
-                        }
-                        else {
-                            message.payload = "Server response: status unknown, possible command error";
-                            message.css = ["boldred"];
-                            updateCommandBody(message);
-                        }
-                        break;
-                    case messagetypes.download.type:
-                        if (message.completed) {
-                            dlbutton.classList.remove("running");
-                            dlbutton.innerText = "Download Checked Items";
-                        }
-                        else {
-                            console.log("Zip in progress: ", message)
-                        }
-                        break;
-                    case messagetypes.settings.type:
-                        let payload = JSON.parse(message.payload);
-                        console.log(payload);
-                        break;
-                    case messagetypes.connection.type:
-                        thisUserId = message.uid;
-                        break; 
-                    case messagetypes.command.type:
-                    default:
-                        console.log(message.payload);
-                        break;
+            try {
+                let message = JSON.parse(evt.data);
+                if (downloadInProgress) {
+                    addDownloadChunks(message);
                 }
+                else {
+                    switch (message.type) {
+                        case messagetypes.timing.type: 
+                            blinkSendButton(false);
+                            postTimingMessaqe(message);
+                            break;
+                        case messagetypes.info.type:
+                            updateCommandBody(message);
+                            break;
+                        case messagetypes.complete.type:
+                        case messagetypes.running.type:
+                            updateCommandBody(message);
+                            break;
+                        case messagetypes.commandresponse.type:
+                            if (message.payload === 'success') {
+                                message.payload = "Server response: chart processing has started...";
+                                updateCommandBody(message);
+                            }
+                            else {
+                                message.payload = "Server response: status unknown, possible command error";
+                                message.css = ["boldred"];
+                                updateCommandBody(message);
+                            }
+                            break;
+                        case messagetypes.download.type:
+                            if (message.completed) {
+                                dlbutton.classList.remove("running");
+                                dlbutton.innerText = "Download Checked Items";
+                                resetFromDownloadState();
+                            }
+                            else {
+                                console.log("Zip in progress: ", message)
+                            }
+                            break;
+                        case messagetypes.settings.type:
+                            let payload = JSON.parse(message.payload);
+                            console.log(payload);
+                            break;
+                        case messagetypes.connection.type:
+                            thisUserId = message.uid;
+                            break; 
+                        case messagetypes.command.type:
+                        default:
+                            console.log(message.payload);
+                            break;
+                    }
+                }
+            }
+            catch(err) {
+                // ignore?
+                // console.log("Message not JSON!", evt.data);
             }
         }
 
@@ -203,7 +189,7 @@ function startWebsocketClient() {
 };
 
 function resetFromDownloadState() {
-    console.log("RESET FROM DOWNLOAD HERE: LINE 181");
+    console.log("RESETTING FROM DOWNLOAD STATE!");
     processitems.forEach((item) =>{
         let ckbid = `${dlchkPrefix}-${item.rowindex}`;
         let ckb = document.getElementById(ckbid);
@@ -244,9 +230,7 @@ function handleCheckboxChange() {
 }
 
 function downloadCheckedItems() {
-    let dlitems = { uid: thisUserId, 
-                    format: archiveformat, 
-                    charts: [] };
+    let dlitems = { uid: thisUserId, charts: [] };
     dlbutton.classList.add("running");
     dlbutton.innerText = "Download in progress...";
     processitems.forEach((item) => {
@@ -294,7 +278,7 @@ function resetEverything() {
     setupCommandBody();
     setDownloadAreaVisible(false);
     blinking = false;
-    sendBtn.innerText = "Send Commands";
+    sendBtn.innerText = "Process Charts";
     sendBtn.style.backgroundColor = "Blue";
 }
 
@@ -388,7 +372,7 @@ function blinkSendButton(state) {
     }
     else {
         blinking = false;
-        sendBtn.textContent = "Send Commands";
+        sendBtn.textContent = "Process Charts";
         sendBtn.classList.remove('start-animation');
         sendBtn.style.backgroundColor = "Blue";
     }

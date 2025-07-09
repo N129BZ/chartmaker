@@ -1309,27 +1309,24 @@ function getUniqueUserId(){
 async function createAndUploadArchive(req, res) { 
     const decoded = decodeURIComponent(req.query.package);
     const jsonobject = JSON.parse(decoded);
-    const filelist = jsonobject.charts;
+    const charts = jsonobject.charts;
     const uid = jsonobject.uid;
-    const archiveformat = jsonobject.format;
-    const archivefilename = `${settings.archivefilename}.${archiveformat}`;
-    const archivefilepath = `${appdir}/public/charts/${archivefilename}`;
+    const zipfilename = `${settings.zipfilename}`;
+    const zipfilepath = `${appdir}/public/charts/${zipfilename}`;
     
     // If a previous zip file exists, remove it...
-    if (fs.existsSync(archivefilepath)) {
-        fs.rmSync(archivefilepath);
+    if (fs.existsSync(zipfilepath)) {
+        fs.rmSync(zipfilepath);
     }
 
-    const output = fs.createWriteStream(archivefilepath);
-    const archive = archiveformat === "zip" ? 
-                                       archiver('zip', { zlib: { level: 9 }}) : 
-                                       archiver('tar', { store: true, gzip: true }); 
+    const output = fs.createWriteStream(zipfilepath);
+    const archive = archiver('zip', { zlib: { level: 9 }}); 
 
     output.on("close", function () {
         console.log(archive.pointer() + " total bytes");
         console.log("Archiver has been finalized and the output file descriptor has closed.");
 
-        res.download(archivefilepath, archivefilename, (err) => { 
+        res.download(zipfilepath, zipfilename, (err) => { 
             if (err) {
                 console.error('File download failed:', err);
             } 
@@ -1368,7 +1365,7 @@ async function createAndUploadArchive(req, res) {
     archive.pipe(output);
 
     // Add each chart to the new zip file
-    filelist.charts.forEach(function(chart) {
+    charts.forEach(function(chart) {
         let msg = messagetypes.download;
         msg.filename = chart;
         sendMessageToClients(msg, uid);

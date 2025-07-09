@@ -186,7 +186,7 @@ html, body {
     padding: 0px;
     position: absolute;
     top: 0px;
-    left: 286px;
+    left: 144px;
     height: 38px;
     width: 230px;
 }
@@ -230,7 +230,7 @@ html, body {
     left: 0px;
     height: 38px;
     width: 513px;
-    visibility: visible;
+    visibility: hidden;
 }
 .tablerow {
     font-family: Arial, Helvetica, sans-serif;
