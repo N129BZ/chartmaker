@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Generate FAA Chart Maps From Digital Images",
   "main": "make.js",
+  "type": "commonjs",
   "dependencies": {
     "archiver": "^7.0.1",
     "child_process": "^1.0.2",

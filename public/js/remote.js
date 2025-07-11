@@ -1,39 +1,49 @@
 'use strict'
 
-let URL_LOCATION            =  location.hostname;
-let URL_PROTOCOL            =  location.protocol;
-let URL_PORT                =  location.port;
-let URL_HOST_BASE           =  URL_LOCATION;
+
+const URL_LOCATION            =  location.hostname;
+const URL_PROTOCOL            =  location.protocol;
+const URL_PORT                =  location.port;
+
+var URL_HOST_BASE           =  URL_LOCATION;
 if (parseInt(URL_PORT) > 0) {
     URL_HOST_BASE += `:${URL_PORT}`;
 }
-let URL_HOST_PROTOCOL       = `${URL_PROTOCOL}//`;
-let URL_SERVER              = `${URL_HOST_PROTOCOL}${URL_HOST_BASE}`;
-let URL_WINSOCK             = `ws://${URL_LOCATION}:`;
-let URL_GET_SETTINGS        = `${URL_SERVER}/settings`;
-let URL_GET_STATUS          = `${URL_SERVER}/status`;
-let URL_POST_DATA           = `${URL_SERVER}/data`;
-let URL_GET_DOWNLOAD        = `${URL_SERVER}/download`;
 
-var messagetypes = {};
+const URL_HOST_PROTOCOL       = `${URL_PROTOCOL}//`;
+const URL_SERVER              = `${URL_HOST_PROTOCOL}${URL_HOST_BASE}`;
+const URL_WINSOCK             = `ws://${URL_LOCATION}:`;
+const URL_GET_SETTINGS        = `${URL_SERVER}/settings`;
+const URL_GET_STATUS          = `${URL_SERVER}/status`;
+const URL_POST_MAKE           = `${URL_SERVER}/make`;
+const URL_POST_DOWNLOAD       = `${URL_SERVER}/download`;
 
-var fclist = document.getElementById("fclist");
-var aclist = document.getElementById("aclist");
-var confwindow = document.getElementById("confwindow");
-var command = document.getElementById("command");
-var chart = document.getElementById("chart");
-var commandlist = document.getElementById("commandlist");
-var chartlist = document.getElementById("chartlist");
-let sendBtn = document.getElementById("send");
-let commandbody = document.getElementById("commandbody");
-let download = document.getElementById("download");
-let dlbutton = document.getElementById("dlbutton");
-let downloadarea = document.getElementById("downloadarea");
+const fclist = document.getElementById("fclist");
+const aclist = document.getElementById("aclist");
+const confwindow = document.getElementById("confwindow");
+const txtCommand = document.getElementById("txtCommand");
+const txtChart = document.getElementById("txtChart");
+const commandOptions = document.getElementById("commandOptions");
+const chartOptions = document.getElementById("chartOptions");
+const commandbody = document.getElementById("commandbody");
+const download = document.getElementById("download");
+const downloadarea = document.getElementById("downloadarea");
+
+const addItemsMenu = document.getElementById("addItemsMenu");
+const btnUndoCommand = document.getElementById("btnUndoCommand");
+const btnUndoChart = document.getElementById("btnUndoChart");
+const btnAddCmd = document.getElementById("btnAddCmd");
+const btnDownload = document.getElementById("btnDownload");
+const btnReset = document.getElementById("btnReset");
+const btnRemove = document.getElementById("btnRemove");
+const btnSend = document.getElementById("btnSend");
 
 var thisUserId = "";
 var websocket;
 var indexlist = [];
-var commands = {"commandlist": []};
+var commandpackage = { type: "commandpackage",
+                       commandlist: [],
+                       uid: "" };
 var processitems = [];
 var confcommands = [];
 var settings = {};
@@ -47,6 +57,7 @@ var downloadInProgress = false;
 
 const dlchkPrefix = "dlchk";
 
+
 window.addEventListener("load", () => {
     setupCommandBody();
     populateCommandsDropdown();
@@ -56,24 +67,14 @@ window.addEventListener("resize", () => {
     console.log("windowresize event");
 });
 
-document.addEventListener('keydown', function(event) {
-    if (event.shiftKey) {  
-        if (event.key === '~') {
-            console.log(`Secret key combo shift + '~' was pressed for settings request`);
-            websocket.send(JSON.stringify(messagetypes.settings));
-        }
-    }
-});
-
 async function getSettingsFromServer() {
     try {
-        const data = await fetch(URL_GET_SETTINGS);
+        const data = await fetch(URL_GET_SETTINGS); 
         if (!data.ok) {
             throw new Error(`HTTP error! status: ${data.status}`);
         } 
         settings = await data.json();
         console.log(settings);
-        messagetypes = settings.messagetypes;
         
         setChartNameArrays();
         startWebsocketClient();
@@ -111,57 +112,57 @@ function startWebsocketClient() {
         console.log(`OPENING: ${wsurl}`);
         websocket = new WebSocket(wsurl);
 
-        websocket.onmessage = (evt) => {
+        websocket.onmessage = (event) => {
             try {
-                let message = JSON.parse(evt.data);
-                if (downloadInProgress) {
-                    addDownloadChunks(message);
-                }
-                else {
-                    switch (message.type) {
-                        case messagetypes.timing.type: 
-                            blinkSendButton(false);
-                            postTimingMessaqe(message);
-                            break;
-                        case messagetypes.info.type:
-                            updateCommandBody(message);
-                            break;
-                        case messagetypes.complete.type:
-                        case messagetypes.running.type:
-                            updateCommandBody(message);
-                            break;
-                        case messagetypes.commandresponse.type:
-                            if (message.payload === 'success') {
-                                message.payload = "Server response: chart processing has started...";
+                let message = JSON.parse(event.data);
+                    if (downloadInProgress) {
+                        addDownloadChunks(message);
+                    }
+                    else {
+                        switch (message.type) {
+                            case settings.messagetypes.timing.type: 
+                                blinkSendButton(false);
+                                postTimingMessaqe(message);
+                                break;
+                            case settings.messagetypes.info.type:
                                 updateCommandBody(message);
-                            }
-                            else {
-                                message.payload = "Server response: status unknown, possible command error";
-                                message.css = ["boldred"];
+                                break;
+                            case settings.messagetypes.complete.type:
+                            case settings.messagetypes.running.type:
                                 updateCommandBody(message);
-                            }
-                            break;
-                        case messagetypes.download.type:
-                            if (message.completed) {
-                                dlbutton.classList.remove("running");
-                                dlbutton.innerText = "Download Checked Items";
-                                resetFromDownloadState();
-                            }
-                            else {
-                                console.log("Zip in progress: ", message)
-                            }
-                            break;
-                        case messagetypes.settings.type:
-                            let payload = JSON.parse(message.payload);
-                            console.log(payload);
-                            break;
-                        case messagetypes.connection.type:
-                            thisUserId = message.uid;
-                            break; 
-                        case messagetypes.command.type:
-                        default:
-                            console.log(message.payload);
-                            break;
+                                break;
+                            case settings.messagetypes.commandresponse.type:
+                                if (message.payload === "success") {
+                                    message.payload = "Server response: chart processing has started...";
+                                    updateCommandBody(message);
+                                }
+                                else {
+                                    message.payload = "Server response: status unknown, possible command error";
+                                    message.css = ["boldred"];
+                                    updateCommandBody(message);
+                                }
+                                break;
+                            case settings.messagetypes.download.type:
+                                if (message.completed === true) {
+                                    resetFromDownloadState();
+                                }
+                                else {
+                                    console.log(`Zip in progress: ${message.filename}`);
+                                }
+                                break;
+                            case settings.messagetypes.settings.type:
+                                let payload = JSON.parse(message.payload);
+                                console.log(payload);
+                                break;
+                            case settings.messagetypes.connection.type:
+                                thisUserId = message.uid;
+                                commandpackage = settings.messagetypes.commandpackage;
+                                commandpackage.uid = thisUserId;
+                                break; 
+                            case settings.messagetypes.command.type:
+                            default:
+                                console.log(message.payload);
+                                break;
                     }
                 }
             }
@@ -188,6 +189,34 @@ function startWebsocketClient() {
     }
 };
 
+function getJSON(data) {
+    if (typeof data !== 'string' || data.trim() === '') {
+        return { isJSON: false }; // probably a Blob
+    }
+
+    try {
+        let output = JSON.parse(data);
+        return { isJSON: true, message: output }; // Successfully parsed, return JSON
+    } 
+    catch (error) {
+        return { isJSON: false }; // Parsing failed, return false
+    }
+}
+
+function removeLastEntry() {
+    if (commandpackage.commandlist.length > 0) {
+        commandpackage.commandlist.pop();
+        for (let i = commandbody.rows.length - 1; i >= 0; i--) {
+            let lastitem = commandbody.rows[i];
+            let td = lastitem.firstChild;
+            if (td.textContent !== "") {
+                td.textContent = "";
+                break;        
+            }
+        }
+    }
+}
+
 function resetFromDownloadState() {
     console.log("RESETTING FROM DOWNLOAD STATE!");
     processitems.forEach((item) =>{
@@ -195,7 +224,41 @@ function resetFromDownloadState() {
         let ckb = document.getElementById(ckbid);
         ckb.checked = false;
     });
-    setDownloadAreaVisible(false);
+    btnDownload.classList.remove("running");
+    btnDownload.innerText = "Download Checked Items";
+    resetEverything();
+}
+
+function resetEverything() {
+    selectedchart = -1;
+    selectedcommand = -1;
+    processitems = [];
+    addItemsMenu.style.display = "block";
+    resetCommandOptions(); 
+    resetChartOptions();  
+    setupCommandBody();
+    setDownloadButtonVisible(false);
+    blinking = false;
+    sendBtn.innerText = "Process Charts";
+    sendBtn.style.backgroundColor = "Blue";
+    commandpackage = settings.messagetypes.commandpackage;
+    commandpackage.uid = thisUserId;
+}
+
+async function sendCommandsToServer() {
+    if (commandpackage.commandlist.length > 0) {
+        commandpackage.uid = thisUserId;
+        addItemsMenu.style.display = "none";
+        inResponseView = true;
+        blinkSendButton(true);
+        const response = await fetch(URL_POST_MAKE, { method: 'POST',
+                                                      headers: {'Content-Type': 'application/json'},  
+                                                      body: JSON.stringify(commandpackage) }); 
+        if (response.ok) {    
+            resetCommandOptions();
+            resetChartOptions();
+        }  
+    }
 }
 
 function postTimingMessaqe(message) {
@@ -203,9 +266,9 @@ function postTimingMessaqe(message) {
     let td = tr.firstChild;
     td.classList.add( ... message.css);
     td.innerText = `Total time for chart processing: ${message.payload}`;
-    resetCommandList(); 
-    resetChartList(); 
-    commands = {"commandlist": []};
+    resetCommandOptions(); 
+    resetChartOptions(); 
+    commandpackage = settings.messagetypes.commandpackage;
     
     processitems.forEach((item) => {
         let ckbid = `${dlchkPrefix}-${item.rowindex}`;
@@ -226,13 +289,26 @@ function handleCheckboxChange() {
             found = true;
         }
     });
-    setDownloadAreaVisible(found);
+    setDownloadButtonVisible(found);
+}
+
+function undoSelection(source) {
+    if (source === "command") {
+        txtCommand.value = "";
+        selectedcommand = -1;
+        txtChart.value = "";
+        selectedchart = -1;
+    }
+    else if (source === "chart") {
+        txtChart.value = "";
+        selectedchart = -1;
+    }
 }
 
 function downloadCheckedItems() {
     let dlitems = { uid: thisUserId, charts: [] };
-    dlbutton.classList.add("running");
-    dlbutton.innerText = "Download in progress...";
+    btnDownload.classList.add("running");
+    btnDownload.innerText = "Download in progress...";
     processitems.forEach((item) => {
         let ckbid = `${dlchkPrefix}-${item.rowindex}`;
         let ckb = document.getElementById(ckbid);
@@ -242,53 +318,21 @@ function downloadCheckedItems() {
     });
 
     if (dlitems.charts.length > 0) {
-        let msg = messagetypes.download;
-        msg.items = dlitems;
-        msg.uid = thisUserId;
-        websocket.send(JSON.stringify(msg));
         console.log(dlitems);
         downloadZipfile(dlitems);
     }
 }
 
-function setDownloadAreaVisible(isVisible) {
-    downloadarea.style.visibility = isVisible ? "visible" : "hidden";
-}
-
-function removeLastEntry() {
-    if (commands.commandlist.length > 0) {
-        commands.commandlist.pop();
-        for (let i = commandbody.rows.length - 1; i >= 0; i--) {
-            let lastitem = commandbody.rows[i];
-            let td = lastitem.firstChild;
-            if (td.textContent !== "") {
-                td.textContent = "";
-                break;        
-            }
-        }
+function setDownloadButtonVisible(isVisible) {
+    if (isVisible) {
+        btnDownload.style.visibility = "visible";
+        btnRemove.style.visibility = "hidden";
+        btnSend.style.visibility = "hidden";
     }
-}
-
-function resetEverything() {
-    selectedchart = -1;
-    selectedcommand = -1;
-    processitems = [];
-    resetCommandList(); 
-    resetChartList();  
-    setupCommandBody();
-    setDownloadAreaVisible(false);
-    blinking = false;
-    sendBtn.innerText = "Process Charts";
-    sendBtn.style.backgroundColor = "Blue";
-}
-
-function submitCommands() {
-    if (commands.commandlist.length > 0) {
-        inResponseView = true;
-        blinkSendButton(true);
-        websocket.send(JSON.stringify(commands));
-        resetCommandList();
-        resetChartList();  
+    else {
+        btnDownload.style.visibility = "hidden";
+        btnRemove.style.visibility = "visible";
+        btnSend.style.visibility = "visible";
     }
 }
 
@@ -297,13 +341,13 @@ function addCommandRequest() {
         setupCommandBody();
     }
 
-    if (selectedcommand == -1) {
+    if (selectedcommand === -1) {
         alert("You must first select a command to add!")
         return;
     }
 
     if (selectedcommand === 0 || selectedcommand === 2) {
-        if (chart.value === "") {
+        if (txtChart.value === "") {
             alert("You must select a chart for the selected command");
             return;
         }
@@ -340,17 +384,18 @@ function addCommandRequest() {
             break;
     }
     
-    let idx = commands.commandlist.length;
+    let idx = commandpackage.commandlist.length;
     
     for (let i = idx; i < idx + list.length; i++) {
         let infomessage = settings.messagetypes.info;
         let chartname = list[selectedchart];
         infomessage.payload = `${cmdtext} ${chartname}` ;
+        infomessage.uid = thisUserId;
         updateCommandBody(infomessage);
 
         let ridx = i + 1;
         let entry = { command: selectedcommand, chart: selectedchart, rowindex: ridx };
-        commands.commandlist.push(entry); 
+        commandpackage.commandlist.push(entry); 
         if (isfullList) {
             selectedchart = selectedchart + 1; 
         }
@@ -358,23 +403,20 @@ function addCommandRequest() {
             break;
         }
     }
-    selectedchart = -1;
-    selectedcommand = -1;
-    command.value = "";
-    chart.value = "";
+    resetCommandOptions();
 }
 
 function blinkSendButton(state) {
     if (state === true) {
         blinking = true;
-        sendBtn.textContent = "Processing...";
-        sendBtn.classList.add('start-animation');
+        btnSend.textContent = "Processing...";
+        btnSend.classList.add('start-animation');
     }
     else {
         blinking = false;
-        sendBtn.textContent = "Process Charts";
-        sendBtn.classList.remove('start-animation');
-        sendBtn.style.backgroundColor = "Blue";
+        btnSend.textContent = "Process Charts";
+        btnSend.classList.remove('start-animation');
+        btnSend.style.backgroundColor = "Blue";
     }
 }
 
@@ -424,21 +466,21 @@ function updateCommandBody(message) {
 
 function chartSelected() {
     selectedchart = -1;
-    let item = chart.value;
+    let item = txtChart.value;
     for (let i = 0; i < settings.areachartlist.length; i++) {
-        if (chartlist.options[i].value === item) {
+        if (chartOptions.options[i].value === item) {
             selectedchart = i;
             break;
         } 
     }
 }
 
-function populateChartList() {
+function commandSelected() {
     selectedcommand = -1;
-    let item = command.value;
+    let item = txtCommand.value;
 
-    for(let i = 0; i < commandlist.options.length; i++) {
-        if (commandlist.options[i].value === item) {
+    for(let i = 0; i < commandOptions.options.length; i++) {
+        if (commandOptions.options[i].value === item) {
             selectedcommand = i;
             break; 
         }
@@ -457,16 +499,16 @@ function populateChartList() {
 }
 
 function populateAreaChartList() {
-    resetChartList();
+    resetChartOptions();
     for (let i = 0; i < settings.areachartlist.length; i++) {
         let option = document.createElement('option');
         option.value = `${settings.areachartlist[i].replaceAll("_", " ")}`;
-        chartlist.appendChild(option);
+        chartOptions.appendChild(option);
     }
 }
 
 function populateFullChartList() {
-    resetChartList();
+    resetChartOptions();
     let  i = 0;
     let item = "";
     
@@ -480,7 +522,7 @@ function populateFullChartList() {
             item = `${settings.fullchartlist[i][0].replaceAll("_", " ")}`;
             option.value = item;
         } 
-        chartlist.appendChild(option)
+        chartOptions.appendChild(option)
     }
 }
 
@@ -499,7 +541,7 @@ function setupCommandBody() {
         td.className = "leftcell";
         if (i === 0) {
             td.setAttribute("colspan", "2");
-            td.innerText = "Command list";
+            td.innerText = "Selection List";
             td.classList.add("boldgreen");
         }   
         tr.appendChild(td);
@@ -534,10 +576,10 @@ function setupCommandBody() {
         commandbody.appendChild(tr);
     }
 
-    const children = document.childNodes;
-    for (let i = 0; i < children.length; i++) {
-        const child = children[i];
-    }
+    // const children = document.childNodes;
+    // for (let i = 0; i < children.length; i++) {
+    //     const child = children[i];
+    // }
 }
 
 function populateCommandsDropdown() {
@@ -547,33 +589,32 @@ function populateCommandsDropdown() {
         alist[i].className = "option";
     }
     alist[0].value = "Process single area VFR chart";
-    commandlist.appendChild(alist[0]);
+    commandOptions.appendChild(alist[0]);
     alist[1].value = "Process all 53 area VFR charts";
-    commandlist.appendChild(alist[1]);
+    commandOptions.appendChild(alist[1]);
     alist[2].value = "Process single full chart";
-    commandlist.appendChild(alist[2]);
+    commandOptions.appendChild(alist[2]);
     alist[3].value = "Process all of the full charts";
-    commandlist.appendChild(alist[3]);
+    commandOptions.appendChild(alist[3]);
 }
 
-function resetCommandList() {
-    command.value = "";
+function resetCommandOptions() {
+    txtCommand.value = "";
     selectedcommand = -1;
-    selectedchart = -1;
+    resetChartOptions();    
 }
 
-function resetChartList() {
-    chart.value = "";
-    chartlist.innerText = "";
+function resetChartOptions() {
+    selectedchart = -1;
+    txtChart.value = "";
+    chartOptions.innerText = "";
 }
 
 async function downloadZipfile(dlitems) {
-    try {
-        const jsonstring = JSON.stringify(dlitems);
-        const urlencoded = encodeURIComponent(jsonstring);
-        var url = `${URL_GET_DOWNLOAD}?package=${urlencoded}`;
-        
-        const response = await fetch(url); 
+    try {           
+        const response = await fetch(URL_POST_DOWNLOAD, { method: 'POST',
+                                                          headers: {'Content-Type': 'application/json'},  
+                                                          body: JSON.stringify(dlitems) }); 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${data.status}`);
         } 
@@ -614,3 +655,36 @@ function processChunks(chunks) {
     document.body.removeChild(downloadLink);
 }
 
+txtCommand.addEventListener('input', () => {
+    commandSelected();
+});
+btnUndoCommand.addEventListener('click', () => {
+    undoSelection("command");
+});
+
+txtChart.addEventListener('input', () => {
+    chartSelected();
+});
+btnUndoChart.addEventListener('click', () => {
+    undoSelection("chart");
+});
+
+btnAddCmd.addEventListener('click', () => {
+    addCommandRequest();
+});
+
+btnSend.addEventListener('click', () => {
+    sendCommandsToServer();
+});
+
+btnReset.addEventListener('click', () => {
+    resetEverything();
+});
+
+btnRemove.addEventListener('click', () => {
+    removeLastEntry();
+});
+
+btnDownload.addEventListener('click', () => {
+    downloadCheckedItems();
+});

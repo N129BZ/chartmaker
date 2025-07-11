@@ -1,6 +1,5 @@
 {   
-    "settings":
-    {
+    "settings": {
         "attribution": "Aviation charts <a href='https://github.com/n129bz/chartmaker'>github.com/n129bz/chartmaker</a>",
         "vfrdownloadtemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
         "vfrindividualtemplate": "https://aeronav.faa.gov/visual/<chartdate>/sectional-files/<charttype>.zip",
@@ -121,39 +120,46 @@
             "info": { 
                "type": "info",
                "payload": "",
-               "css": ["normal"]
+               "css": ["normal"],
+               "uid": ""
             },
             "timing": {
                 "type": "timing",
                 "payload": "",
-                "css": ["timingheader"]
+                "css": ["timingheader"],
+                "uid": ""
             },
             "commandresponse": {
                 "type": "commandresponse",
                 "payload": "",
-                "css": ["boldgreen"]
+                "css": ["boldgreen"],
+                "uid": ""
             },
             "running": {
                 "type": "running",
                 "css": "runningchart",
-                "rowindex": -1
+                "rowindex": -1,
+                "uid": ""
             },
             "complete": {
                 "type": "complete",
                 "payload": "",
                 "dbfilename": "",
                 "css":  "normal",
-                "rowindex": -1
+                "rowindex": -1,
+                "uid": ""
             },
             "command": {
                 "type": "command",
                 "payload": "",
-                "css": ["normal"]
+                "css": ["normal"],
+                "uid": ""
             },
             "settings": {
                 "type": "settings",
                 "payload": "",
-                "css": ["normal"]
+                "css": ["normal"],
+                "uid": ""
             },
             "download": {
                 "type": "download",
@@ -164,6 +170,11 @@
             },
             "connection": {
                 "type": "connection",
+                "uid": ""
+            },
+            "commandpackage": {
+                "type": "commandpackage",
+                "commandlist": [],
                 "uid": ""
             }
         }

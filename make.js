@@ -7,8 +7,8 @@ const path = require('path');
 const express = require('express');
 const basicAuth = require('express-basic-auth');
 const favicon = require('serve-favicon');
-const WebSocket = require('ws')
-const archiver = require('archiver');
+const WebSocket = require('ws');
+const archiver = require ('archiver');
 
 class ProcessTime {
     constructor(processName) {
@@ -185,9 +185,6 @@ let dir_6_quantized = "";
 let isifrchart = false;
 let wgsbounds = [];
 let addmetabounds = false;
-
-// Message types
-const messagetypes = settings.messagetypes;
 
 /**
  * Chart processing starts here
@@ -1036,13 +1033,22 @@ process.on('SIGINT', () => {
  * 4 = Return the settings.json file
  * @param {*} message JSON object message
  */
-function parseMakeCommand(message, userid = "") {
+async function processMakeCommands(message) {
     let idx = -1;
     let opt = -1;
     let item = {};
     let list = message.commandlist;
-    
+    let userid = message.uid;
+
     try {
+        if (!inMakeLoop) {
+            let msgclist = processCommandMessage(message);
+            let msg = settings.messagetypes.commandresponse;
+            msg.uid = userid;
+            msg.payload = "success";
+            sendMessageToClients(JSON.stringify(msg), userid);
+            sendMessageToClients(JSON.stringify(msgclist), userid);
+        }
         inMakeLoop = true;
         outerloop: for (let i = 0; i < list.length; i++) {
             resetGlobalVariables();
@@ -1056,13 +1062,13 @@ function parseMakeCommand(message, userid = "") {
                     if (opt >= 0 && opt <= 52) {
                         parray.push(opt);
                         let ridx = i + 1;
-                        mt = messagetypes.running;
+                        mt = settings.messagetypes.running;
                         mt.rowindex = ridx;
-                        sendMessageToClients(messagetypes.running, userid);
+                        sendMessageToClients(mt, userid);
 
                         let cpt = processSingles(i);
 
-                        mt = messagetypes.complete;
+                        mt = settings.messagetypes.complete;
                         mt.rowindex = ridx;
                         mt.dbfilename = `${chartname}.${settings.dbextension}`;
                         mt.payload = cpt.totaltime;
@@ -1088,8 +1094,9 @@ function parseMakeCommand(message, userid = "") {
 
                         let cpt = processFulls(i);
 
-                        mt = messagetypes.complete;
+                        mt = settings.messagetypes.complete;
                         mt.rowindex = ridx;
+                        mt.dbfilename = `${chartname}.${settings.dbextension}`;
                         mt.payload = cpt.totaltime;
                         sendMessageToClients(mt, userid);
                     }
@@ -1107,12 +1114,12 @@ function parseMakeCommand(message, userid = "") {
             }
         }
         let payload = reportProcessingTime(); 
-        let timemsg = messagetypes.timing;
+        let timemsg = settings.messagetypes.timing;
         timemsg.payload = payload;
         sendMessageToClients(timemsg, userid);
     }
     catch(err){
-        console.log(`Error:\r\n ${err}`);
+        console.debug();
     }
 
     timings = null;
@@ -1142,14 +1149,16 @@ function resetGlobalVariables() {
 }
 
 function processCommandMessage(message) {
-    let clist = messagetypes.command;
-    clist.payload =  {commandlist: []};
+    let clist = settings.messagetypes.command;
+    clist.payload = { commandlist: [] };
+    clist.uid = message.uid;
+    
     try {
-        if (message.type === messagetypes.settings.type) {
+        if (message.type === settings.messagetypes.settings.type) {
             console.log("Settings command received");
             return;
         }
-        else if(message.type === messagetypes.download.type) {
+        else if(message.type === settings.messagetypes.download.type) {
             console.log("Download command received");
             return;
         }
@@ -1173,7 +1182,7 @@ function processCommandMessage(message) {
                             strcht = "N/A";
                             break;
                     }     
-                    clist.payload.commandlist.push({"command": strcmd, "chart": strcht})
+                    clist.payload.commandlist.push({ command: strcmd, chart: strcht })
                 }
             }
         }
@@ -1217,7 +1226,9 @@ function getUniqueUserId(){
             };
 
             app.use(express.static(`${appdir}/public`, options));
+            app.use(express.json());
             app.use(favicon(`${appdir}/public/img/favicon.png`));
+            
             //app.use(authentication);
 
             app.get("/", (req, res) => {
@@ -1230,9 +1241,13 @@ function getUniqueUserId(){
                 res.end();
             });
             
-            app.get("/download", async (req, res) => {
-                console.log("Download requested!");
-                await createAndUploadArchive(req, res);
+            app.post("/make", async (req, res) => {
+                await processMakeCommands(req.body);
+            });
+
+            app.post("/download", async (req, res) => {
+                console.log("Download request posted!");
+                await createAndUploadArchive(req.body, res);
             });
 
             const wss = new WebSocket.Server({ port: settings.wsport });
@@ -1242,8 +1257,6 @@ function getUniqueUserId(){
             wss.on('connection', (ws) => {
                 ws.tag = { sent: false, uid: "" };
                 ws.ping();
-                
-                console.log(`Websocket connected, id: ${ws.tag}`);
                 
                 ws.on('close', function() {
                     connections.delete(ws);
@@ -1255,12 +1268,12 @@ function getUniqueUserId(){
                         let uid = getUniqueUserId();
                         ws.tag.uid = uid;
                         ws.tag.sent = true;
+                        console.log(`Websocket connected, id: ${uid}`);
                         // Add the client ws to the connections dictionary
                         connections.set(ws, uid);   
 
                         // Send a confirmation message back to the client
-                        let msg = messagetypes.connection;
-                        msg.uid = uid;
+                        let msg = { type: "connection", uid: uid }
                         sendMessageToClients(msg, uid);
                     }
                 });
@@ -1270,29 +1283,16 @@ function getUniqueUserId(){
                     connections.delete(ws);
                 });
 
-                ws.onmessage = (event) => {
+                ws.onmessage = async(event) => {
                     let message = JSON.parse(event.data);
-
-                    switch (message.type) {
-                        case messagetypes.download.type: 
-                            console.log("calling the download file manager from here, line 1254")
-                            downloadFile(ws, message.filename);
-                            break;     
-                        case messagetypes.settings.type:
-                            let rs = fs.readFileSync(`${appdir}/settings.json`, "utf-8");
-                            message.payload = rs;
-                            ws.send(JSON.stringify(message));
-                            break;
-                        default:
-                            let msgclist = processCommandMessage(message);
-                            if (!inMakeLoop) {
-                                msg = messagetypes.commandresponse;
-                                msg.payload = 'success';
-                                ws.send(JSON.stringify(msg));
-                                ws.send(JSON.stringify(msgclist));
-                                parseMakeCommand(message);
-                            }
-                        break;
+                    let msgclist = processCommandMessage(message);
+                    if (!inMakeLoop) {
+                        msg = messagetypes.commandresponse;
+                        msg.uid = ws.tag.uid;
+                        msg.payload = "success";
+                        ws.send(JSON.stringify(msg));
+                        ws.send(JSON.stringify(msgclist));
+                        await processMakeCommands(message);
                     }
                 };
             });
@@ -1306,14 +1306,14 @@ function getUniqueUserId(){
     }
 })();
 
-async function createAndUploadArchive(req, res) { 
-    const decoded = decodeURIComponent(req.query.package);
-    const jsonobject = JSON.parse(decoded);
-    const charts = jsonobject.charts;
-    const uid = jsonobject.uid;
+async function createAndUploadArchive(message, response) { 
+    const charts = message.charts;
+    const uid = message.uid;
     const zipfilename = `${settings.zipfilename}`;
     const zipfilepath = `${appdir}/public/charts/${zipfilename}`;
     
+    let index = -1; // index to chart names
+
     // If a previous zip file exists, remove it...
     if (fs.existsSync(zipfilepath)) {
         fs.rmSync(zipfilepath);
@@ -1326,13 +1326,13 @@ async function createAndUploadArchive(req, res) {
         console.log(archive.pointer() + " total bytes");
         console.log("Archiver has been finalized and the output file descriptor has closed.");
 
-        res.download(zipfilepath, zipfilename, (err) => { 
+        response.download(zipfilepath, zipfilename, (err) => { 
             if (err) {
                 console.error('File download failed:', err);
             } 
             else {
                 console.log('Archive file downloaded successfully.');
-                let msg = messagetypes.download;
+                let msg = settings.messagetypes.download;
                 msg.completed = true;
                 sendMessageToClients(msg, uid);
             }
@@ -1359,6 +1359,12 @@ async function createAndUploadArchive(req, res) {
     });
 
     archive.on("entry", function() {
+        index ++;
+        let msg = settings.messagetypes.download;
+        msg.uid = uid;
+        msg.filename = charts[index];
+        msg.completed = false;
+        sendMessageToClients(msg, uid);
         console.log("Archiver entry event fired!")
     })
 
@@ -1366,34 +1372,11 @@ async function createAndUploadArchive(req, res) {
 
     // Add each chart to the new zip file
     charts.forEach(function(chart) {
-        let msg = messagetypes.download;
-        msg.filename = chart;
-        sendMessageToClients(msg, uid);
-
         let addfilepath = `${appdir}/public/charts/${chart}`;
         archive.append(fs.createReadStream(addfilepath), { name: chart });
     });
 
     archive.finalize();
-}
-
-function downloadFile(ws, filename) {
-    const filePath = path.join(appdir, "public", "charts", filename);
-    const readStream = fs.createReadStream(filePath, { highWaterMark: 64 * 1024 }); // 64KB chunks
-
-    readStream.on('data', chunk => {
-        ws.send(chunk); // Send each chunk over the WebSocket
-    });
-
-    readStream.on('end', () => {
-        //ws.send('FILE_TRANSFER_COMPLETE'); // Signal end of transfer
-        console.log('File sent successfully');
-    });
-
-    readStream.on('error', err => {
-        console.error('Error reading file:', err);
-        //ws.send('ERROR_TRANSFERRING_FILE');
-    });
 }
 
 function authentication(req, res, next) {

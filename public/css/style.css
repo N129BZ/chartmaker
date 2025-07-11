@@ -30,12 +30,17 @@ html, body {
     width: 50%;
     margin: 0 auto;
 }
-.menu {
+.commandMenu {
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
-	width: 400px;
-    /* display: inline-block; */
-	text-align: left;
+	width: 342px;
+    text-align: left;
+}
+.chartMenu {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: medium;
+	width: 342px;
+    text-align: left;
 }
 .conflabel {
 	font-family: Arial, Helvetica, sans-serif;
@@ -61,6 +66,9 @@ html, body {
 .table {
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
+}
+#addItemsMenu {
+    display: block;
 }
 .listitem {
     font-family: Arial, Helvetica, sans-serif;
@@ -91,8 +99,8 @@ html, body {
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
 	font-weight: bold;
-    background-color:lightgray;
-    color: black;
+    background-color: blue;
+    color: white;
 	border-radius:10px; 
     border-width: 1px;
     padding:0px;
@@ -186,9 +194,10 @@ html, body {
     padding: 0px;
     position: absolute;
     top: 0px;
-    left: 144px;
+    left: 285px;
     height: 38px;
     width: 230px;
+    visibility: hidden;
 }
 .downloadbutton:active {
   transform: translateY(2px);
@@ -199,8 +208,8 @@ html, body {
     font-family: Arial, Helvetica, sans-serif;
     font-size: medium;
     position: relative;
-    top: -10px;
-    left: -18;
+    top: -18px;
+    /* left: -18; */
     height: 320px;
     width: 513px;
     overflow-x: hidden;
@@ -217,20 +226,6 @@ html, body {
     margin: 10px;
     padding: 0px;
     display:block;
-}
-.downloadarea {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: medium;
-    font-weight: bold;
-    background-color: white;
-    color: black;
-    padding: 0px;
-    position: relative;
-    top: -21px;
-    left: 0px;
-    height: 38px;
-    width: 513px;
-    visibility: hidden;
 }
 .tablerow {
     font-family: Arial, Helvetica, sans-serif;
