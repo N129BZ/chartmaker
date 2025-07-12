@@ -166,6 +166,7 @@
                 "completed": false,
                 "items": [],
                 "filename": "",
+                "getexisting": false,
                 "uid": ""
             },
             "connection": {

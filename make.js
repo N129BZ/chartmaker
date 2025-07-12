@@ -5,7 +5,6 @@ const { execSync } = require('child_process');
 const readlineSync = require('readline-sync');
 const path = require('path');
 const express = require('express');
-const basicAuth = require('express-basic-auth');
 const favicon = require('serve-favicon');
 const WebSocket = require('ws');
 const archiver = require ('archiver');
@@ -81,9 +80,9 @@ function processPrompt(message) {
     return readlineSync.question(message); 
 }
 
-const settings = JSON.parse(fs.readFileSync(`${appdir}/settings.json`, "utf-8")).settings;
-const remotemenu = JSON.parse(fs.readFileSync(`${appdir}/remotemenu.json`, "utf-8"))
-const users = JSON.parse(fs.readFileSync(`${appdir}/users.json`, "utf-8")).users;
+const settings = JSON.parse(fs.readFileSync(path.join(appdir, "settings.json"), "utf-8")).settings;
+const remotemenu = JSON.parse(fs.readFileSync(path.join(appdir, "remotemenu.json"), "utf-8"));
+const users = JSON.parse(fs.readFileSync(path.join(appdir, "users.json"), "utf-8")).users;
 
 var useWebServer = settings.webservermode;
 var timings = new Map();
@@ -116,7 +115,7 @@ function getProcessCount() {
 let logfd = 0;
 const setupDebugLog = function(logfolder) {
     if (settings.logtofile) {
-        logfd = fs.openSync(`${logfolder}/debug.log`, 'w', 0o666);
+        logfd = fs.openSync(path.join(logfolder, "debug.log"), 'w', 0o666);
     }
 }
 const logEntry = function(entry) {
@@ -159,12 +158,6 @@ if (isdocker) {
     let extcharts = path.join(appdir, "externalcharts");
     if (fs.existsSync(extcharts)) {
         dbfolder = extcharts;
-    }
-}
-else {
-    let dbf = settings.defaultdbfolder;
-    if ((dbf.length > 0) && (fs.existsSync(dbf))) {
-        dbfolder = dbf;
     }
 }
 
@@ -352,7 +345,7 @@ function processSingles(msgid = -1) {
         chartname = chartworkname;
         clippedShapeFolder = path.join(appdir, "clipshapes", "sectional");
         chartlayertype = settings.layertypes[settings.layertypeindex];
-        chartfolder = `${workarea}/${chartworkname}`;
+        chartfolder = path.join(workarea, chartworkname);
         charturl = `${settings.vfrindividualtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
         console.log(charturl);
         let cpt = new ProcessTime(chartname);
@@ -501,7 +494,7 @@ function setupEnvironment() {
  * Get the desired chart zip file from the FAA's digital sources URL
  */
 function downloadCharts() {
-    let chartzip = `${chartcache}/${chartworkname}-${chartdate}.zip`;
+    let chartzip = path.join(chartcache, `${chartworkname}-${chartdate}.zip`);
     if (fs.existsSync(chartzip)) {
         logEntry(`Using cached ${chartzip}`);
         return;
@@ -524,7 +517,7 @@ function downloadCharts() {
  * Unzip chart file
  */
 function unzipCharts() {
-    let chartzip = `${chartcache}/${chartworkname}-${chartdate}.zip`;
+    let chartzip = path.join(chartcache, `${chartworkname}-${chartdate}.zip`);
     cmd = `unzip -o ${chartzip} -x '*.htm' -d ${dir_1_unzipped}`;
     executeCommand(cmd);
 
@@ -533,20 +526,20 @@ function unzipCharts() {
         zipfiles.forEach(zipfile => {
             let srchstr = chartname === "Enroute_High" ? "ENR_H" : "ENR_L" // only unzip the indicated type
             if (zipfile.search(srchstr) > -1) {
-                cmd = `unzip -o ${dir_1_unzipped}/${zipfile} -d ${dir_1_unzipped}`;
+                cmd = `unzip -o ${path.join(dir_1_unzipped, zipfile)} -d ${dir_1_unzipped}`;
                 executeCommand(cmd);
             }
         });
     }
 
     // now clean out all of the irrelevant files...
-    cmd = `rm -r -f ${dir_1_unzipped}/*.pdf`;
+    cmd = `rm -r -f ${path.join(dir_1_unzipped, "*.pdf")}`;
     executeCommand(cmd);
 
-    cmd = `rm -r -f ${dir_1_unzipped}/*.htm`;
+    cmd = `rm -r -f ${path.join(dir_1_unzipped, "*.htm")}`;
     executeCommand(cmd);
 
-    cmd = `rm -r -f ${dir_1_unzipped}/*.zip`;
+    cmd = `rm -r -f ${path.join(dir_1_unzipped, "*.zip")}`;
     executeCommand(cmd);
 
     // This chart is a recent addition to the zip file from the FAA.
@@ -554,7 +547,7 @@ function unzipCharts() {
     // in the .zip file, it has no matching .tfw file with wsgbounds 
     // and crashes the process, so we will just eliminate it.
     // Maybe in the future it could be added as a separate option.
-    cmd = `rm -r -f "${dir_1_unzipped}/Caribbean Planning Chart.tif"`;
+    cmd = `rm -r -f "${path.join(dir_1_unzipped, "Caribbean Planning Chart.tif")}`;
     executeCommand(cmd);
 }
 
@@ -587,11 +580,14 @@ function processImages() {
 
     chartareas.forEach((area) => {
         logEntry(`* chart ${area}`);
-        let shapefile = `${clippedShapeFolder}/${area}.shp`;
-        let clipped = `${dir_3_clipped}/${area}.vrt`;
-        let sourcetif = `${dir_1_unzipped}/${area}.tif`;
-        let expanded = `${dir_2_expanded}/${area}.vrt`
-        let tiled = `${dir_4_tiled}/${area}`
+        let shpfile = `${area}.shp`;
+        let vrtfile = `${area}.vrt`;
+        let srcfile = `${area}.tif`;
+        let shapefile = path.join(clippedShapeFolder, shpfile);
+        let clipped = path.join(dir_3_clipped, vrtfile);
+        let sourcetif = path.join(dir_1_unzipped, srcfile);
+        let expanded = path.join(dir_2_expanded, vrtfile);
+        let tiled = path.join(dir_4_tiled, area);
         let expandopt = "";
 
         // determine if RGB expansion is required
@@ -745,12 +741,12 @@ function makeMbTiles() {
     fs.writeSync(fd, metajson);
     fs.closeSync(fd);
 
-    let mbtiles = `${dbfolder}/${chartname}.${settings.dbextension}`;
+    let mbtiles = path.join(dbfolder, `${chartname}.${settings.dbextension}`);
     fs.rmSync(mbtiles, { force: true });  
     
     logEntry(`>> creating database: ${mbtiles}`);
     
-    cmd = `python3 ${appdir}/mbutil/mb-util --image_format=${imageformat} --silent --scheme=tms ${sourcefolder} ${mbtiles}`;
+    cmd = `python3 ${path.join(appdir, "mbutil", "mb-util")} --image_format=${imageformat} --silent --scheme=tms ${sourcefolder} ${mbtiles}`;
     executeCommand(cmd, false);
 
     let cpt = timings.get(chartname);
@@ -1225,14 +1221,13 @@ function getUniqueUserId(){
                 }
             };
 
-            app.use(express.static(`${appdir}/public`, options));
+            let publicdir = path.join(appdir, "public");
+            app.use(express.static(publicdir, options));
             app.use(express.json());
-            app.use(favicon(`${appdir}/public/img/favicon.png`));
+            app.use(favicon(path.join(publicdir, "img", "favicon.png")));
             
-            //app.use(authentication);
-
             app.get("/", (req, res) => {
-                res.send(fs.readFileSync(`${appdir}/public/index.html`, "utf-8"));
+                res.send(fs.readFileSync(path.join(publicdir, "index.html"), "utf-8"));
                 res.end();
             });
 
@@ -1241,13 +1236,18 @@ function getUniqueUserId(){
                 res.end();
             });
             
+            app.post("/sendexisting", async (req, res) => {
+                let data = await sendExistingDatabases(req.body);
+                res.send(data);
+            });
+
             app.post("/make", async (req, res) => {
                 await processMakeCommands(req.body);
             });
 
             app.post("/download", async (req, res) => {
                 console.log("Download request posted!");
-                await createAndUploadArchive(req.body, res);
+                await uploadArchiveFile(req.body, res);
             });
 
             const wss = new WebSocket.Server({ port: settings.wsport });
@@ -1306,7 +1306,7 @@ function getUniqueUserId(){
     }
 })();
 
-async function createAndUploadArchive(message, response) { 
+async function uploadArchiveFile(message, response) { 
     const charts = message.charts;
     const uid = message.uid;
     const zipfilename = `${settings.zipfilename}`;
@@ -1377,6 +1377,19 @@ async function createAndUploadArchive(message, response) {
     });
 
     archive.finalize();
+}
+
+async function sendExistingDatabases(message) {
+    let items = [];
+    try {
+        items = fs.readdirSync(dbfolder);
+        message.items = items;
+        message.completed = true;
+    }
+    catch(err) {
+        console.error(err.stack);
+    }
+    return message;
 }
 
 function authentication(req, res, next) {

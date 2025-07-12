@@ -14,6 +14,7 @@ const URL_HOST_PROTOCOL       = `${URL_PROTOCOL}//`;
 const URL_SERVER              = `${URL_HOST_PROTOCOL}${URL_HOST_BASE}`;
 const URL_WINSOCK             = `ws://${URL_LOCATION}:`;
 const URL_GET_SETTINGS        = `${URL_SERVER}/settings`;
+const URL_POST_SENDEXISTING   = `${URL_SERVER}/sendexisting`;
 const URL_GET_STATUS          = `${URL_SERVER}/status`;
 const URL_POST_MAKE           = `${URL_SERVER}/make`;
 const URL_POST_DOWNLOAD       = `${URL_SERVER}/download`;
@@ -27,7 +28,7 @@ const commandOptions = document.getElementById("commandOptions");
 const chartOptions = document.getElementById("chartOptions");
 const commandbody = document.getElementById("commandbody");
 const download = document.getElementById("download");
-const downloadarea = document.getElementById("downloadarea");
+const downloadExisting = document.getElementById("downloadExisting");
 
 const addItemsMenu = document.getElementById("addItemsMenu");
 const btnUndoCommand = document.getElementById("btnUndoCommand");
@@ -37,6 +38,7 @@ const btnDownload = document.getElementById("btnDownload");
 const btnReset = document.getElementById("btnReset");
 const btnRemove = document.getElementById("btnRemove");
 const btnSend = document.getElementById("btnSend");
+const chkForExisting = document.getElementById("checkForExisting");
 
 var thisUserId = "";
 var websocket;
@@ -115,10 +117,7 @@ function startWebsocketClient() {
         websocket.onmessage = (event) => {
             try {
                 let message = JSON.parse(event.data);
-                    if (downloadInProgress) {
-                        addDownloadChunks(message);
-                    }
-                    else {
+                    if (!downloadInProgress) {
                         switch (message.type) {
                             case settings.messagetypes.timing.type: 
                                 blinkSendButton(false);
@@ -238,6 +237,8 @@ function resetEverything() {
     resetChartOptions();  
     setupCommandBody();
     setDownloadButtonVisible(false);
+    chkForExisting.checked = false;
+    downloadInProgress = false;
     blinking = false;
     sendBtn.innerText = "Process Charts";
     sendBtn.style.backgroundColor = "Blue";
@@ -328,11 +329,15 @@ function setDownloadButtonVisible(isVisible) {
         btnDownload.style.visibility = "visible";
         btnRemove.style.visibility = "hidden";
         btnSend.style.visibility = "hidden";
+        addItemsMenu.style.visibility = "hidden";
+        downloadExisting.style.visibility = "hidden";
     }
     else {
         btnDownload.style.visibility = "hidden";
         btnRemove.style.visibility = "visible";
         btnSend.style.visibility = "visible";
+        addItemsMenu.style.visibility = "visible";
+        downloadExisting.style.visibility = "visible";
     }
 }
 
@@ -449,6 +454,12 @@ function updateCommandBody(message) {
             td.classList.remove("running");
             processitems.push(message);
         }
+        else if (message.type === "existingdb") {
+            let tr = commandbody.rows[message.rowindex];
+            let td = tr.children[0];
+            let span = td.firstChild;
+            td.textContent = message.dbfilename;
+        }
         else {
             // Add the incoming message to the first empty row
             for (let i = 1; i < commandbody.rows.length; i++) {
@@ -478,6 +489,11 @@ function chartSelected() {
 function commandSelected() {
     selectedcommand = -1;
     let item = txtCommand.value;
+    
+    if (chkForExisting.checked) {
+        chkForExisting.checked = false;
+        setupCommandBody();
+    }
 
     for(let i = 0; i < commandOptions.options.length; i++) {
         if (commandOptions.options[i].value === item) {
@@ -611,6 +627,8 @@ function resetChartOptions() {
 }
 
 async function downloadZipfile(dlitems) {
+    downloadInProgress = true;
+    chkForExisting.checked = false;
     try {           
         const response = await fetch(URL_POST_DOWNLOAD, { method: 'POST',
                                                           headers: {'Content-Type': 'application/json'},  
@@ -688,3 +706,43 @@ btnRemove.addEventListener('click', () => {
 btnDownload.addEventListener('click', () => {
     downloadCheckedItems();
 });
+
+chkForExisting.addEventListener('change', () => {
+    if (!downloadInProgress) {
+        if (chkForExisting.checked) {
+            resetCommandOptions();
+            resetChartOptions();
+            getExistingDatabaseList();
+        }
+        else {
+            resetFromDownloadState();
+        }
+    }
+});
+
+async function getExistingDatabaseList() {
+    let dlreq = settings.messagetypes.download;
+    dlreq.uid = thisUserId;
+    dlreq.getexisting = true;
+    const response = await fetch(URL_POST_SENDEXISTING, { method: 'POST',
+                                 headers: {'Content-Type': 'application/json'},  
+                                 body: JSON.stringify(dlreq) }); 
+    const data = await response.json();
+    
+    if (data.items.length > 0) {
+        processitems = [];
+        let rowidx = 0;
+        data.items.forEach((item) => {
+            if (item.endsWith(settings.dbextension)) {
+                rowidx ++;
+                let msg = { type: "existingdb", dbfilename: item, rowindex: rowidx };
+                updateCommandBody(msg);
+                processitems.push(msg);
+                let ckbid = `${dlchkPrefix}-${rowidx}`;
+                let ckb = document.getElementById(ckbid);
+                ckb.style.display = "inline";
+                ckb.addEventListener("change", handleCheckboxChange); 
+            }
+        });
+    }
+}

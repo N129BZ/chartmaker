@@ -95,7 +95,26 @@ html, body {
     margin-right: 2px;
     z-index: 12;
 }
-.addbutton {
+.btnSeeCurrent {
+    font-family: Arial, Helvetica, sans-serif;
+	font-size: medium;
+	font-weight: bold;
+    background-color: blue;
+    color: white;
+	border-radius:10px; 
+    border-width: 1px;
+    padding:0px;
+    position:absolute;
+    top: 117px;
+    left: 510px;
+    height: 38px;
+    width: 150px;
+}
+.btnSeeCurrent:active {
+  transform: translateY(2px);
+  box-shadow: 0 5px #666;
+}
+.btnAddCmd {
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
 	font-weight: bold;
@@ -105,14 +124,17 @@ html, body {
     border-width: 1px;
     padding:0px;
     position:relative;
-    top: -54px;
-    left: 358px;
+    top: -37px;
+    left: 364px;
     height: 38px;
     width: 150px;
 }
-.addbutton:active {
+.btnAddCmd:active {
   transform: translateY(2px);
   box-shadow: 0 5px #666;
+}
+.spacer {
+    height: 8px;
 }
 .resetbutton {
     font-family: Arial, Helvetica, sans-serif;
@@ -209,8 +231,7 @@ html, body {
     font-size: medium;
     position: relative;
     top: -18px;
-    /* left: -18; */
-    height: 320px;
+    height: 324px;
     width: 513px;
     overflow-x: hidden;
     overflow-y: scroll;
@@ -285,8 +306,8 @@ html, body {
     top: 0px;
     left: 0px;
     float: right;
-    height: 16px;
-    width: 16px;
+    height: 14px;
+    width: 14px;
     padding:0px;
     outline: 1px solid black;
     display: none;
@@ -320,6 +341,17 @@ html, body {
     font-weight: bold;
     background-color: lightgreen;
     color: black;
+}
+.largeLabel {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: large;
+    /* text-align: left; */
+}
+.blueInput {
+    padding-bottom: 10px;
+    accent-color: blue;
+    height: 20px;
+    width: 20px;
 }
 .running {
     animation: runningProcess 3s infinite

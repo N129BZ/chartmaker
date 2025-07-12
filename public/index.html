@@ -22,15 +22,14 @@
                 <datalist class="listbox" id="commandOptions">
                 </datalist>
             </div>
-            <br>
             <div class="chartMenu" id="chartMenu"><b><br><label for="btnUndoChart">Charts:</label></b><br>
                 <button class="undobutton" id="btnUndoChart"><svg class="udimage" width="24px" height="24px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none"><path stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 9v5h5m11 2c-.497-4.5-3.367-8-8-8-2.73 0-5.929 2.268-7.294 5.5"/></svg></button>
                 <input type="text" class="listitem" id="txtChart" list="chartOptions">
                 <datalist class="listbox" id="chartOptions">             
                 </datalist>
             </div>
-            <br>   
-            <button id="btnAddCmd" class="addbutton">Add Selection</button>
+            <button id="btnAddCmd" class="btnAddCmd">Add Selection</button>
+            <div class="spacer"></div>
         </div>
         <div class="confwindow" id="confwindow">
             <table class="commandtable" id="commandtable"><tbody id="commandbody"></tbody></table>
@@ -40,7 +39,12 @@
             <button id="btnRemove" class="removebutton">Remove Last Command</button>
             <button id="btnSend" class="sendbutton">Process Charts</button>
             <button id="btnDownload" class="downloadbutton">Download Checked Items</button>
-        </div>  
+        </div>
+        <br> 
+        <div class="downloadExisting" id="downloadExisting">
+            <label class="largeLabel" for="checkForExisting">See currently processed database list for downloading?</label>
+            <input type="checkbox" class="blueInput" id="checkForExisting">
+        </div>
         <script type="module" src="js/remote.js"></script>
     </div>
 </body>
