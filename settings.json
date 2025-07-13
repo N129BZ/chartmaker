@@ -177,6 +177,11 @@
                 "type": "commandpackage",
                 "commandlist": [],
                 "uid": ""
+            },
+            "existingdb": { 
+                "type": "existingdb", 
+                "dbfilename": "", 
+                "rowindex": -1 
             }
         }
     }

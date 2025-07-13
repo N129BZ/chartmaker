@@ -77,9 +77,10 @@ async function getSettingsFromServer() {
         } 
         settings = await data.json();
         console.log(settings);
-        
+        checkForExistingDatabases();
         setChartNameArrays();
         startWebsocketClient();
+        
     }
     catch(err) {
         console.log(err.message);
@@ -87,6 +88,16 @@ async function getSettingsFromServer() {
 }
 
 getSettingsFromServer();
+
+async function checkForExistingDatabases() {
+    let hasexisting = await hasExistingDatabases();
+    if(hasexisting) {
+        downloadExisting.style.visibility = "visible";
+    }
+    else {
+        downloadExisting.style.visibility = "hidden"
+    }
+}
 
 function setChartNameArrays() {
     // Full chart names
@@ -117,52 +128,50 @@ function startWebsocketClient() {
         websocket.onmessage = (event) => {
             try {
                 let message = JSON.parse(event.data);
-                    if (!downloadInProgress) {
-                        switch (message.type) {
-                            case settings.messagetypes.timing.type: 
-                                blinkSendButton(false);
-                                postTimingMessaqe(message);
-                                break;
-                            case settings.messagetypes.info.type:
-                                updateCommandBody(message);
-                                break;
-                            case settings.messagetypes.complete.type:
-                            case settings.messagetypes.running.type:
-                                updateCommandBody(message);
-                                break;
-                            case settings.messagetypes.commandresponse.type:
-                                if (message.payload === "success") {
-                                    message.payload = "Server response: chart processing has started...";
-                                    updateCommandBody(message);
-                                }
-                                else {
-                                    message.payload = "Server response: status unknown, possible command error";
-                                    message.css = ["boldred"];
-                                    updateCommandBody(message);
-                                }
-                                break;
-                            case settings.messagetypes.download.type:
-                                if (message.completed === true) {
-                                    resetFromDownloadState();
-                                }
-                                else {
-                                    console.log(`Zip in progress: ${message.filename}`);
-                                }
-                                break;
-                            case settings.messagetypes.settings.type:
-                                let payload = JSON.parse(message.payload);
-                                console.log(payload);
-                                break;
-                            case settings.messagetypes.connection.type:
-                                thisUserId = message.uid;
-                                commandpackage = settings.messagetypes.commandpackage;
-                                commandpackage.uid = thisUserId;
-                                break; 
-                            case settings.messagetypes.command.type:
-                            default:
-                                console.log(message.payload);
-                                break;
-                    }
+                switch (message.type) {
+                    case settings.messagetypes.timing.type: 
+                        blinkSendButton(false);
+                        postTimingMessaqe(message);
+                        break;
+                    case settings.messagetypes.info.type:
+                        updateCommandBody(message);
+                        break;
+                    case settings.messagetypes.complete.type:
+                    case settings.messagetypes.running.type:
+                        updateCommandBody(message);
+                        break;
+                    case settings.messagetypes.commandresponse.type:
+                        if (message.payload === "success") {
+                            message.payload = "Server response: chart processing has started...";
+                            updateCommandBody(message);
+                        }
+                        else {
+                            message.payload = "Server response: status unknown, possible command error";
+                            message.css = ["boldred"];
+                            updateCommandBody(message);
+                        }
+                        break;
+                    case settings.messagetypes.download.type:
+                        if (message.completed === true) {
+                            resetFromDownloadState();
+                        }
+                        else {
+                            console.log(`Zip in progress: ${message.filename}`);
+                        }
+                        break;
+                    case settings.messagetypes.settings.type:
+                        let payload = JSON.parse(message.payload);
+                        console.log(payload);
+                        break;
+                    case settings.messagetypes.connection.type:
+                        thisUserId = message.uid;
+                        commandpackage = settings.messagetypes.commandpackage;
+                        commandpackage.uid = thisUserId;
+                        break; 
+                    case settings.messagetypes.command.type:
+                    default:
+                        console.log(message.payload);
+                        break;
                 }
             }
             catch(err) {
@@ -240,8 +249,8 @@ function resetEverything() {
     chkForExisting.checked = false;
     downloadInProgress = false;
     blinking = false;
-    sendBtn.innerText = "Process Charts";
-    sendBtn.style.backgroundColor = "Blue";
+    btnSend.innerText = "Process Charts";
+    btnSend.style.backgroundColor = "Blue";
     commandpackage = settings.messagetypes.commandpackage;
     commandpackage.uid = thisUserId;
 }
@@ -306,7 +315,7 @@ function undoSelection(source) {
     }
 }
 
-function downloadCheckedItems() {
+async function downloadCheckedItems() {
     let dlitems = { uid: thisUserId, charts: [] };
     btnDownload.classList.add("running");
     btnDownload.innerText = "Download in progress...";
@@ -331,13 +340,14 @@ function setDownloadButtonVisible(isVisible) {
         btnSend.style.visibility = "hidden";
         addItemsMenu.style.visibility = "hidden";
         downloadExisting.style.visibility = "hidden";
+        chkForExisting.checked = false;
     }
     else {
         btnDownload.style.visibility = "hidden";
         btnRemove.style.visibility = "visible";
         btnSend.style.visibility = "visible";
         addItemsMenu.style.visibility = "visible";
-        downloadExisting.style.visibility = "visible";
+        checkForExistingDatabases(); 
     }
 }
 
@@ -433,7 +443,7 @@ function updateCommandBody(message) {
         td.innerText = message.payload;
     }
     else {
-        if (message.type === "running") {
+        if (message.type === settings.messagetypes.running.type) {
             let rowidx = +message.rowindex;
             let tr = commandbody.rows[rowidx];
             let td = tr.children[0];
@@ -443,7 +453,7 @@ function updateCommandBody(message) {
             span.textContent = "* in progress *";
             td.classList.add("running");
         }
-        else if (message.type === "complete") {
+        else if (message.type === settings.messagetypes.complete.type) {
             let rowidx = +message.rowindex;
             let tr = commandbody.rows[rowidx];
             let td = tr.children[0];
@@ -454,7 +464,7 @@ function updateCommandBody(message) {
             td.classList.remove("running");
             processitems.push(message);
         }
-        else if (message.type === "existingdb") {
+        else if (message.type === settings.messagetypes.existingdb.type) {
             let tr = commandbody.rows[message.rowindex];
             let td = tr.children[0];
             let span = td.firstChild;
@@ -591,11 +601,6 @@ function setupCommandBody() {
         // Now append the new <tr> to the command body
         commandbody.appendChild(tr);
     }
-
-    // const children = document.childNodes;
-    // for (let i = 0; i < children.length; i++) {
-    //     const child = children[i];
-    // }
 }
 
 function populateCommandsDropdown() {
@@ -703,16 +708,24 @@ btnRemove.addEventListener('click', () => {
     removeLastEntry();
 });
 
-btnDownload.addEventListener('click', () => {
-    downloadCheckedItems();
+btnDownload.addEventListener('click', async () => {
+   await downloadCheckedItems();
 });
 
-chkForExisting.addEventListener('change', () => {
-    if (!downloadInProgress) {
+chkForExisting.addEventListener('change', async () => {
+    let inSelfCheckState = false;
+    if (!downloadInProgress && !inSelfCheckState) {
         if (chkForExisting.checked) {
-            resetCommandOptions();
-            resetChartOptions();
-            getExistingDatabaseList();
+            let success = await getExistingDatabaseList();
+            if (success) {
+                resetCommandOptions();
+                //resetChartOptions();
+            }
+            else {
+                inSelfCheckState = true;
+                chkForExisting.checked = false;
+                alert("No databases on the server, nothing to list!");
+            }
         }
         else {
             resetFromDownloadState();
@@ -722,27 +735,37 @@ chkForExisting.addEventListener('change', () => {
 
 async function getExistingDatabaseList() {
     let dlreq = settings.messagetypes.download;
+    let found = false;
+
     dlreq.uid = thisUserId;
     dlreq.getexisting = true;
     const response = await fetch(URL_POST_SENDEXISTING, { method: 'POST',
                                  headers: {'Content-Type': 'application/json'},  
                                  body: JSON.stringify(dlreq) }); 
     const data = await response.json();
-    
-    if (data.items.length > 0) {
+    const items = data.items.existingdblist;
+    if (items.length > 0) {
+        found = true;
         processitems = [];
-        let rowidx = 0;
-        data.items.forEach((item) => {
-            if (item.endsWith(settings.dbextension)) {
-                rowidx ++;
-                let msg = { type: "existingdb", dbfilename: item, rowindex: rowidx };
-                updateCommandBody(msg);
-                processitems.push(msg);
-                let ckbid = `${dlchkPrefix}-${rowidx}`;
-                let ckb = document.getElementById(ckbid);
-                ckb.style.display = "inline";
-                ckb.addEventListener("change", handleCheckboxChange); 
-            }
+        items.forEach((item) => {
+            updateCommandBody(item);
+            processitems.push(item);
+            let ckbid = `${dlchkPrefix}-${item.rowindex}`;
+            let ckb = document.getElementById(ckbid);
+            ckb.style.display = "inline";
+            ckb.addEventListener("change", handleCheckboxChange);
         });
     }
+    return found;
+}
+
+async function hasExistingDatabases() {
+    let dlreq = settings.messagetypes.download;
+    dlreq.uid = thisUserId;
+    dlreq.getexisting = true;
+    const response = await fetch(URL_POST_SENDEXISTING, { method: 'POST',
+                                 headers: {'Content-Type': 'application/json'},  
+                                 body: JSON.stringify(dlreq) }); 
+    const data = await response.json();
+    return (data.items.existingdblist.length > 0);
 }
