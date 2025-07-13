@@ -52,8 +52,6 @@ var pingSenderId = 0;
 // set the base application folder, this will change if running in docker
 let appdir = __dirname;
 
-
-
 /**
  * Utility to see if we are in a docker container
  * @returns boolean
@@ -83,6 +81,8 @@ function processPrompt(message) {
 const settings = JSON.parse(fs.readFileSync(path.join(appdir, "settings.json"), "utf-8")).settings;
 const remotemenu = JSON.parse(fs.readFileSync(path.join(appdir, "remotemenu.json"), "utf-8"));
 const users = JSON.parse(fs.readFileSync(path.join(appdir, "users.json"), "utf-8")).users;
+const zipfilename = settings.zipfilename;
+const zipfilepath = path.join(appdir, "public", "charts", zipfilename); 
 
 var useWebServer = settings.webservermode;
 var timings = new Map();
@@ -118,6 +118,7 @@ const setupDebugLog = function(logfolder) {
         logfd = fs.openSync(path.join(logfolder, "debug.log"), 'w', 0o666);
     }
 }
+
 const logEntry = function(entry) {
     if (settings.logtofile) {
         fs.writeSync(logfd, `${entry}\n`)
@@ -1309,9 +1310,7 @@ function getUniqueUserId(){
 async function uploadArchiveFile(message, response) { 
     const charts = message.charts;
     const uid = message.uid;
-    const zipfilename = `${settings.zipfilename}`;
-    const zipfilepath = `${appdir}/public/charts/${zipfilename}`;
-    
+
     let index = -1; // index to chart names
 
     // If a previous zip file exists, remove it...
@@ -1380,9 +1379,20 @@ async function uploadArchiveFile(message, response) {
 }
 
 async function sendExistingDatabases(message) {
-    let items = [];
+    const extensionsToOmit = ['.zip']; 
+    const items = { existingdblist: [] };
     try {
-        items = fs.readdirSync(dbfolder);
+        const files = fs.readdirSync(dbfolder);
+        const filteredfiles = files.filter(file => {
+            const fileExtension = path.extname(file);
+            return !extensionsToOmit.includes(fileExtension);
+        });
+        var idx = 0;
+        filteredfiles.forEach(file => {
+            idx ++;
+            let msg = { type: "existingdb", dbfilename: file, rowindex: idx };
+            items.existingdblist.push(msg);
+        });
         message.items = items;
         message.completed = true;
     }
