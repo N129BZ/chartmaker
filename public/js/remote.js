@@ -250,7 +250,7 @@ function resetEverything() {
     downloadInProgress = false;
     blinking = false;
     btnSend.innerText = "Process Charts";
-    btnSend.style.backgroundColor = "Blue";
+    btnSend.style.backgroundColor = rgb(70, 70, 180);
     commandpackage = settings.messagetypes.commandpackage;
     commandpackage.uid = thisUserId;
 }
@@ -431,7 +431,7 @@ function blinkSendButton(state) {
         blinking = false;
         btnSend.textContent = "Process Charts";
         btnSend.classList.remove('start-animation');
-        btnSend.style.backgroundColor = "Blue";
+        btnSend.style.backgroundColor = rgb(70, 70, 180);
     }
 }
 

@@ -99,7 +99,7 @@ html, body {
     font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
 	font-weight: bold;
-    background-color: blue;
+    background-color: rgb(70, 70, 180);
     color: white;
 	border-radius:10px; 
     border-width: 1px;
@@ -118,7 +118,7 @@ html, body {
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
 	font-weight: bold;
-    background-color: blue;
+    background-color: rgb(70, 70, 180);
     color: white;
 	border-radius:10px; 
     border-width: 1px;
@@ -142,8 +142,8 @@ html, body {
 	font-weight: bold;
     text-align:center;
     align-content: center;
-    background-color: lightgray;
-    color:black;
+    background-color: black;
+    color: white;
 	border-radius:10px;
     border-width: 1px; 
     padding:0px;
@@ -161,7 +161,7 @@ html, body {
     font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
 	font-weight: bold;
-    background-color:lightgray;
+    background-color:rgb(228, 205, 240);
     color: black;
 	border-radius:10px; 
     border-width: 1px;
@@ -180,7 +180,7 @@ html, body {
     font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
 	font-weight: bold;
-    background-color:blue;
+    background-color:rgb(70, 70, 180);
     color: #fff;
 	border-radius:10px; 
     border-width: 1px;
@@ -209,7 +209,7 @@ html, body {
     font-family: Arial, Helvetica, sans-serif;
     font-size: medium;
     font-weight: bold;
-    background-color: blue;
+    background-color: rgb(70, 70, 180);
     color: white;
     border-radius: 10px;
     border-width: 1px;
@@ -349,7 +349,7 @@ html, body {
 }
 .blueInput {
     padding-bottom: 10px;
-    accent-color: blue;
+    accent-color: rgb(70, 70, 180);
     height: 20px;
     width: 20px;
 }

@@ -386,7 +386,7 @@ function processOneFull() {
 
 function processFulls(msgid = -1) {
     addmetabounds = true; 
-    for (let idx = 0; idx < parray.length; idx++) { //forEach((index) => {
+    for (let idx = 0; idx < parray.length; idx++) { 
         let chart = settings.fullchartlist[parray[idx]]; 
         let lcasename = chart[0].toLowerCase();
         let charttype = chart[1];
@@ -411,7 +411,7 @@ function processFulls(msgid = -1) {
             }
             clippedShapeFolder = path.join(appdir, "clipshapes", lcasename);
             chartname = chartworkname;
-            chartfolder = `${workarea}/${chartworkname}`;
+            chartfolder = path.join(workarea, chartworkname);
         }
 
         let cpt = new ProcessTime(chartname);
@@ -504,7 +504,7 @@ function downloadCharts() {
         let oldfiles = fs.readdirSync(chartcache);
         for (var i = 0; i < oldfiles.length; i++) {
             if (oldfiles[i].startsWith(chartworkname)) {
-                fs.rmSync(`${chartcache}/${oldfiles[i]}`);
+                fs.rmSync(path.join(chartcache, oldfiles[i]));
                 break;
             }
         }
@@ -1371,7 +1371,7 @@ async function uploadArchiveFile(message, response) {
 
     // Add each chart to the new zip file
     charts.forEach(function(chart) {
-        let addfilepath = `${appdir}/public/charts/${chart}`;
+        let addfilepath = path.join(appdir, "public", "charts", chart);
         archive.append(fs.createReadStream(addfilepath), { name: chart });
     });
 
