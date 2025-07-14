@@ -364,13 +364,13 @@ function addCommandRequest() {
     }
 
     if (selectedcommand === -1) {
-        alert("You must first select a command to add!")
+        //alert("You must first select a command to add!")
         return;
     }
 
     if (selectedcommand === 0 || selectedcommand === 2) {
         if (txtChart.value === "") {
-            alert("You must select a chart for the selected command");
+            //alert("You must select a chart for the selected command");
             return;
         }
     }
@@ -743,7 +743,7 @@ chkForExisting.addEventListener('change', async () => {
             else {
                 inSelfCheckState = true;
                 chkForExisting.checked = false;
-                alert("No databases on the server, nothing to list!");
+                //alert("No databases on the server, nothing to list!");
             }
         }
         else {
