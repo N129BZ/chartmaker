@@ -1224,6 +1224,9 @@ function getUniqueUserId(){
 
             let publicdir = path.join(appdir, "public");
             app.use(express.static(publicdir, options));
+            if (settings.useauthentication) {
+                app.use(authentication);
+            }
             app.use(express.json());
             app.use(favicon(path.join(publicdir, "img", "favicon.png")));
             
