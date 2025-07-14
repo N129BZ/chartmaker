@@ -114,7 +114,7 @@ html, body {
   transform: translateY(2px);
   box-shadow: 0 5px #666;
 }
-.btnAddCmd {
+.btnAddCommand {
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
 	font-weight: bold;
@@ -128,15 +128,64 @@ html, body {
     left: 364px;
     height: 38px;
     width: 150px;
+    display: block;
 }
-.btnAddCmd:active {
+.btnAddCommand:active {
+  transform: translateY(2px);
+  box-shadow: 0 5px #666;
+}
+.btnUndoCommand {
+    width: 24px;
+    height: 24px;
+    top: 4px;
+    position:relative;
+    margin-right: 2px;
+    z-index: 0;
+}
+.btnSelectAll {
+    font-family: Arial, Helvetica, sans-serif;
+	font-size: medium;
+	font-weight: bold;
+    background-color: rgb(70, 70, 180);
+    color: white;
+	border-radius:10px; 
+    border-width: 1px;
+    padding:0px;
+	position: relative;
+    top: 0px;
+    left: 18px;
+    height: 38px;
+    width: 150px;
+    display: none;
+}
+.btnSelectAll:active {
+  transform: translateY(2px);
+  box-shadow: 0 5px #666;
+}
+.btnUnselectAll {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: medium;
+	font-weight: bold;
+    background-color: rgb(70, 70, 180);
+    color: white;
+	border-radius:10px; 
+    border-width: 1px;
+    padding:0px;
+	position: relative;
+    top: 0px;
+    left: -16px;
+    height: 38px;
+    width: 150px;
+    display: none;
+}
+.btnUnselectAll:active {
   transform: translateY(2px);
   box-shadow: 0 5px #666;
 }
 .spacer {
     height: 8px;
 }
-.resetbutton {
+.btnReset {
     font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
 	font-weight: bold;
@@ -153,15 +202,15 @@ html, body {
     height: 38px;
     width: 102px;
 }
-.resetbutton:active {
+.btnReset:active {
   transform: translateY(2px); 
   box-shadow: 0 5px #666; 
 }
-.removebutton {
+.btnRemove {
     font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
 	font-weight: bold;
-    background-color:rgb(228, 205, 240);
+    background-color: lightgray;
     color: black;
 	border-radius:10px; 
     border-width: 1px;
@@ -172,11 +221,11 @@ html, body {
     height: 38px;
     width: 200px;
 }
-.removebutton:active {
+.btnRemove:active {
   transform: translateY(2px); 
   box-shadow: 0 5px #666; 
 }
-.sendbutton {
+.btnProcessCharts {
     font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
 	font-weight: bold;
@@ -191,7 +240,7 @@ html, body {
     height: 38px;
     width:165px;
 }
-.sendbutton:active {
+.btnProcessCharts:active {
   transform: translateY(2px);
   box-shadow: 0 5px #666;
 }
@@ -205,7 +254,7 @@ html, body {
     height:40px;
     width: 480px;
 }
-.downloadbutton {
+.btnDownload {
     font-family: Arial, Helvetica, sans-serif;
     font-size: medium;
     font-weight: bold;
@@ -221,7 +270,7 @@ html, body {
     width: 230px;
     visibility: hidden;
 }
-.downloadbutton:active {
+.btnDownload:active {
   transform: translateY(2px);
   box-shadow: 0 5px #666;
 }
@@ -311,6 +360,15 @@ html, body {
     padding:0px;
     outline: 1px solid black;
     display: none;
+}
+.datediv {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: medium; 
+    position: relative;
+    top: 0px;
+    left: 0px;
+    float:inline-start;
+    height: 20px;
 }
 .normal {
     font-family: Arial, Helvetica, sans-serif;

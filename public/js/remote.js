@@ -33,11 +33,13 @@ const downloadExisting = document.getElementById("downloadExisting");
 const addItemsMenu = document.getElementById("addItemsMenu");
 const btnUndoCommand = document.getElementById("btnUndoCommand");
 const btnUndoChart = document.getElementById("btnUndoChart");
-const btnAddCmd = document.getElementById("btnAddCmd");
+const btnAddCommand = document.getElementById("btnAddCommand");
+const btnSelectAll = document.getElementById("btnSelectAll");
+const btnUnselectAll = document.getElementById("btnUnselectAll");
 const btnDownload = document.getElementById("btnDownload");
 const btnReset = document.getElementById("btnReset");
 const btnRemove = document.getElementById("btnRemove");
-const btnSend = document.getElementById("btnSend");
+const btnProcessCharts = document.getElementById("btnProcessCharts");
 const chkForExisting = document.getElementById("checkForExisting");
 
 var thisUserId = "";
@@ -174,10 +176,7 @@ function startWebsocketClient() {
                         break;
                 }
             }
-            catch(err) {
-                // ignore?
-                // console.log("Message not JSON!", evt.data);
-            }
+            finally { }
         }
 
         websocket.onerror = function(evt){
@@ -246,11 +245,16 @@ function resetEverything() {
     resetChartOptions();  
     setupCommandBody();
     setDownloadButtonVisible(false);
+    btnReset.style.visibility = "visible";
+    btnSelectAll.style.display = "none";
+    btnUnselectAll.style.display = "none";
+    btnAddCommand.style.display = "block";
+    btnRemove.style.display = "inline";
     chkForExisting.checked = false;
     downloadInProgress = false;
     blinking = false;
-    btnSend.innerText = "Process Charts";
-    btnSend.style.backgroundColor = rgb(70, 70, 180);
+    btnProcessCharts.innerText = "Process Charts";
+    btnProcessCharts.classList.remove("start-animation"); 
     commandpackage = settings.messagetypes.commandpackage;
     commandpackage.uid = thisUserId;
 }
@@ -267,6 +271,7 @@ async function sendCommandsToServer() {
         if (response.ok) {    
             resetCommandOptions();
             resetChartOptions();
+            addItemsMenu.style.display = "block";
         }  
     }
 }
@@ -337,15 +342,17 @@ function setDownloadButtonVisible(isVisible) {
     if (isVisible) {
         btnDownload.style.visibility = "visible";
         btnRemove.style.visibility = "hidden";
-        btnSend.style.visibility = "hidden";
+        btnProcessCharts.style.visibility = "hidden";
         addItemsMenu.style.visibility = "hidden";
         downloadExisting.style.visibility = "hidden";
         chkForExisting.checked = false;
+        btnSelectAll.style.display = "none";
+        btnUnselectAll.style.visibility = "inline";
     }
     else {
         btnDownload.style.visibility = "hidden";
         btnRemove.style.visibility = "visible";
-        btnSend.style.visibility = "visible";
+        btnProcessCharts.style.visibility = "visible";
         addItemsMenu.style.visibility = "visible";
         checkForExistingDatabases(); 
     }
@@ -421,17 +428,18 @@ function addCommandRequest() {
     resetCommandOptions();
 }
 
-function blinkSendButton(state) {
-    if (state === true) {
+function blinkSendButton(isVisible) {
+    if (isVisible) {
         blinking = true;
-        btnSend.textContent = "Processing...";
-        btnSend.classList.add('start-animation');
+        btnProcessCharts.textContent = "Processing...";
+        btnProcessCharts.classList.add('start-animation');
+        downloadExisting.style.visibility = "hidden";
     }
     else {
         blinking = false;
-        btnSend.textContent = "Process Charts";
-        btnSend.classList.remove('start-animation');
-        btnSend.style.backgroundColor = rgb(70, 70, 180);
+        btnProcessCharts.textContent = "Process Charts";
+        btnProcessCharts.classList.remove('start-animation');
+        checkForExistingDatabases();
     }
 }
 
@@ -466,9 +474,16 @@ function updateCommandBody(message) {
         }
         else if (message.type === settings.messagetypes.existingdb.type) {
             let tr = commandbody.rows[message.rowindex];
-            let td = tr.children[0];
-            let span = td.firstChild;
-            td.textContent = message.dbfilename;
+            let td1 = tr.children[0];
+            td1.textContent = message.dbfilename;
+            let td2 = tr.children[1];
+            let ch1 = td2.children[0];
+            let div = document.createElement("div");
+            div.textContent = message.filedate;
+            div.className = "datediv";
+            td2.insertBefore(div, ch1);
+            //btnAddCommand.style.display = "none";
+            btnSelectAll.style.display = "block";
         }
         else {
             // Add the incoming message to the first empty row
@@ -639,7 +654,8 @@ async function downloadZipfile(dlitems) {
                                                           headers: {'Content-Type': 'application/json'},  
                                                           body: JSON.stringify(dlitems) }); 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${data.status}`);
+            resetEverything();
+            return;
         } 
         const stream = response.body;
         const reader = stream.getReader();
@@ -692,11 +708,11 @@ btnUndoChart.addEventListener('click', () => {
     undoSelection("chart");
 });
 
-btnAddCmd.addEventListener('click', () => {
+btnAddCommand.addEventListener('click', () => {
     addCommandRequest();
 });
 
-btnSend.addEventListener('click', () => {
+btnProcessCharts.addEventListener('click', () => {
     sendCommandsToServer();
 });
 
@@ -709,7 +725,10 @@ btnRemove.addEventListener('click', () => {
 });
 
 btnDownload.addEventListener('click', async () => {
-   await downloadCheckedItems();
+    btnSelectAll.style.display = "none";
+    btnUnselectAll.style.display = "none";
+    btnReset.style.visibility = "hidden";
+    await downloadCheckedItems();
 });
 
 chkForExisting.addEventListener('change', async () => {
@@ -733,6 +752,36 @@ chkForExisting.addEventListener('change', async () => {
     }
 });
 
+btnSelectAll.addEventListener('click', () => {
+    let found = false;
+    for(let i = 1; i < commandbody.rows.length; i++) {
+        const ckbid = `${dlchkPrefix}-${i}`;
+        const ckb = document.getElementById(ckbid);
+        if (ckb.checkVisibility()) {
+            ckb.checked = true;
+            found = true;
+        }
+    }
+    if (found) {
+        btnSelectAll.style.display = "none";
+        btnUnselectAll.style.display = "inline";
+        btnProcessCharts.style.visibility = "hidden";
+    }
+    setDownloadButtonVisible(found);
+});
+
+btnUnselectAll.addEventListener('click', () => {
+    for(let i = 1; i < commandbody.rows.length; i++) {
+        const ckbid = `${dlchkPrefix}-${i}`;
+        const ckb = document.getElementById(ckbid);
+        ckb.checked = false;
+    }
+    //setDownloadButtonVisible(false);
+    btnDownload.style.visibility = "hidden";
+    btnUnselectAll.style.display = "none";
+    btnSelectAll.style.display = "inline";
+});
+
 async function getExistingDatabaseList() {
     let dlreq = settings.messagetypes.download;
     let found = false;
@@ -750,11 +799,16 @@ async function getExistingDatabaseList() {
         items.forEach((item) => {
             updateCommandBody(item);
             processitems.push(item);
-            let ckbid = `${dlchkPrefix}-${item.rowindex}`;
-            let ckb = document.getElementById(ckbid);
+            const ckbid = `${dlchkPrefix}-${item.rowindex}`;
+            const ckb = document.getElementById(ckbid);
             ckb.style.display = "inline";
             ckb.addEventListener("change", handleCheckboxChange);
         });
+        addItemsMenu.style.display = "none";
+        btnProcessCharts.style.visibility = "hidden";
+        btnRemove.style.display = "none";
+        btnSelectAll.style.display = "inline";
+        downloadExisting.style.visibility = "hidden";
     }
     return found;
 }

@@ -1043,8 +1043,8 @@ async function processMakeCommands(message) {
             let msg = settings.messagetypes.commandresponse;
             msg.uid = userid;
             msg.payload = "success";
-            sendMessageToClients(JSON.stringify(msg), userid);
-            sendMessageToClients(JSON.stringify(msgclist), userid);
+            sendMessageToClients(msg, userid);
+            sendMessageToClients(msgclist, userid);
         }
         inMakeLoop = true;
         outerloop: for (let i = 0; i < list.length; i++) {
@@ -1390,7 +1390,13 @@ async function sendExistingDatabases(message) {
         var idx = 0;
         filteredfiles.forEach(file => {
             idx ++;
-            let msg = { type: "existingdb", dbfilename: file, rowindex: idx };
+            let stat = fs.statSync(path.join(dbfolder, file))
+            const birthDate = stat.birthtime;
+            const year = birthDate.getFullYear();
+            const month = String(birthDate.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+            const day = String(birthDate.getDate()).padStart(2, '0');
+            const formattedDate = `${month}-${day}-${year}`;
+            let msg = { type: "existingdb", dbfilename: file, filedate: formattedDate, rowindex: idx };
             items.existingdblist.push(msg);
         });
         message.items = items;

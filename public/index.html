@@ -28,21 +28,23 @@
                 <datalist class="listbox" id="chartOptions">             
                 </datalist>
             </div>
-            <button id="btnAddCmd" class="btnAddCmd">Add Selection</button>
+            <button id="btnAddCommand" class="btnAddCommand">Add Chart</button>
             <div class="spacer"></div>
         </div>
         <div class="confwindow" id="confwindow">
             <table class="commandtable" id="commandtable"><tbody id="commandbody"></tbody></table>
         </div>
         <div class="buttongroup">
-            <button id="btnReset" class="resetbutton">Reset</button>
-            <button id="btnRemove" class="removebutton">Remove Last Command</button>
-            <button id="btnSend" class="sendbutton">Process Charts</button>
-            <button id="btnDownload" class="downloadbutton">Download Checked Items</button>
+            <button id="btnReset" class="btnReset">Reset</button>
+            <button id="btnRemove" class="btnRemove">Remove Last Command</button>
+            <button id="btnSelectAll" class="btnSelectAll">Select All</button>
+            <button id="btnUnselectAll" class="btnUnselectAll">Unselect All</button>
+            <button id="btnProcessCharts" class="btnProcessCharts">Process Charts</button>
+            <button id="btnDownload" class="btnDownload">Download Checked Items</button>
         </div>
         <br> 
         <div class="downloadExisting" id="downloadExisting">
-            <label class="largeLabel" for="checkForExisting">See currently processed database list for downloading?</label>
+            <label class="largeLabel" for="checkForExisting">See list of currently available databases for downloading?</label>
             <input type="checkbox" class="blueInput" id="checkForExisting">
         </div>
         <script type="module" src="js/remote.js"></script>
