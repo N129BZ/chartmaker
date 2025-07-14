@@ -24,6 +24,7 @@
         "httpport": 1962,
         "wsport": 1970,
         "webservermode": true,
+        "useauthentication": true,
         "zipfilename": "Charts.zip",
         
         "chartprocessindexes": [0,1,2,3,4,5,6,7],
