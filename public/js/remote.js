@@ -323,7 +323,7 @@ function undoSelection(source) {
 async function downloadCheckedItems() {
     let dlitems = { uid: thisUserId, charts: [] };
     btnDownload.classList.add("running");
-    btnDownload.innerText = "Download in progress...";
+    btnDownload.innerText = "Zipping download files...";
     processitems.forEach((item) => {
         let ckbid = `${dlchkPrefix}-${item.rowindex}`;
         let ckb = document.getElementById(ckbid);
