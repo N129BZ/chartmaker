@@ -1,6 +1,33 @@
 'use strict'
 
 
+class AppMessage {
+    static mtInfo = "info";
+    static mtTiming = "timing";
+    static mtCommandResponse = "commandresponse";
+    static mtRunning = "running";
+    static mtComplete = "complete";
+    static mtCommand = "command";
+    static mtSettings = "settings";
+    static mtDownload = "download";
+    static mtConnection = "connection";
+    static mtCommandPackage = "commandpackage";
+    static mtExistingDb = "existingdb";
+    
+    constructor(msgtype) {
+        this.type = msgtype;
+        this.css = [];
+        this.payload = "";
+        this.rowindex = -1;
+        this.completed = false;
+        this.items = [];
+        this.filename = "";
+        this.getexisting = false;
+        this.dbfilename = "";
+        this.uid = "";
+    }
+}
+
 const URL_LOCATION            =  location.hostname;
 const URL_PROTOCOL            =  location.protocol;
 const URL_PORT                =  location.port;
@@ -131,18 +158,18 @@ function startWebsocketClient() {
             try {
                 let message = JSON.parse(event.data);
                 switch (message.type) {
-                    case settings.messagetypes.timing.type: 
+                    case AppMessage.mtTiming: 
                         blinkSendButton(false);
                         postTimingMessaqe(message);
                         break;
-                    case settings.messagetypes.info.type:
+                    case AppMessage.mtInfo:
                         updateCommandBody(message);
                         break;
-                    case settings.messagetypes.complete.type:
-                    case settings.messagetypes.running.type:
+                    case AppMessage.mtRunning:
+                    case AppMessage.mtComplete:
                         updateCommandBody(message);
                         break;
-                    case settings.messagetypes.commandresponse.type:
+                    case AppMessage.mtCommandResponse:
                         if (message.payload === "success") {
                             message.payload = "Server response: chart processing has started...";
                             updateCommandBody(message);
@@ -153,7 +180,7 @@ function startWebsocketClient() {
                             updateCommandBody(message);
                         }
                         break;
-                    case settings.messagetypes.download.type:
+                    case AppMessage.mtDownload:
                         if (message.completed === true) {
                             resetFromDownloadState();
                         }
@@ -161,16 +188,16 @@ function startWebsocketClient() {
                             console.log(`Zip in progress: ${message.filename}`);
                         }
                         break;
-                    case settings.messagetypes.settings.type:
+                    case AppMessage.mtSettings:
                         let payload = JSON.parse(message.payload);
                         console.log(payload);
                         break;
-                    case settings.messagetypes.connection.type:
+                    case AppMessage.mtConnection:
                         thisUserId = message.uid;
-                        commandpackage = settings.messagetypes.commandpackage;
+                        commandpackage = new AppMessage(AppMessage.mtCommandPackage);
                         commandpackage.uid = thisUserId;
                         break; 
-                    case settings.messagetypes.command.type:
+                    case AppMessage.mtCommand:
                     default:
                         console.log(message.payload);
                         break;
@@ -239,7 +266,7 @@ function resetFromDownloadState() {
 function resetEverything() {
     selectedchart = -1;
     selectedcommand = -1;
-    processitems = [];
+    processitems.splice(0, processitems.length);
     addItemsMenu.style.display = "block";
     resetCommandOptions(); 
     resetChartOptions();  
@@ -255,7 +282,9 @@ function resetEverything() {
     blinking = false;
     btnProcessCharts.innerText = "Process Charts";
     btnProcessCharts.classList.remove("start-animation"); 
-    commandpackage = settings.messagetypes.commandpackage;
+    commandpackage = { type: "commandpackage",
+                       commandlist: [],
+                       uid: "" };
     commandpackage.uid = thisUserId;
 }
 
@@ -283,7 +312,7 @@ function postTimingMessaqe(message) {
     td.innerText = `Total time for chart processing: ${message.payload}`;
     resetCommandOptions(); 
     resetChartOptions(); 
-    commandpackage = settings.messagetypes.commandpackage;
+    commandpackage = new AppMessage(AppMessage.mtCommandPackage);
     
     processitems.forEach((item) => {
         let ckbid = `${dlchkPrefix}-${item.rowindex}`;
@@ -409,7 +438,7 @@ function addCommandRequest() {
     let idx = commandpackage.commandlist.length;
     
     for (let i = idx; i < idx + list.length; i++) {
-        let infomessage = settings.messagetypes.info;
+        let infomessage = new AppMessage(AppMessage.mtInfo); 
         let chartname = list[selectedchart];
         infomessage.payload = `${cmdtext} ${chartname}` ;
         infomessage.uid = thisUserId;
@@ -444,6 +473,11 @@ function blinkSendButton(isVisible) {
 }
 
 function updateCommandBody(message) { 
+    if (message.payload === "In Library!") {
+        console.log("LINE 448");
+    } 
+    
+    
     if (message.type === "commandresponse") {
         let tr = commandbody.rows[0]; // First row reserved for static title text
         let td = tr.firstChild;
@@ -451,17 +485,17 @@ function updateCommandBody(message) {
         td.innerText = message.payload;
     }
     else {
-        if (message.type === settings.messagetypes.running.type) {
+        if (message.type === AppMessage.mtRunning) {
             let rowidx = +message.rowindex;
             let tr = commandbody.rows[rowidx];
             let td = tr.children[0];
             td.classList.add("running");
-            td = tr.children[1]; // rightcell
+            td = tr.children[1]; 
             let span = td.firstChild;
             span.textContent = "* in progress *";
             td.classList.add("running");
         }
-        else if (message.type === settings.messagetypes.complete.type) {
+        else if (message.type === AppMessage.mtComplete) {
             let rowidx = +message.rowindex;
             let tr = commandbody.rows[rowidx];
             let td = tr.children[0];
@@ -472,7 +506,7 @@ function updateCommandBody(message) {
             td.classList.remove("running");
             processitems.push(message);
         }
-        else if (message.type === settings.messagetypes.existingdb.type) {
+        else if (message.type === AppMessage.mtExistingDb) {
             let tr = commandbody.rows[message.rowindex];
             let td1 = tr.children[0];
             td1.textContent = message.dbfilename;
@@ -783,7 +817,7 @@ btnUnselectAll.addEventListener('click', () => {
 });
 
 async function getExistingDatabaseList() {
-    let dlreq = settings.messagetypes.download;
+    let dlreq = new AppMessage(AppMessage.mtDownload);
     let found = false;
 
     dlreq.uid = thisUserId;
@@ -814,7 +848,7 @@ async function getExistingDatabaseList() {
 }
 
 async function hasExistingDatabases() {
-    let dlreq = settings.messagetypes.download;
+    let dlreq = new AppMessage(AppMessage.mtDownload);
     dlreq.uid = thisUserId;
     dlreq.getexisting = true;
     const response = await fetch(URL_POST_SENDEXISTING, { method: 'POST',

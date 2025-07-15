@@ -9,6 +9,33 @@ const favicon = require('serve-favicon');
 const WebSocket = require('ws');
 const archiver = require ('archiver');
 
+class AppMessage {
+    static mtInfo = "info";
+    static mtTiming = "timing";
+    static mtCommandResponse = "commandresponse";
+    static mtRunning = "running";
+    static mtComplete = "complete";
+    static mtCommand = "command";
+    static mtSettings = "settings";
+    static mtDownload = "download";
+    static mtConnection = "connection";
+    static mtCommandPackage = "commandpackage";
+    static mtExistingDb = "existingdb";
+
+    constructor(msgtype) {
+        this.type = msgtype;
+        this.css = [];
+        this.payload = "";
+        this.rowindex = -1;
+        this.completed = false;
+        this.items = [];
+        this.filename = "";
+        this.getexisting = false;
+        this.dbfilename = "";
+        this.uid = "";
+    }
+}
+
 class ProcessTime {
     constructor(processName) {
         this.processname = processName.replaceAll("_", " ");
@@ -35,13 +62,6 @@ class ProcessTime {
         let pss = pad2(ss);
         this.totaltime = `time: ${phh}:${pmm}:${pss}`;
     }
-};
-
-class WsMessage {
-    constructor(strMsgtype, strMessage) {
-        this.msgtype = msgtype;
-        this.outputmessage = { messagetype: strMsgtype, messagebody: strMessage };
-    };
 };
 
 // create websocket variables
@@ -351,7 +371,13 @@ function processSingles(msgid = -1) {
         console.log(charturl);
         let cpt = new ProcessTime(chartname);
         timings.set(chartname, cpt);
-        runProcessing();
+        let chartdbfile = path.join(dbfolder, `${chartname}.${settings.dbextension}`);
+        if (!fs.existsSync(chartdbfile)) {
+            runProcessing();
+        }
+        else {
+            cpt.totaltime = "In library!";
+        }
         console.log(`${cpt.totaltime}\r\n`);
         
         // if this was a single chart process request,
@@ -418,8 +444,11 @@ function processFulls(msgid = -1) {
         timings.set(chartname, cpt);
         console.log(`${cpt.totaltime}\n`);
 
-        runProcessing();
-
+        let chartdbfile = path.join(dbfolder, `${chartname}.${settings.dbextension}`);
+        if (!fs.existsSync(chartdbfile)) {
+            runProcessing();
+        }
+        
         if (msgid > -1) {
             return cpt;
         }
@@ -548,7 +577,7 @@ function unzipCharts() {
     // in the .zip file, it has no matching .tfw file with wsgbounds 
     // and crashes the process, so we will just eliminate it.
     // Maybe in the future it could be added as a separate option.
-    cmd = `rm -r -f "${path.join(dir_1_unzipped, "Caribbean Planning Chart.tif")}`;
+    cmd = `rm -r -f "${path.join(dir_1_unzipped, 'Caribbean Planning Chart.tif')}"`;
     executeCommand(cmd);
 }
 
@@ -1040,7 +1069,7 @@ async function processMakeCommands(message) {
     try {
         if (!inMakeLoop) {
             let msgclist = processCommandMessage(message);
-            let msg = settings.messagetypes.commandresponse;
+            let msg = new AppMessage(AppMessage.mtCommandResponse);
             msg.uid = userid;
             msg.payload = "success";
             sendMessageToClients(msg, userid);
@@ -1052,24 +1081,26 @@ async function processMakeCommands(message) {
             item = list[i];
             idx = Number(item.command);
             opt = Number(item.chart);
-            let mt = {};
+            
             console.log(`command: ${idx}, chart: ${opt}`);
             switch (idx) {
                 case 0:
                     if (opt >= 0 && opt <= 52) {
                         parray.push(opt);
                         let ridx = i + 1;
-                        mt = settings.messagetypes.running;
-                        mt.rowindex = ridx;
-                        sendMessageToClients(mt, userid);
+                        let rmt = new AppMessage(AppMessage.mtRunning); 
+                        rmt.type = "running";
+                        rmt.rowindex = ridx;
+                        sendMessageToClients(rmt, userid);
 
                         let cpt = processSingles(i);
 
-                        mt = settings.messagetypes.complete;
-                        mt.rowindex = ridx;
-                        mt.dbfilename = `${chartname}.${settings.dbextension}`;
-                        mt.payload = cpt.totaltime;
-                        sendMessageToClients(mt, userid);
+                        let cmt = new AppMessage(AppMessage.mtComplete); 
+                        cmt.type = "complete"; 
+                        cmt.rowindex = ridx; 
+                        cmt.payload = cpt.totaltime;
+                        cmt.dbfilename = `${chartname}.${settings.dbextension}`;
+                        sendMessageToClients(cmt, userid);
                     }
                     break;
                 case 1:
@@ -1080,22 +1111,21 @@ async function processMakeCommands(message) {
                     if (opt >= 0 && opt <= 7) {
                         let ridx = i + 1;
                         parray.push(opt);
-                        mt = messagetypes.running;
+                        let rmt = new AppMessage(AppMessage.mtRunning);
+                        rmt.rowindex = ridx;
 
                         let chart = settings.fullchartlist[opt][0].replace("_", " ");
                         if (chart === "DDECUS") chart = settings.fullchartlist[opt][2].replace("_", " ");
                         console.log(`Processing full chart: ${chart}`);
-
-                        mt.rowindex = ridx;
-                        sendMessageToClients(mt, userid);
+                        sendMessageToClients(rmt, userid);
 
                         let cpt = processFulls(i);
 
-                        mt = settings.messagetypes.complete;
-                        mt.rowindex = ridx;
-                        mt.dbfilename = `${chartname}.${settings.dbextension}`;
-                        mt.payload = cpt.totaltime;
-                        sendMessageToClients(mt, userid);
+                        let cmt = new AppMessage(AppMessage.mtComplete);
+                        cmt.rowindex = ridx;
+                        cmt.payload = cpt.totaltime;
+                        cmt.dbfilename = `${chartname}.${settings.dbextension}`;
+                        sendMessageToClients(cmt, userid);
                     }
                     break;
                 case 3:
@@ -1111,7 +1141,7 @@ async function processMakeCommands(message) {
             }
         }
         let payload = reportProcessingTime(); 
-        let timemsg = settings.messagetypes.timing;
+        let timemsg = new AppMessage(AppMessage.mtTiming); 
         timemsg.payload = payload;
         sendMessageToClients(timemsg, userid);
     }
@@ -1141,21 +1171,21 @@ function resetGlobalVariables() {
     isifrchart = false;
     wgsbounds = [];
     addmetabounds = false;
-    parray = [];
+    parray.splice(0, parray.length);
     nm = 0;
 }
 
 function processCommandMessage(message) {
-    let clist = settings.messagetypes.command;
+    let clist = new AppMessage(AppMessage.mtCommand);
     clist.payload = { commandlist: [] };
     clist.uid = message.uid;
     
     try {
-        if (message.type === settings.messagetypes.settings.type) {
+        if (message.type === AppMessage.mtSettings) {
             console.log("Settings command received");
             return;
         }
-        else if(message.type === settings.messagetypes.download.type) {
+        else if(message.type === AppMessage.mtDownload) {
             console.log("Download command received");
             return;
         }
@@ -1334,7 +1364,7 @@ async function uploadArchiveFile(message, response) {
             } 
             else {
                 console.log('Archive file downloaded successfully.');
-                let msg = settings.messagetypes.download;
+                let msg = new AppMessage(AppMessage.mtDownload); 
                 msg.completed = true;
                 sendMessageToClients(msg, uid);
             }
@@ -1362,7 +1392,7 @@ async function uploadArchiveFile(message, response) {
 
     archive.on("entry", function() {
         index ++;
-        let msg = settings.messagetypes.download;
+        let msg = new AppMessage(AppMessage.mtDownload); 
         msg.uid = uid;
         msg.filename = charts[index];
         msg.completed = false;
