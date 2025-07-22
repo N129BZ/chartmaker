@@ -376,7 +376,7 @@ function processSingles(msgid = -1) {
             runProcessing();
         }
         else {
-            cpt.totaltime = "In library!";
+            cpt.totaltime = "Download:";
         }
         console.log(`${cpt.totaltime}\r\n`);
         
@@ -1087,7 +1087,7 @@ async function processMakeCommands(message) {
                 case 0:
                     if (opt >= 0 && opt <= 52) {
                         parray.push(opt);
-                        let ridx = i + 1;
+                        let ridx = i; // + 1;
                         let rmt = new AppMessage(AppMessage.mtRunning); 
                         rmt.type = "running";
                         rmt.rowindex = ridx;
@@ -1364,9 +1364,9 @@ async function uploadArchiveFile(message, response) {
             } 
             else {
                 console.log('Archive file downloaded successfully.');
-                let msg = new AppMessage(AppMessage.mtDownload); 
-                msg.completed = true;
-                sendMessageToClients(msg, uid);
+                let dlcmsg = new AppMessage(AppMessage.mtDownload);
+                dlcmsg.completed = true;
+                sendMessageToClients(dlcmsg, uid);
             }
         });
     });
@@ -1394,7 +1394,9 @@ async function uploadArchiveFile(message, response) {
         index ++;
         let msg = new AppMessage(AppMessage.mtDownload); 
         msg.uid = uid;
-        msg.filename = charts[index];
+        let item = charts[index];
+        msg.dbfilename = item.dbfilename; //charts[index];
+        msg.rowindex = item.rowindex;
         msg.completed = false;
         sendMessageToClients(msg, uid);
         console.log("Archiver entry event fired!")
@@ -1403,9 +1405,9 @@ async function uploadArchiveFile(message, response) {
     archive.pipe(output);
 
     // Add each chart to the new zip file
-    charts.forEach(function(chart) {
-        let addfilepath = path.join(appdir, "public", "charts", chart);
-        archive.append(fs.createReadStream(addfilepath), { name: chart });
+    charts.forEach(function(item) {
+        let addfilepath = path.join(appdir, "public", "charts", item.dbfilename);
+        archive.append(fs.createReadStream(addfilepath), { name: item.dbfilename });
     });
 
     archive.finalize();

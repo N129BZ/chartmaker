@@ -43,14 +43,20 @@ html, body {
 	width: 342px;
     text-align: left;
 }
-.conflabel {
+.processInformation {
+    outline: 3px solid rgb(67, 67, 207);
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: medium;
-	width: 400px;
-    text-align: left;
+    font-weight: bold;
+    align-content: center;
+	width: 513px;
+    text-align: center;
     position:relative;
-    top: -15px;
+    top: -21px;
     left: 0px;
+    height:20px;
+    background-color: darkgreen;
+    color: white;
 }
 .command {
 	font-family: Arial, Helvetica, sans-serif;
@@ -324,7 +330,7 @@ html, body {
     padding: 0px;
     color: black;
     height: 20px;
-    width: 65%;
+    width: 350px; /* 65%; */
 }
 .rightcell {
     font-family: Arial, Helvetica, sans-serif;
@@ -337,7 +343,7 @@ html, body {
     overflow-y: hidden;
     color: black;
     height: 20px;
-    width: 35%;
+    width: 150px; /* 35%; */
 }
 .resultspan {
     font-family: Arial, Helvetica, sans-serif;

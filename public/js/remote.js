@@ -21,6 +21,7 @@ class AppMessage {
         this.rowindex = -1;
         this.completed = false;
         this.items = [];
+        this.commandlist = [];
         this.filename = "";
         this.getexisting = false;
         this.dbfilename = "";
@@ -68,6 +69,7 @@ const btnReset = document.getElementById("btnReset");
 const btnRemove = document.getElementById("btnRemove");
 const btnProcessCharts = document.getElementById("btnProcessCharts");
 const chkForExisting = document.getElementById("checkForExisting");
+const processInfo = document.getElementById("processInformation");
 
 var thisUserId = "";
 var websocket;
@@ -181,12 +183,7 @@ function startWebsocketClient() {
                         }
                         break;
                     case AppMessage.mtDownload:
-                        if (message.completed === true) {
-                            resetFromDownloadState();
-                        }
-                        else {
-                            console.log(`Zip in progress: ${message.filename}`);
-                        }
+                        updateCommandBody(message)
                         break;
                     case AppMessage.mtSettings:
                         let payload = JSON.parse(message.payload);
@@ -306,10 +303,8 @@ async function sendCommandsToServer() {
 }
 
 function postTimingMessaqe(message) {
-    let tr = commandbody.rows[0];
-    let td = tr.firstChild;
-    td.classList.add( ... message.css);
-    td.innerText = `Total time for chart processing: ${message.payload}`;
+    processInfo.classList.add( ... message.css);
+    processInfo.textContent = `Total time for chart processing: ${message.payload}`;
     resetCommandOptions(); 
     resetChartOptions(); 
     commandpackage = new AppMessage(AppMessage.mtCommandPackage);
@@ -357,7 +352,8 @@ async function downloadCheckedItems() {
         let ckbid = `${dlchkPrefix}-${item.rowindex}`;
         let ckb = document.getElementById(ckbid);
         if (ckb.checked) {
-            dlitems.charts.push(item.dbfilename);
+            let details = {}
+            dlitems.charts.push(item);
         }
     });
 
@@ -476,13 +472,11 @@ function updateCommandBody(message) {
     if (message.payload === "In Library!") {
         console.log("LINE 448");
     } 
-    
+
     
     if (message.type === "commandresponse") {
-        let tr = commandbody.rows[0]; // First row reserved for static title text
-        let td = tr.firstChild;
-        td.classList.add(... message.css);
-        td.innerText = message.payload;
+        processInfo.classList.add(... message.css);
+        processInfo.textContent = message.payload;
     }
     else {
         if (message.type === AppMessage.mtRunning) {
@@ -516,12 +510,23 @@ function updateCommandBody(message) {
             div.textContent = message.filedate;
             div.className = "datediv";
             td2.insertBefore(div, ch1);
-            //btnAddCommand.style.display = "none";
             btnSelectAll.style.display = "block";
+        }
+        else if (message.type === AppMessage.mtDownload) {
+            if (!message.completed) {
+                let tr = commandbody.rows[message.rowindex];
+                let td1 = tr.children[0];
+                let td2 = tr.children[1];
+                td1.classList.add("running");
+                td2.classList.add("running");
+            }
+            else {
+                resetEverything();
+            }
         }
         else {
             // Add the incoming message to the first empty row
-            for (let i = 1; i < commandbody.rows.length; i++) {
+            for (let i = 0; i < commandbody.rows.length; i++) {
                 let tr = commandbody.rows[i];
                 let td = tr.firstChild;
                 if (td.innerText === "") { 
@@ -614,37 +619,31 @@ function setupCommandBody() {
         td.name = nmid;
         td.id = nmid;
         td.className = "leftcell";
-        if (i === 0) {
-            td.setAttribute("colspan", "2");
-            td.innerText = "Selection List";
-            td.classList.add("boldgreen");
-        }   
         tr.appendChild(td);
-
+        
         td = document.createElement("td");
         nmid = `rightcell-${i}`;
         td.name = nmid;
         td.id = nmid;
         td.className = "rightcell";
-        // Add a checkbox on the right side of the <td> element
-        if (i > 0) {
-            // create the <span> text container
-            let span = document.createElement("span");
-            nmid = `span-${i}`;
-            span.id = nmid;
-            span.name = nmid;
-            span.className = "resultspan";
-            td.appendChild(span)
-            
-            // create the hidden checkbox
-            let ckb = document.createElement("input");
-            nmid = `${dlchkPrefix}-${i}`;
-            ckb.name = nmid;
-            ckb.id = nmid;
-            ckb.type = "checkbox";
-            ckb.className = "dlcheckbox";
-            td.appendChild(ckb);
-        }
+        
+        // create the <span> text container
+        let span = document.createElement("span");
+        nmid = `span-${i}`;
+        span.id = nmid;
+        span.name = nmid;
+        span.className = "resultspan";
+        td.appendChild(span)
+        
+        // create the hidden checkbox
+        let ckb = document.createElement("input");
+        nmid = `${dlchkPrefix}-${i}`;
+        ckb.name = nmid;
+        ckb.id = nmid;
+        ckb.type = "checkbox";
+        ckb.className = "dlcheckbox";
+        td.appendChild(ckb);
+        
         tr.appendChild(td);
 
         // Now append the new <tr> to the command body
@@ -683,7 +682,8 @@ function resetChartOptions() {
 async function downloadZipfile(dlitems) {
     downloadInProgress = true;
     chkForExisting.checked = false;
-    try {           
+    try {    
+        // dlitems is an array of AppMessage type "complete"...       
         const response = await fetch(URL_POST_DOWNLOAD, { method: 'POST',
                                                           headers: {'Content-Type': 'application/json'},  
                                                           body: JSON.stringify(dlitems) }); 
