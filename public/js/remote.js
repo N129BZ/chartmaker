@@ -686,6 +686,7 @@ function populateFullChartList() {
  */
 function setupCommandBody() {
     inResponseView = false;
+    processInfo.textContent = "Confirmed chart processing list"
     commandbody.innerText = "";
     for (let i = 0; i < 100; i++) {
         let tr = document.createElement("tr");
@@ -841,6 +842,7 @@ async function getExistingDatabaseList() {
     const items = data.items.existingdblist;
     if (items.length > 0) {
         setupCommandBody();
+        processInfo.textContent = "Existing database download list"
         found = true;
         processitems = [];
         items.forEach((item) => {
