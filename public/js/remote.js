@@ -375,6 +375,8 @@ function setDownloadButtonVisible(isVisible) {
         btnUnselectAll.style.visibility = "inline";
     }
     else {
+        btnDownload.classList.remove("running");
+        btnDownload.innerText = "Download Checked Items"
         btnDownload.style.visibility = "hidden";
         btnRemove.style.visibility = "visible";
         btnProcessCharts.style.visibility = "visible";
