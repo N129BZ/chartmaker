@@ -42,6 +42,7 @@ const URL_HOST_PROTOCOL       = `${URL_PROTOCOL}//`;
 const URL_SERVER              = `${URL_HOST_PROTOCOL}${URL_HOST_BASE}`;
 const URL_WINSOCK             = `ws://${URL_LOCATION}:`;
 const URL_GET_SETTINGS        = `${URL_SERVER}/settings`;
+const URL_GET_EXISTINGCOUNT   = `${URL_SERVER}/existingcount`;
 const URL_POST_SENDEXISTING   = `${URL_SERVER}/sendexisting`;
 const URL_GET_STATUS          = `${URL_SERVER}/status`;
 const URL_POST_MAKE           = `${URL_SERVER}/make`;
@@ -854,12 +855,7 @@ async function getExistingDatabaseList() {
 }
 
 async function hasExistingDatabases() {
-    let dlreq = new AppMessage(AppMessage.mtDownload);
-    dlreq.uid = thisUserId;
-    dlreq.getexisting = true;
-    const response = await fetch(URL_POST_SENDEXISTING, { method: 'POST',
-                                 headers: {'Content-Type': 'application/json'},  
-                                 body: JSON.stringify(dlreq) }); 
+    const response = await fetch(URL_GET_EXISTINGCOUNT, { method: 'GET' }); 
     const data = await response.json();
-    return (data.items.existingdblist.length > 0);
+    return (data.existingcount > 0);
 }

@@ -1282,6 +1282,12 @@ function getUniqueUserId(){
                 res.end();
             });
             
+            app.get("/existingcount", async (req, res) => {
+                let data = await getExistingCount();
+                res.send(JSON.stringify({ existingcount: data }));
+                res.end();
+            });
+
             app.post("/sendexisting", async (req, res) => {
                 let data = await sendExistingDatabases(req.body);
                 res.send(data);
@@ -1423,6 +1429,23 @@ async function uploadArchiveFile(message, response) {
     });
 
     archive.finalize();
+}
+
+async function getExistingCount() {
+    try {
+        const extensionsToOmit = ['.zip']; 
+        const files = fs.readdirSync(dbfolder);
+        const filteredfiles = files.filter(file => {
+            const fileExtension = path.extname(file);
+            return !extensionsToOmit.includes(fileExtension);
+        });
+
+        return filteredfiles.length;
+    }
+    catch(err) {
+        console.log(err.message);
+    }
+    return 0;
 }
 
 async function sendExistingDatabases(message) {
