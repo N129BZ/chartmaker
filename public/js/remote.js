@@ -500,7 +500,7 @@ function updateCommandBody(message) {
         else if (message.type === AppMessage.mtExistingDb) {
             let tr = commandbody.rows[message.rowindex];
             let td1 = tr.children[0];
-            td1.textContent = message.dbfilename;
+            td1.textContent = message.filename;
             let td2 = tr.children[1];
             let ch1 = td2.children[0];
             let div = document.createElement("div");

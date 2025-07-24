@@ -362,6 +362,7 @@ function processAllAreas() {
 function processSingles(msgid = -1) {
     addmetabounds = true;   
     for (let idx = 0; idx < parray.length; idx++) {
+        let doProcessing = true;
         chartworkname = settings.areachartlist[parray[idx]];
         chartname = chartworkname;
         clippedShapeFolder = path.join(appdir, "clipshapes", "sectional");
@@ -372,12 +373,23 @@ function processSingles(msgid = -1) {
         let cpt = new ProcessTime(chartname);
         timings.set(chartname, cpt);
         let chartdbfile = path.join(dbfolder, `${chartname}.${settings.dbextension}`);
-        if (!fs.existsSync(chartdbfile)) {
+        if (fs.existsSync(chartdbfile)) {
+            let stat = fs.statSync(chartdbfile);    
+            const birthDate = stat.birthtime;
+            const year = birthDate.getFullYear();
+            const month = String(birthDate.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+            const day = String(birthDate.getDate()).padStart(2, '0');
+            const formattedDate = `${month}-${day}-${year}`;
+            if (formattedDate === chartdate) {
+                // Current version of this chart exists, no processing needed
+                doProcessing = false;
+                cpt.totaltime = "Download:";
+            }
+        }
+        if (doProcessing) {
             runProcessing();
         }
-        else {
-            cpt.totaltime = "Download:";
-        }
+        
         console.log(`${cpt.totaltime}\r\n`);
         
         // if this was a single chart process request,
@@ -771,7 +783,7 @@ function makeMbTiles() {
     fs.writeSync(fd, metajson);
     fs.closeSync(fd);
 
-    let mbtiles = path.join(dbfolder, `${chartname}.${settings.dbextension}`);
+    let mbtiles = path.join(dbfolder, `${chartname}.${chartdate}.${settings.dbextension}`);
     fs.rmSync(mbtiles, { force: true });  
     
     logEntry(`>> creating database: ${mbtiles}`);
@@ -779,7 +791,7 @@ function makeMbTiles() {
     cmd = `python3 ${path.join(appdir, "mbutil", "mb-util")} --image_format=${imageformat} --silent --scheme=tms ${sourcefolder} ${mbtiles}`;
     executeCommand(cmd, false);
 
-    let cpt = timings.get(chartname);
+    let cpt = timings.get(chartname); 
     cpt.calculateProcessTime();
 }
 
@@ -1425,13 +1437,12 @@ async function sendExistingDatabases(message) {
         var idx = -1;
         filteredfiles.forEach(file => {
             idx ++;
-            let stat = fs.statSync(path.join(dbfolder, file))
-            const birthDate = stat.birthtime;
-            const year = birthDate.getFullYear();
-            const month = String(birthDate.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
-            const day = String(birthDate.getDate()).padStart(2, '0');
-            const formattedDate = `${month}-${day}-${year}`;
-            let msg = { type: "existingdb", dbfilename: file, filedate: formattedDate, rowindex: idx };
+            let msg = new AppMessage(AppMessage.mtExistingDb);  
+            const spl = file.split(".");
+            msg.filename = spl[0];
+            msg.filedate = spl[1];
+            msg.dbfilename = file;
+            msg.rowindex = idx;
             items.existingdblist.push(msg);
         });
         message.items = items;
