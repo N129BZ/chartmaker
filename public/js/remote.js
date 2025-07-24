@@ -469,11 +469,6 @@ function blinkSendButton(isVisible) {
 }
 
 function updateCommandBody(message) { 
-    if (message.payload === "In Library!") {
-        console.log("LINE 448");
-    } 
-
-    
     if (message.type === "commandresponse") {
         processInfo.classList.add(... message.css);
         processInfo.textContent = message.payload;
@@ -513,12 +508,21 @@ function updateCommandBody(message) {
             btnSelectAll.style.display = "block";
         }
         else if (message.type === AppMessage.mtDownload) {
-            if (!message.completed) {
-                let tr = commandbody.rows[message.rowindex];
-                let td1 = tr.children[0];
-                let td2 = tr.children[1];
-                td1.classList.add("running");
-                td2.classList.add("running");
+            if (message.completed === false) {
+                var tr, td1, td2;
+                for (let i = 0; i < commandbody.rows.length; i++) {
+                    tr = commandbody.rows[i];
+                    td1 = tr.children[0];
+                    td2 = tr.children[1];
+                    if (i !== message.rowindex) {
+                        td1.classList.remove("running");
+                        td2.classList.remove("running");
+                    }
+                    else {
+                        td1.classList.add("running");
+                        td2.classList.add("running");
+                    }
+                }
             }
             else {
                 resetEverything();
@@ -788,7 +792,7 @@ chkForExisting.addEventListener('change', async () => {
 
 btnSelectAll.addEventListener('click', () => {
     let found = false;
-    for(let i = 1; i < commandbody.rows.length; i++) {
+    for(let i = 0; i < commandbody.rows.length; i++) {
         const ckbid = `${dlchkPrefix}-${i}`;
         const ckb = document.getElementById(ckbid);
         if (ckb.checkVisibility()) {
@@ -805,7 +809,7 @@ btnSelectAll.addEventListener('click', () => {
 });
 
 btnUnselectAll.addEventListener('click', () => {
-    for(let i = 1; i < commandbody.rows.length; i++) {
+    for(let i = 0; i < commandbody.rows.length; i++) {
         const ckbid = `${dlchkPrefix}-${i}`;
         const ckb = document.getElementById(ckbid);
         ckb.checked = false;

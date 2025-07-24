@@ -1422,7 +1422,7 @@ async function sendExistingDatabases(message) {
             const fileExtension = path.extname(file);
             return !extensionsToOmit.includes(fileExtension);
         });
-        var idx = 0;
+        var idx = -1;
         filteredfiles.forEach(file => {
             idx ++;
             let stat = fs.statSync(path.join(dbfolder, file))
