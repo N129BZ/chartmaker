@@ -25,7 +25,7 @@ html, body {
     flex-wrap: nowrap;
     position:relative;
     width: max-content;
-    left: -20px;
+    left: -45px;
 }
 .application {
     width: 50%;

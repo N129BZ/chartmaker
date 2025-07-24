@@ -119,8 +119,14 @@ async function getSettingsFromServer() {
     }
 }
 
+/**
+ * get the settings object from the server
+ */
 getSettingsFromServer();
 
+/**
+ * See if we need to display the show downloadExisting checkbox
+ */
 async function checkForExistingDatabases() {
     let hasexisting = await hasExistingDatabases();
     if(hasexisting) {
@@ -131,6 +137,9 @@ async function checkForExistingDatabases() {
     }
 }
 
+/**
+ * Iterate through the chart types and chart names and create their lists
+ */
 function setChartNameArrays() {
     // Full chart names
     for (let i = 0; i < settings.fullchartlist.length; i++) {
@@ -221,6 +230,11 @@ function startWebsocketClient() {
     }
 };
 
+/**
+ * Get a json object from a data string
+ * @param {*} data 
+ * @returns true or false 
+ */
 function getJSON(data) {
     if (typeof data !== 'string' || data.trim() === '') {
         return { isJSON: false }; // probably a Blob
@@ -235,6 +249,9 @@ function getJSON(data) {
     }
 }
 
+/**
+ * Remove the last command the user entered
+ */
 function removeLastEntry() {
     if (commandpackage.commandlist.length > 0) {
         commandpackage.commandlist.pop();
@@ -249,6 +266,9 @@ function removeLastEntry() {
     }
 }
 
+/**
+ * Reset the application after a completed download session
+ */
 function resetFromDownloadState() {
     console.log("RESETTING FROM DOWNLOAD STATE!");
     processitems.forEach((item) =>{
@@ -261,6 +281,9 @@ function resetFromDownloadState() {
     resetEverything();
 }
 
+/**
+ * Reset the application back to it's initial load state
+ */
 function resetEverything() {
     selectedchart = -1;
     selectedcommand = -1;
@@ -286,6 +309,9 @@ function resetEverything() {
     commandpackage.uid = thisUserId;
 }
 
+/**
+ * Package up the command requests and send them to the server
+ */
 async function sendCommandsToServer() {
     if (commandpackage.commandlist.length > 0) {
         commandpackage.uid = thisUserId;
@@ -303,6 +329,10 @@ async function sendCommandsToServer() {
     }
 }
 
+/**
+ * Post a timing message for a completed process
+ * @param {*} message 
+ */
 function postTimingMessaqe(message) {
     processInfo.classList.add( ... message.css);
     processInfo.textContent = `Total time for chart processing: ${message.payload}`;
@@ -318,6 +348,9 @@ function postTimingMessaqe(message) {
     });
 }
 
+/**
+ * Master event handler for commandbody checkboxes
+ */
 function handleCheckboxChange() {
     // We want to iterate ALL checkboxes and set the state
     // of the download button if ANY checkbox is checked.
@@ -332,6 +365,10 @@ function handleCheckboxChange() {
     setDownloadButtonVisible(found);
 }
 
+/**
+ * Undo the last selection from either list
+ * @param {*} source 
+ */
 function undoSelection(source) {
     if (source === "command") {
         txtCommand.value = "";
@@ -345,6 +382,10 @@ function undoSelection(source) {
     }
 }
 
+/**
+ * Call for the server to zip up the user's selected 
+ * databases and then upload the zip back here to the client
+ */
 async function downloadCheckedItems() {
     let dlitems = { uid: thisUserId, charts: [] };
     btnDownload.classList.add("running");
@@ -364,6 +405,10 @@ async function downloadCheckedItems() {
     }
 }
 
+/**
+ * Set the desired state of the download button
+ * @param {*} isVisible 
+ */
 function setDownloadButtonVisible(isVisible) {
     if (isVisible) {
         btnDownload.style.visibility = "visible";
@@ -386,19 +431,21 @@ function setDownloadButtonVisible(isVisible) {
     }
 }
 
+/**
+ * Add a command request to the list and the commandbody
+ * @returns 
+ */
 function addCommandRequest() {
     if (inResponseView) {
         setupCommandBody();
     }
 
     if (selectedcommand === -1) {
-        //alert("You must first select a command to add!")
         return;
     }
 
     if (selectedcommand === 0 || selectedcommand === 2) {
         if (txtChart.value === "") {
-            //alert("You must select a chart for the selected command");
             return;
         }
     }
@@ -456,6 +503,10 @@ function addCommandRequest() {
     resetCommandOptions();
 }
 
+/**
+ * Turn animation on/off for the download button
+ * @param {*} isVisible 
+ */
 function blinkSendButton(isVisible) {
     if (isVisible) {
         blinking = true;
@@ -471,6 +522,11 @@ function blinkSendButton(isVisible) {
     }
 }
 
+/**
+ * Update a row in the commandbody with incoming information
+ * @param {*} message 
+ * @returns 
+ */
 function updateCommandBody(message) { 
     if (message.type === "commandresponse") {
         processInfo.classList.add(... message.css);
@@ -546,6 +602,9 @@ function updateCommandBody(message) {
     }
 }
 
+/**
+ * Set the selected state of a chart item
+ */
 function chartSelected() {
     selectedchart = -1;
     let item = txtChart.value;
@@ -557,6 +616,9 @@ function chartSelected() {
     }
 }
 
+/**
+ * Set the selected state of a command item
+ */
 function commandSelected() {
     selectedcommand = -1;
     let item = txtCommand.value;
@@ -585,6 +647,9 @@ function commandSelected() {
     }
 }
 
+/**
+ * Populate the individual area chart list
+ */
 function populateAreaChartList() {
     resetChartOptions();
     for (let i = 0; i < settings.areachartlist.length; i++) {
@@ -594,6 +659,9 @@ function populateAreaChartList() {
     }
 }
 
+/**
+ * Populate the full chart list
+ */
 function populateFullChartList() {
     resetChartOptions();
     let  i = 0;
@@ -613,10 +681,13 @@ function populateFullChartList() {
     }
 }
 
+/**
+ * Generate or Re-generate an empty commandbody list
+ */
 function setupCommandBody() {
     inResponseView = false;
     commandbody.innerText = "";
-    for (let i = 0; i < 70; i++) {
+    for (let i = 0; i < 100; i++) {
         let tr = document.createElement("tr");
         tr.setAttribute("tag", i.toString());
         tr.className = "tablerow";
@@ -658,6 +729,9 @@ function setupCommandBody() {
     }
 }
 
+/**
+ * Populate the Commands item list
+ */
 function populateCommandsDropdown() {
     let alist = []; 
     for (let i = 0; i < 4; i++) {
@@ -674,18 +748,29 @@ function populateCommandsDropdown() {
     commandOptions.appendChild(alist[3]);
 }
 
+/**
+ * Reset the command dropdown list
+ */
 function resetCommandOptions() {
     txtCommand.value = "";
     selectedcommand = -1;
     resetChartOptions();    
 }
 
+/**
+ * Reset the chart dropdown list
+ */
 function resetChartOptions() {
     selectedchart = -1;
     txtChart.value = "";
     chartOptions.innerText = "";
 }
 
+/**
+ * Call the server asynchronously to request a zip file download
+ * @param {*} dlitems 
+ * @returns 
+ */
 async function downloadZipfile(dlitems) {
     downloadInProgress = true;
     chkForExisting.checked = false;
@@ -719,6 +804,10 @@ async function downloadZipfile(dlitems) {
     }
 }
 
+/**
+ * Sub process handles incoming download chunks
+ * @param {*} chunks 
+ */
 function processChunks(chunks) {
     const blob = new Blob(chunks);
     const fileURL = URL.createObjectURL(blob);
@@ -735,6 +824,55 @@ function processChunks(chunks) {
     document.body.removeChild(downloadLink);
 }
 
+/**
+ * Get the list of pre-existing current databases from the server
+ * @returns true or false
+ */
+async function getExistingDatabaseList() {
+    let dlreq = new AppMessage(AppMessage.mtDownload);
+    let found = false;
+
+    dlreq.uid = thisUserId;
+    dlreq.getexisting = true;
+    const response = await fetch(URL_POST_SENDEXISTING, { method: 'POST',
+                                 headers: {'Content-Type': 'application/json'},  
+                                 body: JSON.stringify(dlreq) }); 
+    const data = await response.json();
+    const items = data.items.existingdblist;
+    if (items.length > 0) {
+        setupCommandBody();
+        found = true;
+        processitems = [];
+        items.forEach((item) => {
+            updateCommandBody(item);
+            processitems.push(item);
+            const ckbid = `${dlchkPrefix}-${item.rowindex}`;
+            const ckb = document.getElementById(ckbid);
+            ckb.style.display = "inline";
+            ckb.addEventListener("change", handleCheckboxChange);
+        });
+        addItemsMenu.style.display = "none";
+        btnProcessCharts.style.visibility = "hidden";
+        btnRemove.style.display = "none";
+        btnSelectAll.style.display = "inline";
+        downloadExisting.style.visibility = "hidden";
+    }
+    return found;
+}
+
+/**
+ * See if there are pre-existing databases
+ * @returns true if the returned count > 0
+ */
+async function hasExistingDatabases() {
+    const response = await fetch(URL_GET_EXISTINGCOUNT, { method: 'GET' }); 
+    const data = await response.json();
+    return (data.existingcount > 0);
+}
+
+/*********************************************
+ *      VARIOUS ELEMENT EVENT HANDLERS
+ *********************************************/
 txtCommand.addEventListener('input', () => {
     commandSelected();
 });
@@ -779,12 +917,10 @@ chkForExisting.addEventListener('change', async () => {
             let success = await getExistingDatabaseList();
             if (success) {
                 resetCommandOptions();
-                //resetChartOptions();
             }
             else {
                 inSelfCheckState = true;
                 chkForExisting.checked = false;
-                //alert("No databases on the server, nothing to list!");
             }
         }
         else {
@@ -817,45 +953,7 @@ btnUnselectAll.addEventListener('click', () => {
         const ckb = document.getElementById(ckbid);
         ckb.checked = false;
     }
-    //setDownloadButtonVisible(false);
     btnDownload.style.visibility = "hidden";
     btnUnselectAll.style.display = "none";
     btnSelectAll.style.display = "inline";
 });
-
-async function getExistingDatabaseList() {
-    let dlreq = new AppMessage(AppMessage.mtDownload);
-    let found = false;
-
-    dlreq.uid = thisUserId;
-    dlreq.getexisting = true;
-    const response = await fetch(URL_POST_SENDEXISTING, { method: 'POST',
-                                 headers: {'Content-Type': 'application/json'},  
-                                 body: JSON.stringify(dlreq) }); 
-    const data = await response.json();
-    const items = data.items.existingdblist;
-    if (items.length > 0) {
-        found = true;
-        processitems = [];
-        items.forEach((item) => {
-            updateCommandBody(item);
-            processitems.push(item);
-            const ckbid = `${dlchkPrefix}-${item.rowindex}`;
-            const ckb = document.getElementById(ckbid);
-            ckb.style.display = "inline";
-            ckb.addEventListener("change", handleCheckboxChange);
-        });
-        addItemsMenu.style.display = "none";
-        btnProcessCharts.style.visibility = "hidden";
-        btnRemove.style.display = "none";
-        btnSelectAll.style.display = "inline";
-        downloadExisting.style.visibility = "hidden";
-    }
-    return found;
-}
-
-async function hasExistingDatabases() {
-    const response = await fetch(URL_GET_EXISTINGCOUNT, { method: 'GET' }); 
-    const data = await response.json();
-    return (data.existingcount > 0);
-}

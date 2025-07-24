@@ -99,11 +99,6 @@ function processPrompt(message) {
 }
 
 const settings = JSON.parse(fs.readFileSync(path.join(appdir, "settings.json"), "utf-8")).settings;
-const remotemenu = JSON.parse(fs.readFileSync(path.join(appdir, "remotemenu.json"), "utf-8"));
-const users = JSON.parse(fs.readFileSync(path.join(appdir, "users.json"), "utf-8")).users;
-const zipfilename = settings.zipfilename;
-const zipfilepath = path.join(appdir, "public", "charts", zipfilename); 
-
 var useWebServer = settings.webservermode;
 var timings = new Map();
 
@@ -159,6 +154,10 @@ function pad2(n) {
 // Get the current chart date from the chartdates.json file
 let expiredate = "";
 const chartdate = getBestChartDate();
+const remotemenu = JSON.parse(fs.readFileSync(path.join(appdir, "remotemenu.json"), "utf-8"));
+const users = JSON.parse(fs.readFileSync(path.join(appdir, "users.json"), "utf-8")).users;
+const zipfilename = settings.zipfilename;
+const zipfilepath = path.join(appdir, "public", "charts", chartdate, zipfilename); 
 
 // used for process timing
 const startdate = new Date(new Date().toLocaleString());
@@ -171,7 +170,7 @@ if (!fs.existsSync(workarea)) fs.mkdirSync(workarea)
 let chartcache = path.join(appdir, "chartcache");
 if (!fs.existsSync(chartcache)) fs.mkdirSync(chartcache);
 
-let dbfolder = path.join(appdir, "public", "charts");
+let dbfolder = path.join(appdir, "public", "charts", chartdate);
 if (!fs.existsSync(dbfolder)) fs.mkdirSync(dbfolder)
     
 if (isdocker) {
@@ -783,7 +782,7 @@ function makeMbTiles() {
     fs.writeSync(fd, metajson);
     fs.closeSync(fd);
 
-    let mbtiles = path.join(dbfolder, `${chartname}.${chartdate}.${settings.dbextension}`);
+    let mbtiles = path.join(dbfolder, `${chartname}.${settings.dbextension}`);
     fs.rmSync(mbtiles, { force: true });  
     
     logEntry(`>> creating database: ${mbtiles}`);
@@ -1001,6 +1000,9 @@ function normalizeClipNames() {
     }
 }
 
+/**
+ * Set the global useWebServer flag 
+ */
 function enterWebserverMode() {
     useWebServer = true;
     console.log("entering websocket mode")
@@ -1238,7 +1240,7 @@ function getUniqueUserId(){
 }
 
 /**
- * Start the express web server
+ * Start the express web server and open a websocket server
  */
 (() => {
     if (useWebServer || settings.webservermode) {
@@ -1358,6 +1360,11 @@ function getUniqueUserId(){
     }
 })();
 
+/**
+ * Create and upload a ZIP archive with the user's selected charts
+ * @param {*} message This is the controller message
+ * @param {*} response Send the chart to the ZIP file via response
+ */
 async function uploadArchiveFile(message, response) { 
     const charts = message.charts;
     const uid = message.uid;
@@ -1424,13 +1431,17 @@ async function uploadArchiveFile(message, response) {
 
     // Add each chart to the new zip file
     charts.forEach(function(item) {
-        let addfilepath = path.join(appdir, "public", "charts", item.dbfilename);
+        let addfilepath = path.join(dbfolder, item.dbfilename);
         archive.append(fs.createReadStream(addfilepath), { name: item.dbfilename });
     });
 
     archive.finalize();
 }
 
+/**
+ * Get the count of current pre-existing database files
+ * @returns number
+ */
 async function getExistingCount() {
     try {
         const extensionsToOmit = ['.zip']; 
@@ -1448,6 +1459,11 @@ async function getExistingCount() {
     return 0;
 }
 
+/**
+ * Send the existing database list to the requesting client browser
+ * @param {'*'} message 
+ * @returns an Appmessage.mtExistingDb message with a list of databases
+ */
 async function sendExistingDatabases(message) {
     const extensionsToOmit = ['.zip']; 
     const items = { existingdblist: [] };
@@ -1463,7 +1479,7 @@ async function sendExistingDatabases(message) {
             let msg = new AppMessage(AppMessage.mtExistingDb);  
             const spl = file.split(".");
             msg.filename = spl[0];
-            msg.filedate = spl[1];
+            msg.filedate = chartdate;
             msg.dbfilename = file;
             msg.rowindex = idx;
             items.existingdblist.push(msg);
@@ -1477,6 +1493,13 @@ async function sendExistingDatabases(message) {
     return message;
 }
 
+/**
+ * Authenticate the browser user
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ * @returns 
+ */
 function authentication(req, res, next) {
     const authheader = req.headers.authorization;
     //console.log(req.headers);
