@@ -29,6 +29,15 @@ class AppMessage {
     }
 }
 
+class MakeCommand {
+    constructor(command, chart, rowindex, chartname) {
+        this.command = command;
+        this.chart = chart;
+        this.rowindex = rowindex;
+        this.chartname = chartname;
+    }
+}
+
 const URL_LOCATION            =  location.hostname;
 const URL_PROTOCOL            =  location.protocol;
 const URL_PORT                =  location.port;
@@ -293,6 +302,7 @@ function resetEverything() {
     resetChartOptions();  
     setupCommandBody();
     setDownloadButtonVisible(false);
+    confwindow.scroll({left: 0, top: 0}); 
     btnReset.style.visibility = "visible";
     btnSelectAll.style.display = "none";
     btnUnselectAll.style.display = "none";
@@ -491,7 +501,7 @@ function addCommandRequest() {
         updateCommandBody(infomessage);
 
         let ridx = i + 1;
-        let entry = { command: selectedcommand, chart: selectedchart, rowindex: ridx };
+        let entry = new MakeCommand(selectedcommand, selectedchart, ridx, chartname);
         commandpackage.commandlist.push(entry); 
         if (isfullList) {
             selectedchart = selectedchart + 1; 
@@ -542,6 +552,7 @@ function updateCommandBody(message) {
             let span = td.firstChild;
             span.textContent = "* in progress *";
             td.classList.add("running");
+            processInfo.textContent = `Now processing: ${message.filename}`;
         }
         else if (message.type === AppMessage.mtComplete) {
             let rowidx = +message.rowindex;
@@ -842,7 +853,7 @@ async function getExistingDatabaseList() {
     const items = data.items.existingdblist;
     if (items.length > 0) {
         setupCommandBody();
-        processInfo.textContent = "Existing database download list"
+        processInfo.textContent = `There are ${items.length} databases available for download:`;
         found = true;
         processitems = [];
         items.forEach((item) => {

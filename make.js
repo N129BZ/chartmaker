@@ -1,7 +1,7 @@
 'use strict';
 
 const fs = require('fs');
-const { execSync } = require('child_process');
+const { execSync, spawn } = require('child_process');
 const readlineSync = require('readline-sync');
 const path = require('path');
 const express = require('express');
@@ -36,20 +36,35 @@ class AppMessage {
     }
 }
 
+class MakeCommand {
+    constructor(command, chart, rowindex, chartname) {
+        this.command = command;
+        this.chart = chart;
+        this.rowindex = rowindex;
+        this.chartname = chartname;
+    }
+}
+
 class ProcessTime {
     constructor(processName) {
         this.processname = processName.replaceAll("_", " ");
         this.startdate = new Date(new Date().toLocaleString());
         this.totaltime = "";
+        this.logtime = "";
     }
 
     calculateProcessTime() {
+        let pt = ProcessTime.reportProcessingTime(this.startdate);
+        this.totaltime = `time: ${pt}`;
+    }
+
+    static reportProcessingTime(startdate) {
         let date2 = new Date(new Date().toLocaleString());
-        if (date2 < this.startdate) {
+        if (date2 < startdate) {
             date2.setDate(date2.getDate() + 1);
         }
 
-        let msec = date2 - this.startdate;
+        let msec = date2 - startdate;
         let hh = Math.floor(msec / 1000 / 60 / 60);
         msec -= hh * 1000 * 60 * 60;
         let mm = Math.floor(msec / 1000 / 60);
@@ -60,7 +75,9 @@ class ProcessTime {
         let phh = pad2(hh);
         let pmm = pad2(mm);
         let pss = pad2(ss);
-        this.totaltime = `time: ${phh}:${pmm}:${pss}`;
+        let ttime = `${phh}:${pmm}:${pss}`;
+        logEntry(`Start time: ${startdate}, End time: ${date2}, Total time: ${ttime}`);
+        return ttime;
     }
 };
 
@@ -505,7 +522,9 @@ function runProcessing() {
     }    
 }
 
-reportProcessingTime();
+if (!settings.usecommandline) {
+    ProcessTime.reportProcessingTime(startdate);
+}
 
 /**
  * Generate all of the working folders for image processing
@@ -951,39 +970,6 @@ function executeCommand(command, logstdout = null) {
 }
 
 /**
- * Generate console comment with start, end, and total time of processing run 
- */
-function reportProcessingTime() {
-
-    let date2 = new Date(new Date().toLocaleString());
-
-    // the following is to handle cases where the times are on the opposite side of
-    // midnight e.g. when you want to get the difference between 9:00 PM and 5:00 AM
-
-    if (date2 < startdate) {
-        date2.setDate(date2.getDate() + 1);
-    }
-
-    let msec = date2 - startdate;
-    let hh = Math.floor(msec / 1000 / 60 / 60);
-    msec -= hh * 1000 * 60 * 60;
-    let mm = Math.floor(msec / 1000 / 60);
-    msec -= mm * 1000 * 60;
-    let ss = Math.floor(msec / 1000);
-    msec -= ss * 1000;
-
-    let phh = pad2(hh);
-    let pmm = pad2(mm);
-    let pss = pad2(ss);
-    
-    let logtime = `Start time: ${startdate}, End time: ${date2}, Total time: ${phh}:${pmm}:${pss}`;
-    logEntry(logtime);
-    
-    let ttime = `${phh}:${pmm}:${pss}`;
-    return ttime;
-}
-
-/**
  * Utility to make sure clipping files are all lower-case
  */
 function normalizeClipNames() {
@@ -1029,7 +1015,7 @@ function startPingSender() {
         [...connections.keys()].forEach((ws) => {
             ws.ping();
          });
-    }, 3000); // Send pings every 30 seconds
+    }, settings.pinginterval); 
     pingSenderId = interval;
 }
 
@@ -1103,14 +1089,13 @@ async function processMakeCommands(message) {
                         parray.push(opt);
                         let ridx = i; // + 1;
                         let rmt = new AppMessage(AppMessage.mtRunning); 
-                        rmt.type = "running";
                         rmt.rowindex = ridx;
+                        rmt.filename = item.chartname;
                         sendMessageToClients(rmt, userid);
 
                         let cpt = processSingles(i);
 
                         let cmt = new AppMessage(AppMessage.mtComplete); 
-                        cmt.type = "complete"; 
                         cmt.rowindex = ridx; 
                         cmt.payload = cpt.totaltime;
                         cmt.dbfilename = `${chartname}.${settings.dbextension}`;
@@ -1131,6 +1116,7 @@ async function processMakeCommands(message) {
                         let chart = settings.fullchartlist[opt][0].replace("_", " ");
                         if (chart === "DDECUS") chart = settings.fullchartlist[opt][2].replace("_", " ");
                         console.log(`Processing full chart: ${chart}`);
+                        rmt.dbfilename = `${chartname}.${settings.dbextension}`;
                         sendMessageToClients(rmt, userid);
 
                         let cpt = processFulls(i);
@@ -1154,7 +1140,7 @@ async function processMakeCommands(message) {
                     break outerloop;
             }
         }
-        let payload = reportProcessingTime(); 
+        let payload = ProcessTime.reportProcessingTime(startdate); 
         let timemsg = new AppMessage(AppMessage.mtTiming); 
         timemsg.payload = payload;
         sendMessageToClients(timemsg, userid);
@@ -1352,6 +1338,10 @@ function getUniqueUserId(){
             });
 
             startPingSender();
+
+            if (settings.opendefaultbrowser && !isdocker) {
+                spawn('open', [`http://localhost:${settings.httpport}`]);
+            }
         }
         catch (err) {
             console.log(err);
@@ -1502,8 +1492,7 @@ async function sendExistingDatabases(message) {
  */
 function authentication(req, res, next) {
     const authheader = req.headers.authorization;
-    //console.log(req.headers);
-
+    
     if (!authheader) {
         let err = new Error('You are not authenticated!');
         res.setHeader('WWW-Authenticate', 'Basic');
