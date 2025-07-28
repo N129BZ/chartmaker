@@ -221,11 +221,11 @@ let addmetabounds = false;
  */
 let parray = [];
 let nm = 0;
-let processes = getProcessCount();
 
-let arg = process.argv.slice(2);
+const processes = getProcessCount();
+const arg = process.argv.slice(2);
 
-if (settings.usecommandline) {
+if (useWebServer === false) {
     if (arg.length >= 1) {
         let chart = "";
         let sarg = arg[0].toLowerCase();
@@ -242,8 +242,9 @@ if (settings.usecommandline) {
         else if (sarg.startsWith("-h")) {
             console.log("Command line options:\r\n" +
                         "----------------------------------------------------------------------------------\r\n" +
-                        "-h, --help      Show this help\r\n" +
-                        "-s, --settings  Show all values in settings.json\r\n" +
+                        "-h, --help         Show this help\r\n" +
+                        "-s, --settings     Show all values in settings.json\r\n" +
+                        "-w, --webserver    Start the web server" +
                         "----------------------------------------------------------------------------------\r\n" +
                         "area-single=X   Process one area chart where X is the index in the area chart list\r\n" +
                         "area-all        Process all 53 area VFR charts individually\r\n" +
@@ -251,6 +252,9 @@ if (settings.usecommandline) {
                         "full-all        Process all of the full charts in the full chart list\r\n" +
                         "----------------------------------------------------------------------------------\r\n");
                         process.exit();
+        }
+        else if (sarg.startsWith("-w")) {
+            enterWebserverMode();
         }
         else if (sarg === "area-all") {
             processAllAreas();
@@ -287,55 +291,42 @@ if (settings.usecommandline) {
         }
     }
     else {
-        if (settings.webservermode) {
-            enterWebserverMode();
-        }
-        else {
-            let response = processPrompt("Select:\r\n" +
-                                    "--------------------------------------------------------------------\r\n" +
-                                    "1 = Process a single area VFR chart\r\n" +
-                                    "2 = Process all 53 area VFR charts individually\r\n" +
-                                    "3 = Process a single full chart from the full chart list\r\n" +
-                                    "4 = Process all of the full charts in the full chart list\r\n" +
-                                    "5 = Generate a GeoTIFF from a mbtiles database\r\n" +
-                                    "6 = Put chartmaker into webserver mode (new feature)\r\n" +
-                                    "7 = Output the settings.json file to the console\r\n" +
-                                    "---------------------------------------------------------------------\r\n\r\n" +
-                                    "Your selection: "); 
-            switch (response) {
-                case "1":
-                    processOneArea();
-                    break;
-                case "2":
-                    processAllAreas();
-                    break;
-                case "3":
-                    processOneFull();
-                    break;
-                case "4":
-                    parray = settings.chartprocessindexes;
-                    processFulls();
-                    break;
-                case "5":
-                    generateGeoTIFF();
-                    break;
-                case "6":
-                    enterWebserverMode();
-                    break;
-                case "7":
-                    console.log(settings);
-                    console.log("\r\n\r\n\r\n");
-                    process.exit();
-                default:
-                    console.log("Exiting chartmaker!");
-                    break;
-            }
+        let response = processPrompt("Select:\r\n" +
+                                "--------------------------------------------------------------------\r\n" +
+                                "1 = Process a single area VFR chart\r\n" +
+                                "2 = Process all 53 area VFR charts individually\r\n" +
+                                "3 = Process a single full chart from the full chart list\r\n" +
+                                "4 = Process all of the full charts in the full chart list\r\n" +
+                                "5 = Put chartmaker into webserver mode (new feature)\r\n" +
+                                "6 = Output the settings.json file to the console\r\n" +
+                                "---------------------------------------------------------------------\r\n\r\n" +
+                                "Your selection: "); 
+        switch (response) {
+            case "1":
+                processOneArea();
+                break;
+            case "2":
+                processAllAreas();
+                break;
+            case "3":
+                processOneFull();
+                break;
+            case "4":
+                parray = settings.chartprocessindexes;
+                processFulls();
+                break;
+            case "5":
+                enterWebserverMode();
+                break;
+            case "6":
+                console.log(settings);
+                console.log("\r\n\r\n\r\n");
+                process.exit();
+            default:
+                console.log("Exiting chartmaker!");
+                break;
         }
     }
-}
-else {
-    parray = settings.chartprocessindexes;
-    processFulls();
 }
 
 function processOneArea(area = -1) {
@@ -522,7 +513,7 @@ function runProcessing() {
     }    
 }
 
-if (!settings.usecommandline) {
+if (!useWebServer) {
     ProcessTime.reportProcessingTime(startdate);
 }
 
@@ -991,7 +982,7 @@ function normalizeClipNames() {
  */
 function enterWebserverMode() {
     useWebServer = true;
-    console.log("entering websocket mode")
+    console.log("Entering web server mode")
 }
 
 /**
@@ -1135,9 +1126,6 @@ async function processMakeCommands(message) {
                         processFulls();
                     }
                     break;  
-                case 4:
-                    sendSettings = true;
-                    break outerloop;
             }
         }
         let payload = ProcessTime.reportProcessingTime(startdate); 
@@ -1229,7 +1217,7 @@ function getUniqueUserId(){
  * Start the express web server and open a websocket server
  */
 (() => {
-    if (useWebServer || settings.webservermode) {
+    if (useWebServer) {
         const app = express();
         
         try {
@@ -1291,7 +1279,7 @@ function getUniqueUserId(){
             });
 
             const wss = new WebSocket.Server({ port: settings.wsport });
-            console.log(`Websocket listening on port ${settings.wsport}`);
+            console.log(`WebSocket server listening on port ${settings.wsport}`);
             let msg = {};
 
             wss.on('connection', (ws) => {

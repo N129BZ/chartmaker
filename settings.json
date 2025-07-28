@@ -20,16 +20,16 @@
         "addoverviews": true,
         "usecommandline": false,
         "timezone": "America/Chicago",
-        "debug": true,
+        "debug": false,
+
+        "webservermode": true,
         "httpport": 1962,
         "wsport": 1970,
         "pinginterval": 30000,
-        "webservermode": true,
-        "opendefaultbrowser": false,
+        "opendefaultbrowser": true,
         "useauthentication": false,
         "zipfilename": "Charts.zip",
         
-        "chartprocessindexes": [],
         "fullchartlist": [
             ["Sectional", "vfr", ""],
             ["Caribbean", "vfr", ""],
@@ -108,16 +108,6 @@
             "png",
             "jpeg",
             "webp"
-        ],
-        "fullchartindexes": [
-            "Sectional",
-            "Caribbean",
-            "Grand_Canyon",
-            "Terminal", 
-            "Helicopter", 
-            "Enroute_Low",
-            "Enroute_High",
-            "US_VFR_Wall_Planning"
         ]
     }
 }
