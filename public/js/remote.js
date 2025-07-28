@@ -428,7 +428,7 @@ function setDownloadButtonVisible(isVisible) {
         downloadExisting.style.visibility = "hidden";
         chkForExisting.checked = false;
         btnSelectAll.style.display = "none";
-        btnUnselectAll.style.visibility = "inline";
+        btnUnselectAll.style.display = "inline";
     }
     else {
         btnDownload.classList.remove("running");
