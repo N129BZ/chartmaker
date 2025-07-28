@@ -1446,7 +1446,7 @@ async function getExistingCount() {
  * @returns an Appmessage.mtExistingDb message with a list of databases
  */
 async function sendExistingDatabases(message) {
-    const extensionsToOmit = ['.zip']; 
+    const extensionsToOmit = ['.zip', '.txt']; 
     const items = { existingdblist: [] };
     try {
         const files = fs.readdirSync(dbfolder);
