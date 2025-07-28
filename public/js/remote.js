@@ -697,7 +697,7 @@ function populateFullChartList() {
  */
 function setupCommandBody() {
     inResponseView = false;
-    processInfo.textContent = "Confirmed chart processing list"
+    processInfo.textContent = "Confirmed chart processing entries:"
     commandbody.innerText = "";
     for (let i = 0; i < 100; i++) {
         let tr = document.createElement("tr");
