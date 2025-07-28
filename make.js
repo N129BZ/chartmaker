@@ -187,7 +187,10 @@ if (!fs.existsSync(workarea)) fs.mkdirSync(workarea)
 let chartcache = path.join(appdir, "chartcache");
 if (!fs.existsSync(chartcache)) fs.mkdirSync(chartcache);
 
-let dbfolder = path.join(appdir, "public", "charts", chartdate);
+let chartsfolder = path.join(appdir, "public", "charts");
+if (!fs.existsSync(chartsfolder)) fs.mkdirSync(chartsfolder)
+
+let dbfolder = path.join(chartsfolder, chartdate);
 if (!fs.existsSync(dbfolder)) fs.mkdirSync(dbfolder)
     
 if (isdocker) {
