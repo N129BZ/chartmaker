@@ -37,11 +37,12 @@ class AppMessage {
 }
 
 class MakeCommand {
-    constructor(command, chart, rowindex, chartname) {
+    constructor(command, chart, rowindex, chartname, layertype) {
         this.command = command;
         this.chart = chart;
         this.rowindex = rowindex;
         this.chartname = chartname;
+        this.layertype = layertype;
     }
 }
 
@@ -202,7 +203,7 @@ if (isdocker) {
 }
 
 let imageformat = settings.tiledrivers[settings.tiledriverindex];
-let chartlayertype = "";
+let chartlayertype = settings.layertypes[settings.layertypeindex];
 let chartworkname = "";
 let chartname = "";
 let charturl = "";
@@ -440,8 +441,7 @@ function processFulls(msgid = -1) {
         let charttype = chart[1];
 
         chartworkname = chart[0]; 
-        chartlayertype = settings.layertypes[settings.layertypeindex];
-
+        
         if (charttype === "ifr") {
             isifrchart = true;
             lcasename = chart[2].toLowerCase();
@@ -562,8 +562,8 @@ function downloadCharts() {
             }
         }
         logEntry(`Downloading ${chartzip}`);
-        cmd = `curl ${charturl} -o ${chartzip}`;
-        executeCommand(cmd);
+        cmd = `curl ${charturl} -v -o ${chartzip}`;
+        executeCommand(cmd, true);
     }
 }
 
@@ -777,17 +777,11 @@ function makeMbTiles() {
     let metajson = `{
         "name": "${chartname}",
         "description": "${chartdesc} Chart",
-        "version": "1.1",
-        ${addedbounds}
         "type": "${chartlayertype}",
         "format": "${imageformat}",
-        "quality": ${settings.tileimagequality},
         "minzoom": ${minzoom},
         "maxzoom": ${maxzoom},
-        "attribution": "${settings.attribution}",
-        "scheme": "tms",
-        "valid": "${chartdate}",
-        "expires": "${expiredate}"
+        "attribution": "${settings.attribution}"
     }`;
     
     let fpath = path.join(sourcefolder, "metadata.json");
@@ -1075,7 +1069,8 @@ async function processMakeCommands(message) {
             item = list[i];
             idx = Number(item.command);
             opt = Number(item.chart);
-            
+            chartlayertype = item.layertype;
+
             console.log(`command: ${idx}, chart: ${opt}`);
             switch (idx) {
                 case 0:
