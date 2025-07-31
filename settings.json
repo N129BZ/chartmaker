@@ -11,9 +11,9 @@
         "cleanprocessfolders": true,
 
         "outputgrayscale": false,
-        "tileimagequality" : 40,
+        "tileimagequality" : 25,
         "blendpixels" : 30,
-        "zoomrange" : "0-11",
+        "zoomrange" : "5-11",
         "centerzoomlevel": "7",
         "dbextension": "db",
         "defaultdbfolder": "public/charts",
@@ -97,7 +97,7 @@
             "Wichita"
         ],
 
-        "layertypeindex": 1,   
+        "layertypeindex": 0,   
         "layertypes": [
             "baselayer", 
             "overlay"
