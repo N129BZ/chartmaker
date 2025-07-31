@@ -30,11 +30,12 @@ class AppMessage {
 }
 
 class MakeCommand {
-    constructor(command, chart, rowindex, chartname) {
+    constructor(command, chart, rowindex, chartname, layertype) {
         this.command = command;
         this.chart = chart;
         this.rowindex = rowindex;
         this.chartname = chartname;
+        this.layertype = layertype;
     }
 }
 
@@ -501,7 +502,8 @@ function addCommandRequest() {
         updateCommandBody(infomessage);
 
         let ridx = i + 1;
-        let entry = new MakeCommand(selectedcommand, selectedchart, ridx, chartname);
+        let selectedRadio = document.querySelector('input[name="layerType"]:checked');
+        let entry = new MakeCommand(selectedcommand, selectedchart, ridx, chartname, selectedRadio.value);
         commandpackage.commandlist.push(entry); 
         if (isfullList) {
             selectedchart = selectedchart + 1; 
