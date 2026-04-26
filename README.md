@@ -1,4 +1,4 @@
-# chartmaker - Download FAA VFR and IFR digital raster charts and translate into mbtiles databases for other mapping applications
+# Chartmaker - Download FAA VFR and IFR digital raster charts and translate into mbtiles databases for other mapping applications
 ### (Check out my chart viewing application https://github.com/n129bz/chartserver - also shows Metars, Pireps, Weather, etc.)
 
 ## Using a Docker image
