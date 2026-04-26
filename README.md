@@ -1,20 +1,6 @@
 # chartmaker - Download FAA VFR and IFR digital raster charts and translate into mbtiles databases for other mapping applications
 ### (Check out my chart viewing application https://github.com/n129bz/chartserver - also shows Metars, Pireps, Weather, etc.)
 
-## NEW!   Put chartmaker into web server mode and make maps by using a web page or by remotely sending control messages through a connected websocket. More documentation coming soon!    
-This is controlled by 3 new settings in settings.json. You can use whatever ***httpport*** and ***wsport*** port values you want.
-```
-    "httpport": 1962,
-    "wsport": 1970,
-    "webservermode": true,
-```
-<img width="589" height="725" alt="Chartmaker01" src="https://github.com/user-attachments/assets/14f8c991-568a-48f7-8f68-0663ac9e044b" />
-<img width="597" height="841" alt="ChartmakerWeb" src="https://github.com/user-attachments/assets/febfa936-4aff-4439-acf8-7599ea60b934" />
-<img width="591" height="752" alt="ChartmakerMain" src="https://github.com/user-attachments/assets/993b4f0f-a1fd-47c4-a660-e151b10eba20" />
-<img width="581" height="526" alt="Chartmaker04" src="https://github.com/user-attachments/assets/62c13b7c-7d08-4f27-b8b0-793ff2a14aed" />
-
-<br>
-<br>
 ## Using a Docker image
 ### Docker image: ***docker pull n129bz/chartmaker:latest***
 ### To run the image: ***docker run -it n129bz/chartmaker:latest***
@@ -158,6 +144,18 @@ The FAA publishes charts 20 days ***before*** the official chart date, and chart
 ```   
 #### *Additional information
 The chart zip files are downloaded from the FAA digital raster chart repository and unzipped. After the unzipping process all of the the resultant GEOtiff image names (and their matching tfw world file names) are "normalized" to all lower-case filenames with underscores in place of dashes and spaces and any apostrophes removed. This simplifies the down-stream processing of these files since **GDAL** can interpret spaces as argument separators.   
+
+## NEW!   Put chartmaker into web server mode and make maps by using a web page or by remotely sending control messages through a connected websocket. More documentation coming soon!    
+This is controlled by 3 new settings in settings.json. You can use whatever ***httpport*** and ***wsport*** port values you want.
+```
+    "httpport": 1962,
+    "wsport": 1970,
+    "webservermode": true,
+```
+<img width="589" height="725" alt="Chartmaker01" src="https://github.com/user-attachments/assets/14f8c991-568a-48f7-8f68-0663ac9e044b" />
+<img width="597" height="841" alt="ChartmakerWeb" src="https://github.com/user-attachments/assets/febfa936-4aff-4439-acf8-7599ea60b934" />
+<img width="591" height="752" alt="ChartmakerMain" src="https://github.com/user-attachments/assets/993b4f0f-a1fd-47c4-a660-e151b10eba20" />
+<img width="581" height="526" alt="Chartmaker04" src="https://github.com/user-attachments/assets/62c13b7c-7d08-4f27-b8b0-793ff2a14aed" />
 
 ### ToDo:
 
