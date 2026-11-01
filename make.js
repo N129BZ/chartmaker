@@ -1,13 +1,13 @@
 'use strict';
 
-const fs = require('fs');
-const { execSync, spawn } = require('child_process');
-const readlineSync = require('readline-sync');
-const path = require('path');
-const express = require('express');
-const favicon = require('serve-favicon');
-const WebSocket = require('ws');
-const archiver = require ('archiver');
+import fs from 'node:fs';
+import { execSync, spawn } from 'node:child_process';
+import readlineSync from 'readline-sync';
+import path from 'node:path';
+import express from 'express';
+import { cwd } from 'node:process';
+import { WebSocketServer } from 'ws';
+import archiver from 'archiver';
 
 class AppMessage {
     static mtInfo = "info";
@@ -88,7 +88,7 @@ var inMakeLoop = false;
 var pingSenderId = 0;
 
 // set the base application folder, this will change if running in docker
-let appdir = __dirname;
+let appdir = cwd();
 
 /**
  * Utility to see if we are in a docker container
@@ -264,7 +264,7 @@ if (useWebServer === false) {
             processAllAreas();
         }
         else if (sarg === "full-all") {
-            processAllFull();
+            processFulls();
         }
         else if (sarg.search("area-single") > -1) {
             try {
@@ -642,19 +642,7 @@ function processImages() {
         let sourcetif = path.join(dir_1_unzipped, srcfile);
         let expanded = path.join(dir_2_expanded, vrtfile);
         let tiled = path.join(dir_4_tiled, area);
-        let expandopt = "";
-
-        // determine if RGB expansion is required
-        cmd = `gdalinfo -json "${sourcetif}"`;
-        let infojson = JSON.parse(execSync(cmd));
-        if (infojson.bands.length === 1) {
-            if (settings.outputgrayscale) {
-                expandopt = "-expand gray"; 
-            }
-            else {
-                expandopt = "-expand rgb";
-            }
-        }
+        let expandopt = "-expand rgb";
 
         wgsbounds = infojson.wgs84Extent.coordinates[0];
 
@@ -663,22 +651,17 @@ function processImages() {
         executeCommand(cmd);
 
         logEntry(`>> gdalwarp warping and clipping ${clipped} using shapefile ${shapefile}`);
-        cmd = `gdalwarp -t_srs EPSG:3857 -dstalpha --config GDAL_CACHEMAX 256 -multi -cblend ${cblend} -cutline ${shapefile} -crop_to_cutline ${expanded} ${clipped}`;
+        cmd = `gdalwarp -t_srs EPSG:3857 -dstalpha --config GDAL_CACHEMAX 512 ` + 
+                       `-wo SOURCE_EXTRA=1000 -co COMPRESS=DEFLATE -co PREDICTOR=2 `
+                       `-multi -cblend ${cblend} -cutline ${shapefile} -crop_to_cutline ${expanded} ${clipped}`;
         executeCommand(cmd);
 
-        // If user specified grayscale but left the imageformat as 
-        // webp, then force the imageformat to a default of png.
-        if (settings.outputgrayscale && imageformat === "webp") {
-            imageformat = "png";
-        }
-        
         // setup formatting arguments for overviews        
         let formatargs = `--tiledriver=${imageformat.toUpperCase()} `;
         let configargs = "";
         switch (imageformat) {
             case "webp":
-                configargs = `--config WEBP_LOSSLESS_OVERVIEW YES --config WEBP_LEVEL_OVERVIEW ${settings.tileimagequality}`;
-                formatargs += `--webp-quality=${settings.tileimagequality} --webp-lossless`;
+                configargs = `--config WEBP_LEVEL_OVERVIEW ${settings.tileimagequality}`;
                 break;
             case "jpeg":
                 configargs = `--config JPEG_QUALITY_OVERVIEW ${settings.tileimagequality}`;
@@ -688,12 +671,10 @@ function processImages() {
                 break;
         }
 
-        if (settings.addoverviews) {
-            logEntry(`>> gdaladdo adding overviews to ${clipped}`);
-            cmd = `gdaladdo ${configargs} --config GDAL_NUM_THREADS ALL_CPUS ${clipped}`;
-            executeCommand(cmd)
-        }
-
+        logEntry(`>> gdaladdo adding overviews to ${clipped}`);
+        cmd = `gdaladdo ${configargs} --config GDAL_NUM_THREADS ALL_CPUS ${clipped}`;
+        executeCommand(cmd)
+        
         logEntry(`>> gdal2tiles tiling ${clipped} into ${tiled}`);
         cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=${processes} ${formatargs} --tmscompatible --webviewer=openlayers ${clipped} ${tiled}`;
         executeCommand(cmd);
