@@ -624,7 +624,7 @@ function processImages() {
      1) GDAL_TRANSLATE: Expand color table to RGBA
      2) GDALWARP: Warp chart to EPSG:4326 and clip off the borders and legend
      3) GDALADDO: Generate overviews of the VRT for all zoom levels 
-     4) GDAL2TILES: Convert overviews into tiled PNG images
+     4) GDAL2TILES: Convert overviews into tiled images
     -------------------------------------------------------------------------*/
 
     let chartareas = buildChartNameArray();
@@ -636,11 +636,22 @@ function processImages() {
         let vrtfile = `${area}.vrt`;
         let srcfile = `${area}.tif`;
         let shapefile = path.join(clippedShapeFolder, shpfile);
-        let clipped = path.join(dir_3_clipped, vrtfile);
         let sourcetif = path.join(dir_1_unzipped, srcfile);
         let expanded = path.join(dir_2_expanded, vrtfile);
-        let tiled = path.join(dir_4_tiled, area);
+        let clipped = path.join(dir_3_clipped, vrtfile);
         let expandopt = "-expand rgb";
+
+        // determine if RGB expansion is required
+        cmd = `gdalinfo -json "${sourcetif}"`;
+        let infojson = JSON.parse(execSync(cmd));
+        if (infojson.bands.length === 1) {
+            if (settings.outputgrayscale) {
+                expandopt = "-expand gray"; 
+            }
+            else {
+                expandopt = "-expand rgb";
+            }
+        }
 
         wgsbounds = infojson.wgs84Extent.coordinates[0];
 
@@ -650,34 +661,71 @@ function processImages() {
 
         logEntry(`>> gdalwarp warping and clipping ${clipped} using shapefile ${shapefile}`);
         cmd = `gdalwarp -t_srs EPSG:3857 -dstalpha --config GDAL_CACHEMAX 512 ` + 
-                       `-wo SOURCE_EXTRA=1000 -co COMPRESS=DEFLATE -co PREDICTOR=2 `
-                       `-multi -cblend ${cblend} -cutline ${shapefile} -crop_to_cutline ${expanded} ${clipped}`;
+              `-multi -cblend ${cblend} -cutline ${shapefile} -crop_to_cutline ${expanded} ${clipped}`;
         executeCommand(cmd);
 
-        // setup formatting arguments for overviews        
-        let formatargs = `--tiledriver=${imageformat.toUpperCase()} `;
-        let configargs = "";
-        switch (imageformat) {
-            case "webp":
-                configargs = `--config WEBP_LOSSLESS_OVERVIEW YES --config WEBP_LEVEL_OVERVIEW ${settings.tileimagequality}`;
-                formatargs += `--webp-quality=${settings.tileimagequality} --webp-lossless`;
-                break;
-            case "jpeg":
-                configargs = `--config JPEG_QUALITY_OVERVIEW ${settings.tileimagequality}`;
-                break;     
-            default:
-                // no adjustments for PNG images
-                break;
-        }
+        // // setup formatting arguments for overviews        
+        // let formatargs = `--tiledriver=${imageformat.toUpperCase()} `;
+        // let configargs = "";
+        // switch (imageformat) {
+        //     case "webp":
+        //         configargs = `--config WEBP_LOSSLESS_OVERVIEW NO --config WEBP_LEVEL_OVERVIEW ${settings.tileimagequality}`;
+        //         formatargs += `--webp-quality=${settings.tileimagequality}`;
+        //         break;
+        //     case "jpeg":
+        //         configargs = `--config JPEG_QUALITY_OVERVIEW ${settings.tileimagequality}`;
+        //         break;     
+        //     default:
+        //         // no adjustments for PNG images
+        //         break;
+        // }
 
-        logEntry(`>> gdaladdo adding overviews to ${clipped}`);
-        cmd = `gdaladdo ${configargs} --config GDAL_NUM_THREADS ALL_CPUS ${clipped}`;
-        executeCommand(cmd)
+        // logEntry(`>> gdaladdo adding overviews to ${clipped}`);
+        // cmd = `gdaladdo ${configargs} --config GDAL_NUM_THREADS ALL_CPUS ${clipped}`;
+        // executeCommand(cmd)
         
-        logEntry(`>> gdal2tiles tiling ${clipped} into ${tiled}`);
-        cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=${processes} ${formatargs} --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
-        executeCommand(cmd);
+        // logEntry(`>> gdal2tiles tiling ${clipped} into ${tiled}`);
+        // cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=${processes} ${formatargs} --tmscompatible --webviewer=none ${clipped} ${tiled}`;
+        // executeCommand(cmd);
     });
+
+    // setup formatting arguments for overviews        
+    let formatargs = `--tiledriver=${imageformat.toUpperCase()} `;
+    let configargs = "";
+    switch (imageformat) {
+        case "webp":
+            configargs = `--config WEBP_LOSSLESS_OVERVIEW NO --config WEBP_LEVEL_OVERVIEW ${settings.tileimagequality}`;
+            formatargs += `--webp-quality=${settings.tileimagequality}`;
+            break;
+        case "jpeg":
+            configargs = `--config JPEG_QUALITY_OVERVIEW ${settings.tileimagequality}`;
+            break;     
+        default:
+            // no adjustments for PNG images
+            break;
+    }
+
+    const imgfmt = imageformat.toUpperCase();
+    const mbtiles = path.join(dir_4_tiled, chartworkname) + ".mbtiles";
+    const bigvrt = path.join(dir_3_clipped, chartworkname) + ".vrt";
+    const infiles =`${dir_3_clipped}/*.vrt`;
+    logEntry(`>> Building single chart VRT file: ${bigvrt}`);
+    cmd = `gdalbuildvrt ${bigvrt} ${infiles}`;
+    executeCommand(cmd);
+
+    logEntry(`>> Creating MBTILES database file at: ${mbtiles}`);
+    cmd = `gdal_translate ${bigvrt} ${mbtiles} -of MBTILES -co TILES_PRODUCER="Custom Pipeline" ` + 
+          `-co COMPRESS=${imgfmt} -co QUALITY=${settings.tileimagequality} ` +
+          `-co RESAMPLING=AVERAGE -co ZOOM_LEVEL_STRATEGY=AUTO`;
+    executeCommand(cmd);
+
+    logEntry(`>> gdaladdo adding overviews to ${mbtiles}`);
+    cmd = `gdaladdo -r average ${configargs} --config GDAL_NUM_THREADS ALL_CPUS ${mbtiles}`;
+    executeCommand(cmd)
+    
+    // logEntry(`>> gdal2tiles tiling ${bigvrt} into ${tiled}`);
+    // cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=${processes} ${formatargs} --tmscompatible --webviewer=none ${bigvrt} ${tiled}`;
+    // executeCommand(cmd);
 }
 
 /**

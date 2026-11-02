@@ -79,13 +79,13 @@ sub main {
 
                         foreach my $y (@overlay_y_tiles) {
                             # If the both base and overlay tiles exist, then call the ImageMagick "convert" function to composite the images. 
-                            if ( -e "$base_directory/$zoomlevel/$x/$y" ) {
-                                qx(convert "$base_directory/$zoomlevel/$x/$y" "$overlay_directory/$zoomlevel/$x/$y" -composite "$base_directory/$zoomlevel/$x/$y");
-                            }
+                            #if ( -e "$base_directory/$zoomlevel/$x/$y" ) {
+                            #    qx(convert "$base_directory/$zoomlevel/$x/$y" "$overlay_directory/$zoomlevel/$x/$y" -composite "$base_directory/$zoomlevel/$x/$y");
+                            #}
                             # Otherwise do a regular copy from overlay tile to base directory
-                            else {
+                            #else {
                                 move("$overlay_directory/$zoomlevel/$x/$y", "$base_directory/$zoomlevel/$x/$y");
-                            }
+                            #}
                         }
                     }
                 }
