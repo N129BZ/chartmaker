@@ -687,9 +687,13 @@ function processImages() {
 
     // run the post processing command if it exists
     if (settings.postprocesscommand.length > 0) {
-        
+        const destfolder = path.join(settings.defaultdbfolder, chartdate);
+        if (!fs.existsSync(destfolder)) {
+            fs.mkdirSync(destfolder);
+        }
+        const destname = path.join(destfolder, chartworkname) + ".mbtiles";
         cmd = settings.postprocesscommand.replace("<chartname>", mbtiles)
-                                         .replace("<destname>", settings.defaultdbfolder);
+                                         .replace("<destname>", destname);
         logEntry(`>> Executing post processing command: ${cmd}`);
         executeCommand(cmd);
     }
