@@ -11,7 +11,6 @@
 #### Installation:
 1.) This node.js application is designed to run on Linux, and also runs well on **WSL** (Windows Subsystem for Linux) and assumes a pre-existing node js installation   
 2.) After installing all requirements, clone this repository, change directory to **chartmaker**, open a terminal and enter **npm install**        
-3.) Give execute permissions to **perlinstall.sh** shell script and run it to install all the perl dependencies           
 4.) Run the application in a terminal with the command **node make** or to see command line options, **node make --help**    
 5.) If not passing a chart number argument, respond to the prompt for what to process    
 6.) Go do something else... depending on the number of charts and image quality, the process can take several hours to complete.     
@@ -23,10 +22,9 @@ The FAA publishes charts 20 days ***before*** the official chart date, and chart
 #### settings.json
 * Edit the values in **chartprocessindexes** with any ordinal index numbers from the **faachartnames** list for charts you want to process, in the order you want them processed. The default is all charts in the index list, in index order. The setting array **faachartnames** are the actual zip filenames the FAA uses and are for reference only. **Changes to the downloadtemplates, faachartnames, layertypes, or tiledrivers lists WILL BREAK THE APPLICATION!**    
 * The zoom range value can either be in the format **n-n**, or you can use a single zoom level **n**                
-* You can change the **tileimagequality** percentage from ***1*** up to ***100*** and **tiledriverindex** index to ***2*** (webp) to reduce mbtiles file size. The smaller the percentage, the fuzzier the chart will be at high zoom levels.   
-  * The tiledimagequality setting works for both **png** and **webp** images. Percentages as low as 30% will still produce highly readable charts and ***significantly*** reduce database size.     
-* To save disk space, you can set **cleanprocessfolders** to true. 
-  * The merge and/or pngquant work folders will be many gigabytes for the entire chart set and are not needed once processing is complete
+* You can change the **tileimagequality** percentage to ***75*** and **tiledriverindex** index to ***2*** (webp) to reduce mbtiles file size. The smaller the percentage, the fuzzier the chart will be at high zoom levels WEBP does extremely well at 75%.   
+  * The tiledimagequality setting only works for **webp** images. 
+* To save disk space, you can set **cleanprocessfolders** to true, which will remove all temporary processing files.
 * To preserve the processed databases, you can set **renameworkarea** to true. This will rename the **workarea** folder to include the processed chart date so the next run will not overwrite the folder.
 
 #### settings.json values
@@ -133,9 +131,9 @@ The FAA publishes charts 20 days ***before*** the official chart date, and chart
     "overlay"   
 ]
 ```      
-* ***tiledriverindex*** determines the tiledriver type, for example webp produces the smallest image size but png produces the sharpest images   
+* ***tiledriverindex*** determines the tiledriver type, for example index 2 (webp) produces the smallest image size but png produces the sharpest images   
 ```
-"tiledriverindex": 0,   
+"tiledriverindex": 2,   
 "tiledrivers": [   
     "png",   
     "jpg",   
