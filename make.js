@@ -486,7 +486,7 @@ function runProcessing() {
     dir_1_unzipped = path.join(chartfolder, "1_unzipped");
     dir_2_expanded = path.join(chartfolder, "2_expanded");
     dir_3_clipped = path.join(chartfolder, "3_clipped");
-    dir_4_mbtiles = path.join(chartfolder, "4_tiled");
+    dir_4_mbtiles = path.join(chartfolder, "4_mbtiles");
     
     setupEnvironment();
     downloadCharts();
