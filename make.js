@@ -201,7 +201,6 @@ if (isdocker) {
 }
 
 let imageformat = settings.tiledrivers[settings.tiledriverindex];
-let chartlayertype = settings.layertypes[settings.layertypeindex];
 let chartworkname = "";
 let chartname = "";
 let charturl = "";
@@ -211,12 +210,8 @@ let chartfolder = "";
 let dir_1_unzipped = "";
 let dir_2_expanded = "";
 let dir_3_clipped = "";
-let dir_4_tiled = "";
-let dir_5_merged = "";
-let dir_6_quantized = "";
+let dir_4_mbtiles = "";
 let isifrchart = false;
-let wgsbounds = [];
-let addmetabounds = false;
 
 /**
  * Chart processing starts here
@@ -381,7 +376,7 @@ function processSingles(msgid = -1) {
         console.log(charturl);
         let cpt = new ProcessTime(chartname);
         timings.set(chartname, cpt);
-        let chartdbfile = path.join(dbfolder, `${chartname}.${settings.dbextension}`);
+        let chartdbfile = path.join(dbfolder, `${chartname}.mbtiles`);
         if (fs.existsSync(chartdbfile)) {
             let stat = fs.statSync(chartdbfile);    
             const birthDate = stat.birthtime;
@@ -464,7 +459,7 @@ function processFulls(msgid = -1) {
         timings.set(chartname, cpt);
         console.log(`${cpt.totaltime}\n`);
 
-        let chartdbfile = path.join(dbfolder, `${chartname}.${settings.dbextension}`);
+        let chartdbfile = path.join(dbfolder, `${chartname}.mbtiles`);
         if (!fs.existsSync(chartdbfile)) {
             runProcessing();
         }
@@ -493,18 +488,14 @@ function runProcessing() {
     dir_1_unzipped = path.join(chartfolder, "1_unzipped");
     dir_2_expanded = path.join(chartfolder, "2_expanded");
     dir_3_clipped = path.join(chartfolder, "3_clipped");
-    dir_4_tiled = path.join(chartfolder, "4_tiled");
-    dir_5_merged = path.join(chartfolder, "5_merged");
-    dir_6_quantized = path.join(chartfolder, "6_quantized");
+    dir_4_mbtiles = path.join(chartfolder, "4_tiled");
     
     setupEnvironment();
     downloadCharts();
     unzipCharts();
     normalizeChartNames();
     processImages();
-    //mergeAndQuantize();
-    //makeMbTiles();
-
+    
     if (settings.cleanprocessfolders === true) {
         cmd = `rm -rf ${workarea}`
         executeCommand(cmd);
@@ -535,9 +526,7 @@ function setupEnvironment() {
     if (!fs.existsSync(dir_1_unzipped)) fs.mkdirSync(dir_1_unzipped);
     if (!fs.existsSync(dir_2_expanded)) fs.mkdirSync(dir_2_expanded);
     if (!fs.existsSync(dir_3_clipped)) fs.mkdirSync(dir_3_clipped);
-    if (!fs.existsSync(dir_4_tiled)) fs.mkdirSync(dir_4_tiled);
-    if (!fs.existsSync(dir_5_merged)) fs.mkdirSync(dir_5_merged);
-    if (!fs.existsSync(dir_6_quantized)) fs.mkdirSync(dir_6_quantized);
+    if (!fs.existsSync(dir_4_mbtiles)) fs.mkdirSync(dir_4_mbtiles);
     if (settings.logtofile) setupDebugLog(chartfolder);
     logEntry("Created all workarea subfolders");
 }
@@ -680,7 +669,7 @@ function processImages() {
     }
 
     const imgfmt = imageformat.toUpperCase();
-    const mbtiles = path.join(dir_4_tiled, chartworkname) + ".mbtiles";
+    const mbtiles = path.join(dir_4_mbtiles, chartworkname) + ".mbtiles";
     const bigvrt = path.join(dir_3_clipped, chartworkname) + ".vrt";
     const infiles =`${dir_3_clipped}/*.vrt`;
     logEntry(`>> Building single chart VRT file: ${bigvrt}`);
@@ -689,14 +678,13 @@ function processImages() {
 
     logEntry(`>> Creating MBTILES database file at: ${mbtiles}`);
     cmd = `gdal_translate ${bigvrt} ${mbtiles} -of MBTILES -mo TILES_PRODUCER="N129BZ Chartmaker" ` + 
-          `-co TILE_FORMAT=${imgfmt} -co QUALITY=${settings.tileimagequality} ` +
-          `-co RESAMPLING=AVERAGE`;
+          `--config GDAL_CACHEMAX 2048 -co NUM_THREADS=ALL_CPUS -co SPARSE_OK=YES ` + 
+          `-co TILE_FORMAT=${imgfmt} -co QUALITY=${settings.tileimagequality}`;
     executeCommand(cmd);
 
     logEntry(`>> Adding gdaladdo overviews to ${mbtiles}`);
-    const webpconfig = imageformat === "webp" ? `--config WEBP_LOSSLESS_OVERVIEW NO --config WEBP_LEVEL_OVERVIEW ${settings.tileimagequality}` : "";
-    configargs = `--config COMPRESS_OVERVIEW ${imgfmt} ${webpconfig}`;
-    cmd = `gdaladdo -r average ${configargs} --config GDAL_NUM_THREADS ALL_CPUS ${mbtiles}`;
+    configargs =  `--config GDAL_CACHEMAX 2048 --config GDAL_NUM_THREADS ALL_CPUS`;
+    cmd = `gdaladdo -r average ${configargs} ${mbtiles} 2 4 8 16 32 64 128 256`;
     executeCommand(cmd)
 
     // run the post processing command if it exists
@@ -944,7 +932,7 @@ async function processMakeCommands(message) {
                         let cmt = new AppMessage(AppMessage.mtComplete); 
                         cmt.rowindex = ridx; 
                         cmt.payload = cpt.totaltime;
-                        cmt.dbfilename = `${chartname}.${settings.dbextension}`;
+                        cmt.dbfilename = `${chartname}.mbtiles`;
                         sendMessageToClients(cmt, userid);
                     }
                     break;
@@ -962,7 +950,7 @@ async function processMakeCommands(message) {
                         let chart = settings.fullchartlist[opt][0].replace("_", " ");
                         if (chart === "DDECUS") chart = settings.fullchartlist[opt][2].replace("_", " ");
                         console.log(`Processing full chart: ${chart}`);
-                        rmt.dbfilename = `${chartname}.${settings.dbextension}`;
+                        rmt.dbfilename = `${chartname}.mbtiles`;
                         sendMessageToClients(rmt, userid);
 
                         let cpt = processFulls(i);
@@ -970,7 +958,7 @@ async function processMakeCommands(message) {
                         let cmt = new AppMessage(AppMessage.mtComplete);
                         cmt.rowindex = ridx;
                         cmt.payload = cpt.totaltime;
-                        cmt.dbfilename = `${chartname}.${settings.dbextension}`;
+                        cmt.dbfilename = `${chartname}.mbtiles`;
                         sendMessageToClients(cmt, userid);
                     }
                     break;
@@ -1008,9 +996,7 @@ function resetGlobalVariables() {
     dir_1_unzipped = "";
     dir_2_expanded = "";
     dir_3_clipped = "";
-    dir_4_tiled = "";
-    dir_5_merged = "";
-    dir_6_quantized = "";
+    dir_4_mbtiles = "";
     isifrchart = false;
     wgsbounds = [];
     addmetabounds = false;
