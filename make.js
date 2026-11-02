@@ -500,11 +500,11 @@ function runProcessing() {
 
         cmd = `mkdir ${workarea}`
         executeCommand(cmd);
-    }    
-}
-
-if (!useWebServer) {
-    ProcessTime.reportProcessingTime(startdate);
+    }   
+    
+    if (!useWebServer) {
+        ProcessTime.reportProcessingTime(startdate);
+    }
 }
 
 /**
@@ -682,7 +682,7 @@ function processImages() {
 
     logEntry(`>> Adding gdaladdo overviews to ${mbtiles}`);
     configargs =  `--config GDAL_CACHEMAX 2048 --config GDAL_NUM_THREADS ALL_CPUS`;
-    cmd = `gdaladdo -r average ${configargs} ${mbtiles} 2 4 8 16 32 64 128 256`;
+    cmd = `gdaladdo -r average ${configargs} ${mbtiles} ${settings.overviewrange}`;
     executeCommand(cmd)
 
     // run the post processing command if it exists
