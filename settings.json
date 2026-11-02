@@ -21,7 +21,7 @@
         "usecommandline": true,
         "timezone": "America/Chicago",
         "debug": false,
-
+        "postprocesscommand": "mv <chartname> <destname>",
         "webservermode": false,
         "httpport": 5062,
         "wsport": 5070,

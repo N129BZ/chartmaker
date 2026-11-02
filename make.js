@@ -411,7 +411,7 @@ function processSingles(msgid = -1) {
 
 function processOneFull() {
     let lst = "\nSelect the full chart number you want to process from this list\r\n\r\n";
-    let i = 0;
+    let i = 1;
     settings.fullchartlist.forEach((fullchart) => {
         let cname = fullchart[0] === "DDECUS" ? fullchart[2] : fullchart[0];
         lst += `${i} ${cname.split("_").join(" ")}\r\n`;
@@ -421,8 +421,8 @@ function processOneFull() {
     let response = processPrompt(lst);
     nm = Number(response); 
 
-    if (nm >= 0 && nm < settings.fullchartlist.length) {
-        parray.push(nm);
+    if (nm >= 1 && nm < settings.fullchartlist.length + 1) {
+        parray.push(nm - 1);
     }
     else {
         console.log("Invalid response, exiting!");
@@ -502,8 +502,8 @@ function runProcessing() {
     unzipCharts();
     normalizeChartNames();
     processImages();
-    mergeAndQuantize();
-    makeMbTiles();
+    //mergeAndQuantize();
+    //makeMbTiles();
 
     if (settings.cleanprocessfolders === true) {
         cmd = `rm -rf ${workarea}`
@@ -652,9 +652,7 @@ function processImages() {
                 expandopt = "-expand rgb";
             }
         }
-
-        wgsbounds = infojson.wgs84Extent.coordinates[0];
-
+        
         logEntry(`>> gdal_translate ${sourcetif}`);
         cmd = `gdal_translate -strict -of vrt -ovr NONE ${expandopt} ${sourcetif} ${expanded}`;
         executeCommand(cmd);
@@ -663,30 +661,6 @@ function processImages() {
         cmd = `gdalwarp -t_srs EPSG:3857 -dstalpha --config GDAL_CACHEMAX 512 ` + 
               `-multi -cblend ${cblend} -cutline ${shapefile} -crop_to_cutline ${expanded} ${clipped}`;
         executeCommand(cmd);
-
-        // // setup formatting arguments for overviews        
-        // let formatargs = `--tiledriver=${imageformat.toUpperCase()} `;
-        // let configargs = "";
-        // switch (imageformat) {
-        //     case "webp":
-        //         configargs = `--config WEBP_LOSSLESS_OVERVIEW NO --config WEBP_LEVEL_OVERVIEW ${settings.tileimagequality}`;
-        //         formatargs += `--webp-quality=${settings.tileimagequality}`;
-        //         break;
-        //     case "jpeg":
-        //         configargs = `--config JPEG_QUALITY_OVERVIEW ${settings.tileimagequality}`;
-        //         break;     
-        //     default:
-        //         // no adjustments for PNG images
-        //         break;
-        // }
-
-        // logEntry(`>> gdaladdo adding overviews to ${clipped}`);
-        // cmd = `gdaladdo ${configargs} --config GDAL_NUM_THREADS ALL_CPUS ${clipped}`;
-        // executeCommand(cmd)
-        
-        // logEntry(`>> gdal2tiles tiling ${clipped} into ${tiled}`);
-        // cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=${processes} ${formatargs} --tmscompatible --webviewer=none ${clipped} ${tiled}`;
-        // executeCommand(cmd);
     });
 
     // setup formatting arguments for overviews        
@@ -714,18 +688,25 @@ function processImages() {
     executeCommand(cmd);
 
     logEntry(`>> Creating MBTILES database file at: ${mbtiles}`);
-    cmd = `gdal_translate ${bigvrt} ${mbtiles} -of MBTILES -co TILES_PRODUCER="Custom Pipeline" ` + 
-          `-co COMPRESS=${imgfmt} -co QUALITY=${settings.tileimagequality} ` +
-          `-co RESAMPLING=AVERAGE -co ZOOM_LEVEL_STRATEGY=AUTO`;
+    cmd = `gdal_translate ${bigvrt} ${mbtiles} -of MBTILES -mo TILES_PRODUCER="N129BZ Chartmaker" ` + 
+          `-co TILE_FORMAT=${imgfmt} -co QUALITY=${settings.tileimagequality} ` +
+          `-co RESAMPLING=AVERAGE`;
     executeCommand(cmd);
 
-    logEntry(`>> gdaladdo adding overviews to ${mbtiles}`);
+    logEntry(`>> Adding gdaladdo overviews to ${mbtiles}`);
+    const webpconfig = imageformat === "webp" ? `--config WEBP_LOSSLESS_OVERVIEW NO --config WEBP_LEVEL_OVERVIEW ${settings.tileimagequality}` : "";
+    configargs = `--config COMPRESS_OVERVIEW ${imgfmt} ${webpconfig}`;
     cmd = `gdaladdo -r average ${configargs} --config GDAL_NUM_THREADS ALL_CPUS ${mbtiles}`;
     executeCommand(cmd)
-    
-    // logEntry(`>> gdal2tiles tiling ${bigvrt} into ${tiled}`);
-    // cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=${processes} ${formatargs} --tmscompatible --webviewer=none ${bigvrt} ${tiled}`;
-    // executeCommand(cmd);
+
+    // run the post processing command if it exists
+    if (settings.postprocesscommand.length > 0) {
+        
+        cmd = settings.postprocesscommand.replace("<chartname>", mbtiles)
+                                         .replace("<destname>", settings.defaultdbfolder);
+        logEntry(`>> Executing post processing command: ${cmd}`);
+        executeCommand(cmd);
+    }
 }
 
 /**
