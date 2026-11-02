@@ -364,7 +364,6 @@ function processAllAreas() {
 }
 
 function processSingles(msgid = -1) {
-    addmetabounds = true;   
     for (let idx = 0; idx < parray.length; idx++) {
         let doProcessing = true;
         chartworkname = settings.areachartlist[parray[idx]];
@@ -427,7 +426,6 @@ function processOneFull() {
 }
 
 function processFulls(msgid = -1) {
-    addmetabounds = true; 
     for (let idx = 0; idx < parray.length; idx++) { 
         let chart = settings.fullchartlist[parray[idx]]; 
         let lcasename = chart[0].toLowerCase();
@@ -999,7 +997,6 @@ function resetGlobalVariables() {
     dir_4_mbtiles = "";
     isifrchart = false;
     wgsbounds = [];
-    addmetabounds = false;
     parray.splice(0, parray.length);
     nm = 0;
 }
