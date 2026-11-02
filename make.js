@@ -1,4 +1,3 @@
-'use strict';
 
 import fs from 'node:fs';
 import { execSync, spawn } from 'node:child_process';
@@ -7,7 +6,6 @@ import path from 'node:path';
 import express from 'express';
 import { cwd } from 'node:process';
 import { WebSocketServer } from 'ws';
-import archiver from 'archiver';
 
 class AppMessage {
     static mtInfo = "info";
@@ -661,7 +659,8 @@ function processImages() {
         let configargs = "";
         switch (imageformat) {
             case "webp":
-                configargs = `--config WEBP_LEVEL_OVERVIEW ${settings.tileimagequality}`;
+                configargs = `--config WEBP_LOSSLESS_OVERVIEW YES --config WEBP_LEVEL_OVERVIEW ${settings.tileimagequality}`;
+                formatargs += `--webp-quality=${settings.tileimagequality} --webp-lossless`;
                 break;
             case "jpeg":
                 configargs = `--config JPEG_QUALITY_OVERVIEW ${settings.tileimagequality}`;
@@ -676,7 +675,7 @@ function processImages() {
         executeCommand(cmd)
         
         logEntry(`>> gdal2tiles tiling ${clipped} into ${tiled}`);
-        cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=${processes} ${formatargs} --tmscompatible --webviewer=openlayers ${clipped} ${tiled}`;
+        cmd = `gdal2tiles.py --zoom=${settings.zoomrange} --processes=${processes} ${formatargs} --tmscompatible --webviewer=leaflet ${clipped} ${tiled}`;
         executeCommand(cmd);
     });
 }
@@ -1225,7 +1224,6 @@ function getUniqueUserId(){
                 app.use(authentication);
             }
             app.use(express.json());
-            app.use(favicon(path.join(publicdir, "img", "favicon.png")));
             
             app.get("/", (req, res) => {
                 res.send(fs.readFileSync(path.join(publicdir, "index.html"), "utf-8"));
@@ -1257,7 +1255,7 @@ function getUniqueUserId(){
                 await uploadArchiveFile(req.body, res);
             });
 
-            const wss = new WebSocket.Server({ port: settings.wsport });
+            const wss = new WebSocketServer({ port: settings.wsport });
             console.log(`WebSocket server listening on port ${settings.wsport}`);
             let msg = {};
 
@@ -1322,78 +1320,78 @@ function getUniqueUserId(){
  * @param {*} message This is the controller message
  * @param {*} response Send the chart to the ZIP file via response
  */
-async function uploadArchiveFile(message, response) { 
-    const charts = message.charts;
-    const uid = message.uid;
+// async function uploadArchiveFile(message, response) { 
+//     const charts = message.charts;
+//     const uid = message.uid;
 
-    let index = -1; // index to chart names
+//     let index = -1; // index to chart names
 
-    // If a previous zip file exists, remove it...
-    if (fs.existsSync(zipfilepath)) {
-        fs.rmSync(zipfilepath);
-    }
+//     // If a previous zip file exists, remove it...
+//     if (fs.existsSync(zipfilepath)) {
+//         fs.rmSync(zipfilepath);
+//     }
 
-    const output = fs.createWriteStream(zipfilepath);
-    const archive = archiver('zip', { zlib: { level: 9 }}); 
+//     const output = fs.createWriteStream(zipfilepath);
+//     const archive = archiver('zip', { zlib: { level: 9 }}); 
 
-    output.on("close", function () {
-        console.log(archive.pointer() + " total bytes");
-        console.log("Archiver has been finalized and the output file descriptor has closed.");
+//     output.on("close", function () {
+//         console.log(archive.pointer() + " total bytes");
+//         console.log("Archiver has been finalized and the output file descriptor has closed.");
 
-        response.download(zipfilepath, zipfilename, (err) => { 
-            if (err) {
-                console.error('File download failed:', err);
-            } 
-            else {
-                console.log('Archive file downloaded successfully.');
-                let dlcmsg = new AppMessage(AppMessage.mtDownload);
-                dlcmsg.completed = true;
-                sendMessageToClients(dlcmsg, uid);
-            }
-        });
-    });
+//         response.download(zipfilepath, zipfilename, (err) => { 
+//             if (err) {
+//                 console.error('File download failed:', err);
+//             } 
+//             else {
+//                 console.log('Archive file downloaded successfully.');
+//                 let dlcmsg = new AppMessage(AppMessage.mtDownload);
+//                 dlcmsg.completed = true;
+//                 sendMessageToClients(dlcmsg, uid);
+//             }
+//         });
+//     });
 
-    output.on("end", function () {
-        console.log("Data has been drained");
-    });
+//     output.on("end", function () {
+//         console.log("Data has been drained");
+//     });
     
-    // Catch warnings (ie stat failures and other non-blocking errors)
-    archive.on("warning", function (err) {
-        if (err.code === "ENOENT") {
-            // log warning
-        } 
-        else {
-            throw err;
-        }
-    });
+//     // Catch warnings (ie stat failures and other non-blocking errors)
+//     archive.on("warning", function (err) {
+//         if (err.code === "ENOENT") {
+//             // log warning
+//         } 
+//         else {
+//             throw err;
+//         }
+//     });
 
-    // Catch this error explicitly
-    archive.on("error", function (err) {
-        throw err;
-    });
+//     // Catch this error explicitly
+//     archive.on("error", function (err) {
+//         throw err;
+//     });
 
-    archive.on("entry", function() {
-        index ++;
-        let msg = new AppMessage(AppMessage.mtDownload); 
-        msg.uid = uid;
-        let item = charts[index];
-        msg.dbfilename = item.dbfilename; //charts[index];
-        msg.rowindex = item.rowindex;
-        msg.completed = false;
-        sendMessageToClients(msg, uid);
-        console.log("Archiver entry event fired!")
-    })
+//     archive.on("entry", function() {
+//         index ++;
+//         let msg = new AppMessage(AppMessage.mtDownload); 
+//         msg.uid = uid;
+//         let item = charts[index];
+//         msg.dbfilename = item.dbfilename; //charts[index];
+//         msg.rowindex = item.rowindex;
+//         msg.completed = false;
+//         sendMessageToClients(msg, uid);
+//         console.log("Archiver entry event fired!")
+//     })
 
-    archive.pipe(output);
+//     archive.pipe(output);
 
-    // Add each chart to the new zip file
-    charts.forEach(function(item) {
-        let addfilepath = path.join(dbfolder, item.dbfilename);
-        archive.append(fs.createReadStream(addfilepath), { name: item.dbfilename });
-    });
+//     // Add each chart to the new zip file
+//     charts.forEach(function(item) {
+//         let addfilepath = path.join(dbfolder, item.dbfilename);
+//         archive.append(fs.createReadStream(addfilepath), { name: item.dbfilename });
+//     });
 
-    archive.finalize();
-}
+//     archive.finalize();
+// }
 
 /**
  * Get the count of current pre-existing database files

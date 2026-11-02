@@ -13,17 +13,18 @@
         "outputgrayscale": false,
         "tileimagequality" : 75,
         "blendpixels" : 5,
-        "zoomrange" : "0-11",
+        "zoomrange" : "4-12",
         "centerzoomlevel": "7",
-        "dbextension": "db",
+        "dbextension": "mbtiles",
         "defaultdbfolder": "public/charts",
+        "addoverviews": true,
         "usecommandline": true,
         "timezone": "America/Chicago",
         "debug": false,
 
         "webservermode": false,
-        "httpport": 5060,
-        "wsport": 5063,
+        "httpport": 5062,
+        "wsport": 5070,
         "pinginterval": 30000,
         "opendefaultbrowser": true,
         "useauthentication": false,
@@ -96,7 +97,7 @@
             "Wichita"
         ],
 
-        "layertypeindex": 0,   
+        "layertypeindex": 1,   
         "layertypes": [
             "baselayer", 
             "overlay"
