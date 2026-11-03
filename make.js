@@ -441,9 +441,9 @@ function processAllFulls() {
 
 function processFulls(msgid = -1) {
     for (let idx = 0; idx < parray.length; idx++) { 
-        let chart = settings.fullchartlist[parray[idx]];
+        const chart = settings.fullchartlist[parray[idx]];
+        const charttype = chart[1];
         let lcasename = chart[0].toLowerCase();
-        let charttype = chart[1];
 
         chartworkname = chart[0]; 
         
@@ -452,7 +452,7 @@ function processFulls(msgid = -1) {
             lcasename = chart[2].toLowerCase();
             charturl = settings.ifrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
             clippedShapeFolder = path.join(appdir, "clipshapes", lcasename);
-            chartname = settings.fullchartlist[idx][2]; // use alias value for IFR
+            chartname = chart[2]; // use alias value for IFR
             chartfolder = path.join(workarea, chartname);
         }
         else { // vfr
@@ -634,10 +634,12 @@ function processImages() {
         // determine if RGB expansion is required
         cmd = `gdalinfo -json "${sourcetif}"`;
         const infojson = JSON.parse(execSync(cmd));
-        let expandopt = "-expand rgb";
+        let expandopt = "";
         if (infojson.bands.length === 1) {
             if (settings.outputgrayscale) {
                 expandopt = "-expand gray"; 
+            } else {
+                expandopt = "-expand rgb";
             }
         }
         
@@ -666,8 +668,8 @@ function processImages() {
     }
 
     const imgfmt = imageformat.toUpperCase();
-    const mbtiles = path.join(dir_4_mbtiles, chartworkname) + ".mbtiles";
-    const bigvrt = path.join(dir_3_clipped, chartworkname) + ".vrt";
+    const mbtiles = path.join(dir_4_mbtiles, chartname) + ".mbtiles";
+    const bigvrt = path.join(dir_3_clipped, chartname) + ".vrt";
     const infiles =`${dir_3_clipped}/*.vrt`;
     logEntry(`>> Building single chart VRT file: ${bigvrt}`);
     cmd = `gdalbuildvrt ${bigvrt} ${infiles}`;
@@ -675,12 +677,13 @@ function processImages() {
 
     logEntry(`>> Creating MBTILES database file at: ${mbtiles}`);
     cmd = `gdal_translate ${bigvrt} ${mbtiles} -of MBTILES -mo TILES_PRODUCER="N129BZ Chartmaker" ` + 
-          `--config GDAL_CACHEMAX 2048 -co NUM_THREADS=ALL_CPUS ` + 
+          `--config GDAL_CACHEMAX 4096 --config GDAL_MAX_DATASET_POOL_SIZE 500 ` +
+          `--config OGR_SQLITE_JOURNALMODE MEMORY --config OGR_SQLITE_SYNCHRONOUS OFF ` +
           `-co TILE_FORMAT=${imgfmt} -co QUALITY=${settings.tileimagequality}`;
     executeCommand(cmd);
 
     logEntry(`>> Adding gdaladdo overviews to ${mbtiles}`);
-    configargs =  `--config GDAL_CACHEMAX 2048 --config GDAL_NUM_THREADS ALL_CPUS`;
+    configargs =  `--config GDAL_CACHEMAX 4096 --config GDAL_NUM_THREADS ALL_CPUS`;
     cmd = `gdaladdo -r average ${configargs} ${mbtiles} ${settings.overviewrange}`;
     executeCommand(cmd)
 
@@ -689,7 +692,7 @@ function processImages() {
     if (!fs.existsSync(destfolder)) {
         fs.mkdirSync(destfolder, { recursive: true });
     }
-    const destname = path.join(destfolder, chartworkname) + ".mbtiles";
+    const destname = path.join(destfolder, chartname) + ".mbtiles";
     cmd = `mv ${mbtiles} ${destname}`;
     logEntry(`>> Executing post processing command: ${cmd}`);
     executeCommand(cmd);
