@@ -6,7 +6,7 @@
 ### To run the image: ***docker run -it n129bz/chartmaker:latest***
 ### To launch chartmaker on the docker image: ***cd /chartmaker*** then enter: ***node make*** or, for a specific chart: ***see Wiki for a complete list of possible arguments***
 
-### Requirements: nodejs + npm, sqlite3, python, perl, cpanminus, pngquant, imagemagick, curl, unzip, build-essential, libgdal-dev, libssl-dev, gdal-bin (v3.6.2 minimum)
+### Requirements: nodejs + npm, sqlite3, curl, unzip, build-essential, libgdal-dev, libssl-dev, gdal-bin (v3.6.2 minimum)
 
 #### Installation:
 1.) This node.js application is designed to run on Linux, and also runs well on **WSL** (Windows Subsystem for Linux) and assumes a pre-existing node js installation   
