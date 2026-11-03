@@ -674,7 +674,7 @@ function processImages() {
 
     logEntry(`>> Creating MBTILES database file at: ${mbtiles}`);
     cmd = `gdal_translate ${bigvrt} ${mbtiles} -of MBTILES -mo TILES_PRODUCER="N129BZ Chartmaker" ` + 
-          `--config GDAL_CACHEMAX 2048 -co NUM_THREADS=ALL_CPUS -co SPARSE_OK=YES ` + 
+          `--config GDAL_CACHEMAX 2048 -co NUM_THREADS=ALL_CPUS ` + 
           `-co TILE_FORMAT=${imgfmt} -co QUALITY=${settings.tileimagequality}`;
     executeCommand(cmd);
 
