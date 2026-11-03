@@ -1121,8 +1121,9 @@ function getUniqueUserId(){
                 ws.ping();
                 
                 ws.on('close', function() {
+                    const id = connections.get(ws);
                     connections.delete(ws);
-                    console.log(`Websocket closed, id: ${ws.tag}`);
+                    console.log(`Websocket closed, id: ${id}`);
                 });
 
                 ws.on('pong', () => {
