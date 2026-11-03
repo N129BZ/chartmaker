@@ -359,7 +359,7 @@ function processAllAreas() {
     for (var i = 0; i < 53; i++) {
         parray.push(i);
     }
-    let cpt = new ProcessTime(chartname);
+    const cpt = new ProcessTime(chartname);
     timings.set(chartname, cpt);
     console.log(`${cpt.startdate}\n`);
     processSingles();
@@ -387,7 +387,6 @@ function processSingles(msgid = -1) {
             if (formattedDate === chartdate) {
                 // Current version of this chart exists, no processing needed
                 doProcessing = false;
-                cpt.totaltime = "Download:";
             }
         }
         if (doProcessing) {
@@ -423,6 +422,9 @@ function processOneFull() {
         console.log("Invalid response, exiting!");
         process.exit();
     }
+	const cpt = new ProcessTime(chartname);
+	timings.set(chartname, cpt);
+    console.log(`${cpt.startdate}\n`);
     processFulls();
 }
 
@@ -430,7 +432,7 @@ function processAllFulls() {
     settings.fullchartlist.forEach((fullchart) => {
         parray.push(settings.fullchartlist.indexOf(fullchart))
     });
-    let cpt = new ProcessTime(chartname);
+    const cpt = new ProcessTime(chartname);
     timings.set(chartname, cpt);
     console.log(`${cpt.startdate}\n`);
     processFulls();
