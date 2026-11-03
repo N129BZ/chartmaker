@@ -607,36 +607,26 @@ function normalizeChartNames() {
  * Perform GDAL operations on all the unzipped chart tif images 
  */
 function processImages() {
-    /*-----------------------------------------------------------------------
-     1) GDAL_TRANSLATE: Expand color table to RGBA
-     2) GDALWARP: Warp chart to EPSG:4326 and clip off the borders and legend
-     3) GDALADDO: Generate overviews of the VRT for all zoom levels 
-     4) GDAL2TILES: Convert overviews into tiled images
-    -------------------------------------------------------------------------*/
-
-    let chartareas = buildChartNameArray();
-    let cblend = settings.blendpixels;
+    const chartareas = buildChartNameArray();
+    const cblend = settings.blendpixels;
 
     chartareas.forEach((area) => {
         logEntry(`* chart ${area}`);
-        let shpfile = `${area}.shp`;
-        let vrtfile = `${area}.vrt`;
-        let srcfile = `${area}.tif`;
-        let shapefile = path.join(clippedShapeFolder, shpfile);
-        let sourcetif = path.join(dir_1_unzipped, srcfile);
-        let expanded = path.join(dir_2_expanded, vrtfile);
-        let clipped = path.join(dir_3_clipped, vrtfile);
-        let expandopt = "-expand rgb";
-
+        const shpfile = `${area}.shp`;
+        const vrtfile = `${area}.vrt`;
+        const srcfile = `${area}.tif`;
+        const shapefile = path.join(clippedShapeFolder, shpfile);
+        const sourcetif = path.join(dir_1_unzipped, srcfile);
+        const expanded = path.join(dir_2_expanded, vrtfile);
+        const clipped = path.join(dir_3_clipped, vrtfile);
+        
         // determine if RGB expansion is required
         cmd = `gdalinfo -json "${sourcetif}"`;
-        let infojson = JSON.parse(execSync(cmd));
+        const infojson = JSON.parse(execSync(cmd));
+        let expandopt = "-expand rgb";
         if (infojson.bands.length === 1) {
             if (settings.outputgrayscale) {
                 expandopt = "-expand gray"; 
-            }
-            else {
-                expandopt = "-expand rgb";
             }
         }
         
