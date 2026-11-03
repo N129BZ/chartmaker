@@ -8,12 +8,12 @@
 
         "renameworkarea": false,
         "logtofile": false,
-        "cleanprocessfolders": false,
+        "cleanprocessfolders": true,
 
         "outputgrayscale": false,
         "tileimagequality" : 80,
         "blendpixels" : 5,
-        "overviewrange" : "2 4 8 16 32 64 128 256 512 1024",
+        "overviewrange" : "2 4 8 16 32 64 128 256 512 1024 2048",
         "centerzoomlevel": "7",
         "defaultdbfolder": "public/charts",
         "usecommandline": true,
