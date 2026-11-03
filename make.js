@@ -203,6 +203,7 @@ if (isdocker) {
 let imageformat = settings.tiledrivers[settings.tiledriverindex];
 let chartworkname = "";
 let chartname = "";
+let chartlayertype = "";
 let charturl = "";
 let clippedShapeFolder = "";
 let cmd = "";
@@ -359,14 +360,14 @@ function processAllAreas() {
     for (var i = 0; i < 53; i++) {
         parray.push(i);
     }
-    const cpt = new ProcessTime(chartname);
-    timings.set(chartname, cpt);
-    console.log(`${cpt.startdate}\n`);
     processSingles();
 }
 
 function processSingles(msgid = -1) {
     for (let idx = 0; idx < parray.length; idx++) {
+        const cpt = new ProcessTime(chartname);
+        timings.set(chartname, cpt);
+        console.log(`${cpt.startdate}\n`);
         let doProcessing = true;
         chartworkname = settings.areachartlist[parray[idx]];
         chartname = chartworkname;

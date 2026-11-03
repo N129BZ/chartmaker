@@ -1,4 +1,4 @@
-{   
+{
     "settings": {
         "attribution": "Aviation charts <a href='https://github.com/n129bz/chartmaker'>github.com/n129bz/chartmaker</a>",
         "vfrdownloadtemplate": "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip",
@@ -11,9 +11,9 @@
         "cleanprocessfolders": false,
 
         "outputgrayscale": false,
-        "tileimagequality" : 75,
+        "tileimagequality" : 80,
         "blendpixels" : 5,
-        "overviewrange" : "2 4 8 16 32 64 128 256",
+        "overviewrange" : "2 4 8 16 32 64 128 256 512 1024",
         "centerzoomlevel": "7",
         "defaultdbfolder": "public/charts",
         "usecommandline": true,
@@ -27,7 +27,7 @@
         "opendefaultbrowser": true,
         "useauthentication": false,
         "zipfilename": "Charts.zip",
-        
+
         "fullchartlist": [
             ["Sectional", "vfr", ""],
             ["Caribbean", "vfr", ""],
@@ -38,7 +38,7 @@
             ["DDECUS", "ifr", "Enroute_High"],
             ["US_VFR_Wall_Planning", "vfr", ""]
         ],
-        
+
         "areachartlist": [
             "Albuquerque",
             "Anchorage",
@@ -95,9 +95,9 @@
             "Wichita"
         ],
 
-        "layertypeindex": 1,   
+        "layertypeindex": 1,
         "layertypes": [
-            "baselayer", 
+            "baselayer",
             "overlay"
         ],
 
