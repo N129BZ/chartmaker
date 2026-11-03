@@ -685,18 +685,18 @@ function processImages() {
     cmd = `gdaladdo -r average ${configargs} ${mbtiles} ${settings.overviewrange}`;
     executeCommand(cmd)
 
-    // run the post processing command if it exists
-    if (settings.postprocesscommand.length > 0) {
-        const destfolder = path.join(settings.defaultdbfolder, chartdate);
-        if (!fs.existsSync(destfolder)) {
-            fs.mkdirSync(destfolder);
-        }
-        const destname = path.join(destfolder, chartworkname) + ".mbtiles";
-        cmd = settings.postprocesscommand.replace("<chartname>", mbtiles)
-                                         .replace("<destname>", destname);
-        logEntry(`>> Executing post processing command: ${cmd}`);
-        executeCommand(cmd);
+    // run post processing to move the new database
+    const destfolder = path.join(settings.defaultdbfolder, chartdate);
+    if (!fs.existsSync(destfolder)) {
+        fs.mkdirSync(destfolder);
     }
+    const destname = path.join(destfolder, chartworkname) + ".mbtiles";
+    if (!fs.existsSync(destfolder)) {
+        fs.mkdirSync(destfolder, { recursive: true });
+    }
+    cmd = `mv ${mbtiles} ${destname}`;
+    logEntry(`>> Executing post processing command: ${cmd}`);
+    executeCommand(cmd);
 }
 
 /**

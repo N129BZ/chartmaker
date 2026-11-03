@@ -24,8 +24,9 @@ The FAA publishes charts 20 days ***before*** the official chart date, and chart
 * The zoom range value can either be in the format **n-n**, or you can use a single zoom level **n**                
 * You can change the **tileimagequality** percentage to ***75*** and **tiledriverindex** index to ***2*** (webp) to reduce mbtiles file size. The smaller the percentage, the fuzzier the chart will be at high zoom levels WEBP does extremely well at 75%.   
   * The tiledimagequality setting only works for **webp** images. 
+* If the folder path in **defaultdbfolder** does not exist, it will be created recursively. All generated mbtiles files will be moved here after generation.
 * To save disk space, you can set **cleanprocessfolders** to true, which will remove all temporary processing files.
-* To preserve the processed databases, you can set **renameworkarea** to true. This will rename the **workarea** folder to include the processed chart date so the next run will not overwrite the folder.
+* To preserve the intermediate processed files, you can set **renameworkarea** to true. This will rename the **workarea** folder to include the processed chart date so the next run will not overwrite the folder. This is a convenience setting to allow seeing the intermediate files, buit uses disk space.
 
 #### settings.json values
 * ***attribution*** is a database metadata value that many mapping applications use for acknowledgement of the database creator      
