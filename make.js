@@ -641,12 +641,10 @@ function processImages() {
     });
 
     // setup formatting arguments for overviews        
-    let formatargs = `--tiledriver=${imageformat.toUpperCase()} `;
     let configargs = "";
     switch (imageformat) {
         case "webp":
             configargs = `--config WEBP_LOSSLESS_OVERVIEW NO --config WEBP_LEVEL_OVERVIEW ${settings.tileimagequality}`;
-            formatargs += `--webp-quality=${settings.tileimagequality}`;
             break;
         case "jpeg":
             configargs = `--config JPEG_QUALITY_OVERVIEW ${settings.tileimagequality}`;
@@ -678,12 +676,9 @@ function processImages() {
     // run post processing to move the new database
     const destfolder = path.join(settings.defaultdbfolder, chartdate);
     if (!fs.existsSync(destfolder)) {
-        fs.mkdirSync(destfolder);
-    }
-    const destname = path.join(destfolder, chartworkname) + ".mbtiles";
-    if (!fs.existsSync(destfolder)) {
         fs.mkdirSync(destfolder, { recursive: true });
     }
+    const destname = path.join(destfolder, chartworkname) + ".mbtiles";
     cmd = `mv ${mbtiles} ${destname}`;
     logEntry(`>> Executing post processing command: ${cmd}`);
     executeCommand(cmd);
