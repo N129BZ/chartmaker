@@ -15,5 +15,5 @@
     "ws": "^8.18.2"
   },
   "author": "Brian A. Manlove",
-  "license": "BSD-3-Clause"
+  "license": "Apache-2.0"
 }
