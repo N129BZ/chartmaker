@@ -241,7 +241,7 @@ if (useWebServer === false) {
                         "----------------------------------------------------------------------------------\r\n" +
                         "-h, --help         Show this help\r\n" +
                         "-s, --settings     Show all values in settings.json\r\n" +
-                        "-w, --webserver    Start the web server" +
+                        "-w, --webserver    Start the web server\r\n" +
                         "----------------------------------------------------------------------------------\r\n" +
                         "area-single=X   Process one area chart where X is the index in the area chart list\r\n" +
                         "area-all        Process all 53 area VFR charts individually\r\n" +
@@ -309,8 +309,7 @@ if (useWebServer === false) {
                 processOneFull();
                 break;
             case "4":
-                parray = settings.chartprocessindexes;
-                processFulls();
+                processAllFulls();
                 break;
             case "5":
                 enterWebserverMode();
@@ -360,6 +359,9 @@ function processAllAreas() {
     for (var i = 0; i < 53; i++) {
         parray.push(i);
     }
+    let cpt = new ProcessTime(chartname);
+    timings.set(chartname, cpt);
+    console.log(`${cpt.startdate}\n`);
     processSingles();
 }
 
@@ -373,8 +375,7 @@ function processSingles(msgid = -1) {
         chartfolder = path.join(workarea, chartworkname);
         charturl = `${settings.vfrindividualtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
         console.log(charturl);
-        let cpt = new ProcessTime(chartname);
-        timings.set(chartname, cpt);
+
         let chartdbfile = path.join(dbfolder, `${chartname}.mbtiles`);
         if (fs.existsSync(chartdbfile)) {
             let stat = fs.statSync(chartdbfile);    
@@ -425,9 +426,19 @@ function processOneFull() {
     processFulls();
 }
 
+function processAllFulls() {
+    settings.fullchartlist.forEach((fullchart) => {
+        parray.push(settings.fullchartlist.indexOf(fullchart))
+    });
+    let cpt = new ProcessTime(chartname);
+    timings.set(chartname, cpt);
+    console.log(`${cpt.startdate}\n`);
+    processFulls();
+}
+
 function processFulls(msgid = -1) {
     for (let idx = 0; idx < parray.length; idx++) { 
-        let chart = settings.fullchartlist[parray[idx]]; 
+        let chart = settings.fullchartlist[parray[idx]];
         let lcasename = chart[0].toLowerCase();
         let charttype = chart[1];
 
@@ -453,9 +464,6 @@ function processFulls(msgid = -1) {
             chartfolder = path.join(workarea, chartworkname);
         }
 
-        let cpt = new ProcessTime(chartname);
-        timings.set(chartname, cpt);
-        console.log(`${cpt.totaltime}\n`);
 
         let chartdbfile = path.join(dbfolder, `${chartname}.mbtiles`);
         if (!fs.existsSync(chartdbfile)) {
