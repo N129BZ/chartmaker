@@ -81,9 +81,9 @@ class ProcessTime {
 };
 
 // create websocket variables
-var connections = new Map();
-var inMakeLoop = false;
-var pingSenderId = 0;
+const connections = new Map();
+let inMakeLoop = false;
+let pingSenderId = 0;
 
 // set the base application folder, this will change if running in docker
 let appdir = cwd();
@@ -115,8 +115,8 @@ function processPrompt(message) {
 }
 
 const settings = JSON.parse(fs.readFileSync(path.join(appdir, "settings.json"), "utf-8")).settings;
-var useWebServer = settings.webservermode;
-var timings = new Map();
+let useWebServer = settings.webservermode;
+let timings = new Map();
 
 /** 
  *  Set the time zone of this process to the value in settings if it exists.
@@ -203,7 +203,6 @@ if (isdocker) {
 let imageformat = settings.tiledrivers[settings.tiledriverindex];
 let chartworkname = "";
 let chartname = "";
-let chartlayertype = "";
 let charturl = "";
 let clippedShapeFolder = "";
 let cmd = "";
@@ -213,6 +212,8 @@ let dir_2_expanded = "";
 let dir_3_clipped = "";
 let dir_4_mbtiles = "";
 let isifrchart = false;
+let updateMetadata = false;
+let metadataDescription = "";
 
 /**
  * Chart processing starts here
@@ -329,7 +330,7 @@ if (useWebServer === false) {
 function processOneArea(area = -1) {
     if (area == -1) {
         let lst = "\nSelect the chart number you want to process from this list\r\n\r\n";
-        for (var i = 0; i <  settings.areachartlist.length; i++) {
+        for (let i = 0; i <  settings.areachartlist.length; i++) {
             lst += `${i} ${settings.areachartlist[i].split("_").join(" ")}\r\n`; 
         }
         lst += "--------------------------------------------\r\nYour selection: ";
@@ -357,7 +358,7 @@ function processOneArea(area = -1) {
 
 function processAllAreas() {    
     console.log("\r\nProcessing all 53 chart areas...\r\n");
-    for (var i = 0; i < 53; i++) {
+    for (let i = 0; i < 53; i++) {
         parray.push(i);
     }
     processSingles();
@@ -454,6 +455,8 @@ function processFulls(msgid = -1) {
             clippedShapeFolder = path.join(appdir, "clipshapes", lcasename);
             chartname = chart[2]; // use alias value for IFR
             chartfolder = path.join(workarea, chartname);
+            updateMetadata = true;
+            metadataDescription = chartname.replaceAll("_", " ");
         }
         else { // vfr
             if (lcasename === "us_vfr_wall_planning") {
@@ -551,7 +554,7 @@ function downloadCharts() {
     }
     else { 
         let oldfiles = fs.readdirSync(chartcache);
-        for (var i = 0; i < oldfiles.length; i++) {
+        for (let i = 0; i < oldfiles.length; i++) {
             if (oldfiles[i].startsWith(chartworkname)) {
                 fs.rmSync(path.join(chartcache, oldfiles[i]));
                 break;
@@ -687,6 +690,12 @@ function processImages() {
     cmd = `gdaladdo -r average ${configargs} ${mbtiles} ${settings.overviewrange}`;
     executeCommand(cmd)
 
+    if (updateMetadata) {
+        let sql = `sqlite3 ${mbtiles} "UPDATE metadata SET value = '${metadataDescription}' ` +
+                  `WHERE name IN ('name', 'description')`;
+        const retval = execSync(sql);
+        console.log(`SQL EXEC RESULT: ${retval}`);
+    }
     // run post processing to move the new database
     const destfolder = path.join(settings.defaultdbfolder, chartdate);
     if (!fs.existsSync(destfolder)) {
@@ -1068,7 +1077,7 @@ function getUniqueUserId(){
                 console.log(`Web Server listening on port ${settings.httpport}`);
             });
 
-            var options = {
+            let options = {
                 maxAge: 600000,
                 dotfiles: 'ignore',
                 etag: false,
@@ -1214,7 +1223,7 @@ async function sendExistingDatabases(message) {
             const fileExtension = path.extname(file);
             return !extensionsToOmit.includes(fileExtension);
         });
-        var idx = -1;
+        let idx = -1;
         filteredfiles.forEach(file => {
             idx ++;
             let msg = new AppMessage(AppMessage.mtExistingDb);  
