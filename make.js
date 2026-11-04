@@ -213,6 +213,7 @@ let dir_3_clipped = "";
 let dir_4_mbtiles = "";
 let isifrchart = false;
 let metadataDescription = "";
+let chartlayertype = "";
 
 /**
  * Chart processing starts here
@@ -690,19 +691,21 @@ function processImages() {
     executeCommand(cmd)
 
     // Update the metadata table to remove underscore characters from name and description
-    let sql = `sqlite3 ${mbtiles} "UPDATE metadata SET value = '${metadataDescription}' ` + 
-              `WHERE name IN ('name', 'description');"`;
-    console.log(sql);
-    const retval = execSync(sql);
-    console.log(`SQL EXEC RESULT: ${retval}`);
+    metadataDescription = chartname.replaceAll("_", " ");
+    let sql = `UPDATE metadata SET value = '${metadataDescription}' ` + 
+              `WHERE name IN ('name', 'description') RETURNING name, value`;
+    const output = execSync(`sqlite3 ${mbtiles} "${sql}"`, { encoding: 'utf-8' });
+    console.log(`SQL UPDATE RESULT: ${output}`);
 
     // run post processing to move the new database
-    const destfolder = path.join(cwd(), settings.defaultdbfolder, chartdate);
-    if (!fs.existsSync(destfolder)) {
-        fs.mkdirSync(destfolder, { recursive: true });
+    let outputDbFolder = settings.mbtilesfolder;
+    if (!fs.existsSync(settings.mbtilesfolder)) {
+        // if the path doesnt exist, put it as a subfolder of the app path
+        outputDbFolder = path.join(appdir, outputDbFolder);
+        fs.mkdirSync(outputDbFolder, { recursive: true });
     }
-    const destname = path.join(destfolder, chartname) + ".mbtiles";
-    cmd = `mv ${mbtiles} ${destname}`;
+    outputDbFolder = path.join(outputDbFolder, chartname) + ".mbtiles";
+    cmd = `mv ${mbtiles} ${outputDbFolder}`;
     logEntry(`>> Executing post processing command: ${cmd}`);
     executeCommand(cmd);
 }
@@ -1008,6 +1011,7 @@ function resetGlobalVariables() {
     dir_3_clipped = "";
     dir_4_mbtiles = "";
     isifrchart = false;
+    metadataDescription = "";
     wgsbounds = [];
     parray.splice(0, parray.length);
     nm = 0;
