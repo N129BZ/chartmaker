@@ -690,12 +690,12 @@ function processImages() {
     cmd = `gdaladdo -r average ${configargs} ${mbtiles} ${settings.overviewrange}`;
     executeCommand(cmd)
 
-    // Update the metadata table to remove underscore characters from name and description
+    // Update the metadata table to remove underscore characters from chart name and description
     metadataDescription = chartname.replaceAll("_", " ");
     let sql = `UPDATE metadata SET value = '${metadataDescription}' ` + 
               `WHERE name IN ('name', 'description') RETURNING name, value`;
-    const output = execSync(`sqlite3 ${mbtiles} "${sql}"`, { encoding: 'utf-8' });
-    console.log(`SQL UPDATE RESULT: ${output}`);
+    const output = execSync(`sqlite3 -json ${mbtiles} "${sql}"`, { encoding: 'utf-8' });
+    console.log(`UPDATE RESULT\n: ${output}`);
 
     // run post processing to move the new database
     let outputDbFolder = settings.mbtilesfolder;
