@@ -15,7 +15,7 @@
         "blendpixels" : 5,
         "overviewrange" : "2 4 8 16 32 64 128 256 512 1024 2048",
         "centerzoomlevel": "7",
-        "defaultdbfolder": "public/charts",
+        "mbtilesfolder": "public/charts",
         "usecommandline": true,
         "timezone": "America/Chicago",
         "debug": false,
