@@ -692,7 +692,8 @@ function processImages() {
 
     if (updateMetadata) {
         let sql = `sqlite3 ${mbtiles} "UPDATE metadata SET value = '${metadataDescription}' ` +
-                  `WHERE name IN ('name', 'description')`;
+                  `WHERE name IN ('name', 'description');"`;
+        console.log(sql);
         const retval = execSync(sql);
         console.log(`SQL EXEC RESULT: ${retval}`);
     }
