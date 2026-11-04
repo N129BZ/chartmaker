@@ -1,12 +1,7 @@
-# Chartmaker - Download FAA VFR and IFR digital raster charts and translate into mbtiles databases for other mapping applications
-### (Check out my chart viewing application https://github.com/n129bz/chartserver - also shows Metars, Pireps, Weather, etc.)
+# Chartmaker - Create VFR and IFR digital raster chart MBTILES databases from downloaded FAA geo-referenced TIF images for OpenLayers or Leaflet mapping applications
+### Check out my chart viewing application at https://github.com/n129bz/mapclient - which also shows Metars, TAFs, Pireps, Animated Weather, Airport Information including frequencies and runways - and more! Also check out the companion express web server application at https://github.com/n129bz/mapserver.
 
-## Using a Docker image
-### Docker image: ***docker pull n129bz/chartmaker:latest***
-### To run the image: ***docker run -it n129bz/chartmaker:latest***
-### To launch chartmaker on the docker image: ***cd /chartmaker*** then enter: ***node make*** or, for a specific chart: ***see Wiki for a complete list of possible arguments***
-
-### Requirements: nodejs + npm, sqlite3, curl, unzip, build-essential, libgdal-dev, libssl-dev, gdal-bin (v3.6.2 minimum)
+### Requirements: gdal-bin (v3.6.2 minimum,) build-essential, libgdal-dev, libssl-dev, sqlite3, curl, unzip, and nodejs + npm (LTS) 
 
 #### Installation:
 1.) This node.js application is designed to run on Linux, and also runs well on **WSL** (Windows Subsystem for Linux) and assumes a pre-existing node js installation   
@@ -20,15 +15,15 @@
 #### chartdates.json
 The FAA publishes charts 20 days ***before*** the official chart date, and chartmaker will automatically select the nearest chart date from this file of official FAA chart 56-day release dates, all the way up to the year 2044. If the next chart date is more than 20 days out, chartmaker will get the current chart date.                   
 #### settings.json
-* Edit the values in **chartprocessindexes** with any ordinal index numbers from the **faachartnames** list for charts you want to process, in the order you want them processed. The default is all charts in the index list, in index order. The setting array **faachartnames** are the actual zip filenames the FAA uses and are for reference only. **Changes to the downloadtemplates, faachartnames, layertypes, or tiledrivers lists WILL BREAK THE APPLICATION!**    
-* The zoom range value can either be in the format **n-n**, or you can use a single zoom level **n**                
-* You can change the **tileimagequality** percentage to ***75*** and **tiledriverindex** index to ***2*** (webp) to reduce mbtiles file size. The smaller the percentage, the fuzzier the chart will be at high zoom levels WEBP does extremely well at 75%.   
-  * The tiledimagequality setting only works for **webp** images. 
+The settings array **fullchartlist** and **areachartlist** are the actual zip filenames the FAA uses and are for reference only. **Changes to the downloadtemplates, chartlists, layertypes, or tiledrivers lists WILL BREAK THE APPLICATION!**    
+* The **overviewrange** values determine the zoom levels, where **2 4 8 16 32 64 128 256 1024 2048** will give zoom factors from **11 to 0**.                
+* The default **tileimagequality** percentage of ***75*** and **tiledriverindex** index to ***2*** (webp) gives the best resolution at a reasonable mbtiles file size. The smaller the percentage, the fuzzier the chart will be at high zoom levels. **webp** does extremely well at 75%.   
+  * Please note that the tiledimagequality setting only works for **webp** images. 
 * If the folder path in **defaultdbfolder** does not exist, it will be created recursively. All generated mbtiles files will be moved here after generation.
-* To save disk space, you can set **cleanprocessfolders** to true, which will remove all temporary processing files.
-* To preserve the intermediate processed files, you can set **renameworkarea** to true. This will rename the **workarea** folder to include the processed chart date so the next run will not overwrite the folder. This is a convenience setting to allow seeing the intermediate files, buit uses disk space.
+* To save disk space, you can set **cleanprocessfolders** to true, which will remove all temporary processing files when the processing completes.
+* To preserve the intermediate processed files, you can set **renameworkarea** to true. This will rename the **workarea** folder to include the processed chart date so the next run will not overwrite the folder. This is a convenience setting to allow seeing the intermediate files, but it uses more disk space.
 
-#### settings.json values
+#### other settings.json values
 * ***attribution*** is a database metadata value that many mapping applications use for acknowledgement of the database creator      
 ```
 "attribution": "Aviation charts <a href='https://github.com/n129bz/chartmaker'>github.com/n129bz/chartmaker</a>"   
@@ -47,15 +42,13 @@ The FAA publishes charts 20 days ***before*** the official chart date, and chart
 ```     
 * ***tile image quality percentage,*** tileimagequality has a huge effect on png processing time, not quite as much with webp    
 ```
-"tileimagequality" : 80   <- percentage (1-100) greatly affects processing speed and database size
-"zoomrange" : "1-12"      <- range of overviews to produce, higher takes longer and can make db huge
+"tileimagequality" : 75   <- percentage (1-100) greatly affects processing speed and database size
+"overviewrange" : "2 4 8 16 32 64 128 256 512 1024 2048"   <- range of overviews to produce, higher takes longer and can make db huge
 ```   
-* ***chartprocessindexes*** control which chart types to process if you do not pass a chart number argument and you respond to the subsequent prompt with a "0". In this case each faachartname index in the array will be processed.
-* ***faachartnames*** is an array with 3 values: FAA chart name, chart type, and an alias (not used for vfr charts.) The chartprocessindexes array values correspond to the ordinal position (zero-based) in the faachartnames list.   
+* ***fullchartlist*** is an array with subarrays that contain 3 values: FAA chart name, chart type, and an alias (not used for vfr charts.)    
 **WARNING: Editing of any of these faachartnames values will break the application.**   
 ```
-"chartprocessindexes": [0,1,2,3,4,5,6], <- charts represented by indexes, default is all 6 will be processed, in this order (order can be changed or indexes removed) 
-"faachartnames": [   
+"fullchartlist": [   
     ["Sectional", "vfr", ""],    <- Entire USA + Alaska + Hawaii (NOTE no alias used for vfr charts)  
     ["Caribbean", "vfr", ""],
     ["Grand_Canyon", "vfr", ""],     
@@ -65,63 +58,63 @@ The FAA publishes charts 20 days ***before*** the official chart date, and chart
     ["DDECUS", "ifr", "Enroute_High"]
 ]
 ```
-* ***vfrindividualcharts*** is a list of all 53 VFR area charts and is what the application uses for individual chart processing.    
+* ***areachartlist*** is a list of all 53 VFR area charts and is what the application uses for individual chart processing.    
 **WARNING: Editing any of these values will cause individual chart processing to fail.**
 ```
-"vfrindividualcharts": [
-    [1, "Albuquerque"],
-    [2, "Anchorage"],
-    [3, "Atlanta"],
-    [4, "Bethel"],
-    [5, "Billings"],
-    [6, "Brownsville"],
-    [7, "Cape_Lisburne"],
-    [8, "Charlotte"],
-    [9, "Cheyenne"],
-    [10, "Chicago"],
-    [11, "Cincinnati"],
-    [12, "Cold_Bay"],
-    [13, "Dallas-Ft_Worth"],
-    [14, "Dawson"],
-    [15, "Denver"],
-    [16, "Detroit"],
-    [17, "Dutch_Harbor"],
-    [18, "El_Paso"],
-    [19, "Fairbanks"],
-    [20, "Great_Falls"],
-    [21, "Green_Bay"],
-    [22, "Halifax"],
-    [23, "Hawaiian_Islands"],
-    [24, "Houston"],
-    [25, "Jacksonville"],
-    [26, "Juneau"],
-    [27, "Kansas_City"],
-    [28, "Ketchikan"],
-    [29, "Klamath_Falls"],
-    [30, "Kodiak"],
-    [31, "Lake_Huron"],
-    [32, "Las_Vegas"],
-    [33, "Los_Angeles"],
-    [34, "McGrath"],
-    [35, "Memphis"],
-    [36, "Miami"],
-    [37, "Montreal"],
-    [38, "New_Orleans"],
-    [39, "New_York"],
-    [40, "Nome"],
-    [41, "Omaha"],
-    [42, "Phoenix"],
-    [43, "Point_Barrow"],
-    [44, "Salt_Lake_City"],
-    [45, "San_Antonio"],
-    [46, "San_Francisco"],
-    [47, "Seattle"],
-    [48, "Seward"],
-    [49, "St_Louis"],
-    [50, "Twin_Cities"],
-    [51, "Washington"],
-    [52, "Western_Aleutian_Islands"],
-    [53, "Wichita"] 
+"areachartlist": [
+    "Albuquerque",
+    "Anchorage",
+    "Atlanta",
+    "Bethel",
+    "Billings",
+    "Brownsville",
+    "Cape_Lisburne",
+    "Charlotte",
+    "Cheyenne",
+    "Chicago",
+    "Cincinnati",
+    "Cold_Bay",
+    "Dallas-Ft_Worth",
+    "Dawson",
+    "Denver",
+    "Detroit",
+    "Dutch_Harbor",
+    "El_Paso",
+    "Fairbanks",
+    "Great_Falls",
+    "Green_Bay",
+    "Halifax",
+    "Hawaiian_Islands",
+    "Houston",
+    "Jacksonville",
+    "Juneau",
+    "Kansas_City",
+    "Ketchikan",
+    "Klamath_Falls",
+    "Kodiak",
+    "Lake_Huron",
+    "Las_Vegas",
+    "Los_Angeles",
+    "McGrath",
+    "Memphis",
+    "Miami",
+    "Montreal",
+    "New_Orleans",
+    "New_York",
+    "Nome",
+    "Omaha",
+    "Phoenix",
+    "Point_Barrow",
+    "Salt_Lake_City",
+    "San_Antonio",
+    "San_Francisco,
+    "Seattle",
+    "Seward",
+    "St_Louis",
+    "Twin_Cities",
+    "Washington",
+    "Western_Aleutian_Islands",
+    "Wichita" 
 ]
 ```    
 * ***layertypeindex*** controls the layertype and therefore how it will be rendered on a map, for example If you will be overlaying an OSM map with your chartmaker map   
@@ -144,11 +137,11 @@ The FAA publishes charts 20 days ***before*** the official chart date, and chart
 #### *Additional information
 The chart zip files are downloaded from the FAA digital raster chart repository and unzipped. After the unzipping process all of the the resultant GEOtiff image names (and their matching tfw world file names) are "normalized" to all lower-case filenames with underscores in place of dashes and spaces and any apostrophes removed. This simplifies the down-stream processing of these files since **GDAL** can interpret spaces as argument separators.   
 
-## NEW!   Put chartmaker into web server mode and make maps by using a web page or by remotely sending control messages through a connected websocket. More documentation coming soon!    
+## NEW! Put chartmaker into web server mode and make maps by using a web page or by remotely sending control messages through a connected websocket. More documentation coming soon!    
 This is controlled by 3 new settings in settings.json. You can use whatever ***httpport*** and ***wsport*** port values you want.
 ```
-    "httpport": 1962,
-    "wsport": 1970,
+    "httpport": 5062,
+    "wsport": 5070,
     "webservermode": true,
 ```
 <img width="589" height="725" alt="Chartmaker01" src="https://github.com/user-attachments/assets/14f8c991-568a-48f7-8f68-0663ac9e044b" />
