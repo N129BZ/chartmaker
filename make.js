@@ -212,7 +212,6 @@ let dir_2_expanded = "";
 let dir_3_clipped = "";
 let dir_4_mbtiles = "";
 let isifrchart = false;
-let updateMetadata = false;
 let metadataDescription = "";
 
 /**
@@ -456,7 +455,6 @@ function processFulls(msgid = -1) {
             chartname = chart[2]; // use alias value for IFR
             chartfolder = path.join(workarea, chartname);
             updateMetadata = true;
-            metadataDescription = chartname.replaceAll("_", " ");
         }
         else { // vfr
             if (lcasename === "us_vfr_wall_planning") {
@@ -470,6 +468,7 @@ function processFulls(msgid = -1) {
             chartfolder = path.join(workarea, chartworkname);
         }
 
+        metadataDescription = chartname.replaceAll("_", " ");
 
         let chartdbfile = path.join(dbfolder, `${chartname}.mbtiles`);
         if (!fs.existsSync(chartdbfile)) {
@@ -690,15 +689,15 @@ function processImages() {
     cmd = `gdaladdo -r average ${configargs} ${mbtiles} ${settings.overviewrange}`;
     executeCommand(cmd)
 
-    if (updateMetadata) {
-        let sql = `sqlite3 ${mbtiles} "UPDATE metadata SET value = '${metadataDescription}' ` +
-                  `WHERE name IN ('name', 'description');"`;
-        console.log(sql);
-        const retval = execSync(sql);
-        console.log(`SQL EXEC RESULT: ${retval}`);
-    }
+    // Update the metadata table to remove underscore characters from name and description
+    let sql = `sqlite3 ${mbtiles} "UPDATE metadata SET value = '${metadataDescription}' ` + 
+              `WHERE name IN ('name', 'description');"`;
+    console.log(sql);
+    const retval = execSync(sql);
+    console.log(`SQL EXEC RESULT: ${retval}`);
+
     // run post processing to move the new database
-    const destfolder = path.join(settings.defaultdbfolder, chartdate);
+    const destfolder = path.join(cwd(), settings.defaultdbfolder, chartdate);
     if (!fs.existsSync(destfolder)) {
         fs.mkdirSync(destfolder, { recursive: true });
     }
