@@ -19,7 +19,7 @@ The settings array **fullchartlist** and **areachartlist** are the actual zip fi
 * The **overviewrange** values determine the zoom levels, where **2 4 8 16 32 64 128 256 1024 2048** will give zoom factors from **11 to 0**.                
 * The default **tileimagequality** percentage of ***75*** and **tiledriverindex** index to ***2*** (webp) gives the best resolution at a reasonable mbtiles file size. The smaller the percentage, the fuzzier the chart will be at high zoom levels. **webp** does extremely well at 75%.   
   * Please note that the tiledimagequality setting only works for **webp** images. 
-* If the folder path in **defaultdbfolder** does not exist, it will be created recursively. All generated mbtiles files will be moved here after generation.
+* If the folder path in the **mbtilesfolder** setting does not exist, it will be created recursively. All generated mbtiles files will be moved here after processing is complete.
 * To save disk space, you can set **cleanprocessfolders** to true, which will remove all temporary processing files when the processing completes.
 * To preserve the intermediate processed files, you can set **renameworkarea** to true. This will rename the **workarea** folder to include the processed chart date so the next run will not overwrite the folder. This is a convenience setting to allow seeing the intermediate files, but it uses more disk space.
 
