@@ -1,8 +1,0 @@
-{
-    "menuitems": [
-        "Process a single area VFR chart",
-        "Process all 53 area VFR charts individually",
-        "Process a single full chart",
-        "Process all of the full charts"
-    ]
-}

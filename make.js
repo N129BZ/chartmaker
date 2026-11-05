@@ -184,7 +184,6 @@ function pad2(n) {
 // Get the current chart date from the chartdates.json file
 let expiredate = "";
 const chartdate = getBestChartDate();
-const remotemenu = JSON.parse(fs.readFileSync(path.join(appdir, "remotemenu.json"), "utf-8"));
 const users = JSON.parse(fs.readFileSync(path.join(appdir, "users.json"), "utf-8")).users;
 const zipfilename = settings.zipfilename;
 const zipfilepath = path.join(appdir, "public", "charts", chartdate, zipfilename); 
@@ -388,7 +387,6 @@ function processSingles(msgid = -1) {
         chartworkname = settings.areachartlist[parray[idx]];
         chartname = chartworkname;
         clippedShapeFolder = path.join(appdir, "clipshapes", "sectional");
-        chartlayertype = settings.layertypes[settings.layertypeindex];
         chartfolder = path.join(workarea, chartworkname);
         charturl = `${settings.vfrindividualtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
         console.log(charturl);
@@ -942,7 +940,6 @@ async function processMakeCommands(message) {
             item = list[i];
             idx = Number(item.command);
             opt = Number(item.chart);
-            chartlayertype = item.layertype;
 
             console.log(`command: ${idx}, chart: ${opt}`);
             switch (idx) {
@@ -965,10 +962,6 @@ async function processMakeCommands(message) {
                     }
                     break;
                 case 1:
-                    // no sub command
-                    processAllAreas();
-                    break;
-                case 2:
                     if (opt >= 0 && opt <= 7) {
                         let ridx = i;
                         parray.push(opt);
@@ -990,13 +983,6 @@ async function processMakeCommands(message) {
                         sendMessageToClients(cmt, userid);
                     }
                     break;
-                case 3:
-                    // no subcommand
-                    for (let i = 0; i <= 7; i++ ) {
-                        parray.push(i);
-                        processFulls();
-                    }
-                    break;  
             }
         }
         let payload = ProcessTime.reportProcessingTime(startdate); 
@@ -1004,8 +990,8 @@ async function processMakeCommands(message) {
         timemsg.payload = payload;
         sendMessageToClients(timemsg, userid);
     }
-    catch(err){
-        console.debug();
+    catch(error){
+        console.error(error);
     }
 
     timings = null;
@@ -1014,7 +1000,6 @@ async function processMakeCommands(message) {
 }
 
 function resetGlobalVariables() {
-    chartlayertype = "";
     chartworkname = "";
     chartname = "";
     charturl = "";
@@ -1027,7 +1012,6 @@ function resetGlobalVariables() {
     dir_4_mbtiles = "";
     isifrchart = false;
     metadataDescription = "";
-    wgsbounds = [];
     parray.splice(0, parray.length);
     nm = 0;
 }
@@ -1051,7 +1035,7 @@ function processCommandMessage(message) {
                 for (let i = 0; i < message.commandlist.length; i++) {
                     let tclcmd = +message.commandlist[i].command;
                     let tclcht = +message.commandlist[i].chart;
-                    let strcmd = remotemenu.menuitems[tclcmd];
+                    let strcmd = tclcmd === 0 ? "Process single area VFR chart" : "Process single full chart";
                     let strcht = "";
                     switch (tclcmd) {
                         case 0:

@@ -30,12 +30,11 @@ class AppMessage {
 }
 
 class MakeCommand {
-    constructor(command, chart, rowindex, chartname, layertype) {
+    constructor(command, chart, rowindex, chartname) {
         this.command = command;
         this.chart = chart;
         this.rowindex = rowindex;
         this.chartname = chartname;
-        this.layertype = layertype;
     }
 }
 
@@ -95,7 +94,6 @@ var areaChartNames = [];
 var downloadInProgress = false;
 
 const dlchkPrefix = "dlchk";
-
 
 window.addEventListener("load", () => {
     setupCommandBody();
@@ -372,7 +370,10 @@ async function sendCommandsToServer() {
         if (response.ok) {    
             resetCommandOptions();
             resetChartOptions();
-            addItemsMenu.style.display = "block";
+            btnRemove.style.visibility = "hidden";
+            btnSelectAll.style.visibility = "hidden";
+            btnUnselectAll.style.visibility = "hidden";
+            btnReset.style.visibility = "hidden";
         }  
     }
 }
@@ -419,14 +420,15 @@ function handleCheckboxChange() {
  */
 function undoSelection(source) {
     if (source === "command") {
-        txtCommand.value = "";
-        selectedcommand = -1;
-        txtChart.value = "";
-        selectedchart = -1;
+        resetCommandOptions();
     }
     else if (source === "chart") {
-        txtChart.value = "";
-        selectedchart = -1;
+        resetChartOptions();
+        if (selectedcommand === 0) {
+            populateAreaChartList();
+        } else if (selectedcommand === 2) {
+            populateFullChartList();
+        }
     }
 }
 
@@ -466,13 +468,15 @@ function setDownloadButtonVisible(isVisible) {
         downloadExisting.style.visibility = "hidden";
         chkForExisting.checked = false;
         btnSelectAll.style.display = "none";
-        btnUnselectAll.style.display = "inline";
+        btnUnselectAll.style.display = "none";
+        //btnUnselectAll.style.display = "inline";
     }
     else {
         btnDownload.classList.remove("running");
         btnDownload.innerText = "Download Checked Items"
         btnDownload.style.visibility = "hidden";
         btnRemove.style.visibility = "visible";
+        btnSelectAll.style.display = "visible";
         btnProcessCharts.style.visibility = "visible";
         addItemsMenu.style.visibility = "visible";
         checkForExistingDatabases(); 
@@ -539,8 +543,7 @@ function addCommandRequest() {
         updateCommandBody(infomessage);
 
         let ridx = i + 1;
-        let selectedRadio = document.querySelector('input[name="layerType"]:checked');
-        let entry = new MakeCommand(selectedcommand, selectedchart, ridx, chartname, selectedRadio.value);
+        let entry = new MakeCommand(selectedcommand, selectedchart, ridx, chartname);
         commandpackage.commandlist.push(entry); 
         if (isfullList) {
             selectedchart = selectedchart + 1; 
@@ -656,13 +659,23 @@ function updateCommandBody(message) {
  * Set the selected state of a chart item
  */
 function chartSelected() {
-    selectedchart = -1;
-    let item = txtChart.value;
-    for (let i = 0; i < settings.areachartlist.length; i++) {
-        if (chartOptions.options[i].value === item) {
-            selectedchart = i;
-            break;
-        } 
+    selectedchart = parseInt(txtChart.value, 10);
+    if (isNaN(selectedchart)) {
+        selectedchart = -1;
+    }
+    validateAddButton();
+}
+
+/**
+ * Validate and toggle the Add Chart button
+ */
+function validateAddButton() {
+    if (selectedcommand === 0 || selectedcommand === 2) {
+        btnAddCommand.disabled = (selectedchart === -1 || isNaN(selectedchart));
+    } else if (selectedcommand === 1 || selectedcommand === 3) {
+        btnAddCommand.disabled = false;
+    } else {
+        btnAddCommand.disabled = true;
     }
 }
 
@@ -670,31 +683,37 @@ function chartSelected() {
  * Set the selected state of a command item
  */
 function commandSelected() {
-    selectedcommand = -1;
-    let item = txtCommand.value;
+    selectedcommand = parseInt(txtCommand.value, 10);
+    if (isNaN(selectedcommand)) {
+        selectedcommand = -1;
+    }
     
     if (chkForExisting.checked) {
         chkForExisting.checked = false;
         setupCommandBody();
     }
 
-    for(let i = 0; i < commandOptions.options.length; i++) {
-        if (commandOptions.options[i].value === item) {
-            selectedcommand = i;
-            break; 
-        }
-    }
-
     switch (selectedcommand) {
         case 0:
-        case 1:
             populateAreaChartList();
             break;
+        case 1:
+            resetChartOptions();
+            txtChart.disabled = true;
+            break;
         case 2:
-        case 3:
             populateFullChartList();
             break;
+        case 3:
+            resetChartOptions();
+            txtChart.disabled = true;
+            break;
+        default:
+            resetChartOptions();
+            txtChart.disabled = true;
+            break;
     }
+    validateAddButton();
 }
 
 /**
@@ -702,11 +721,14 @@ function commandSelected() {
  */
 function populateAreaChartList() {
     resetChartOptions();
+    txtChart.innerHTML = '<option value="" disabled selected>-- Select area chart --</option>';
     for (let i = 0; i < settings.areachartlist.length; i++) {
         let option = document.createElement('option');
-        option.value = `${settings.areachartlist[i].replaceAll("_", " ")}`;
-        chartOptions.appendChild(option);
+        option.value = String(i);
+        option.textContent = `${settings.areachartlist[i].replaceAll("_", " ")}`;
+        txtChart.appendChild(option);
     }
+    txtChart.disabled = false;
 }
 
 /**
@@ -714,21 +736,18 @@ function populateAreaChartList() {
  */
 function populateFullChartList() {
     resetChartOptions();
-    let  i = 0;
-    let item = "";
-    
-    for (i = 0; i < settings.fullchartlist.length; i++) {
+    txtChart.innerHTML = '<option value="" disabled selected>-- Select full chart --</option>';
+    for (let i = 0; i < settings.fullchartlist.length; i++) {
         let option = document.createElement('option');
-        if (i == 5 || i == 6) {
-            item = `${settings.fullchartlist[i][2].replaceAll("_", " ")}`;
-            option.value = item;
+        option.value = String(i);
+        let item = settings.fullchartlist[i][0];
+        if (i === 5 || i === 6) {
+            item = settings.fullchartlist[i][2];
         }
-        else {
-            item = `${settings.fullchartlist[i][0].replaceAll("_", " ")}`;
-            option.value = item;
-        } 
-        chartOptions.appendChild(option)
+        option.textContent = item.replaceAll("_", " ");
+        txtChart.appendChild(option);
     }
+    txtChart.disabled = false;
 }
 
 /**
@@ -784,19 +803,17 @@ function setupCommandBody() {
  * Populate the Commands item list
  */
 function populateCommandsDropdown() {
-    let alist = []; 
-    for (let i = 0; i < 4; i++) {
-        alist.push(document.createElement('option'));
-        alist[i].className = "option";
-    }
-    alist[0].value = "Process single area VFR chart";
-    commandOptions.appendChild(alist[0]);
-    alist[1].value = "Process all 53 area VFR charts";
-    commandOptions.appendChild(alist[1]);
-    alist[2].value = "Process single full chart";
-    commandOptions.appendChild(alist[2]);
-    alist[3].value = "Process all of the full charts";
-    commandOptions.appendChild(alist[3]);
+    txtCommand.innerHTML = '<option value="" disabled selected>-- Select an option --</option>';
+    const commandList = [
+        "Process single area VFR chart",
+        "Process single full chart",
+    ];
+    commandList.forEach((cmd, idx) => {
+        let opt = document.createElement('option');
+        opt.value = String(idx);
+        opt.textContent = cmd;
+        txtCommand.appendChild(opt);
+    });
 }
 
 /**
@@ -805,7 +822,8 @@ function populateCommandsDropdown() {
 function resetCommandOptions() {
     txtCommand.value = "";
     selectedcommand = -1;
-    resetChartOptions();    
+    resetChartOptions();
+    validateAddButton();
 }
 
 /**
@@ -813,8 +831,9 @@ function resetCommandOptions() {
  */
 function resetChartOptions() {
     selectedchart = -1;
-    txtChart.value = "";
-    chartOptions.innerText = "";
+    txtChart.innerHTML = '<option value="" disabled selected>-- Select chart --</option>';
+    txtChart.disabled = true;
+    validateAddButton();
 }
 
 /**
@@ -925,6 +944,9 @@ async function hasExistingDatabases() {
 /*********************************************
  *      VARIOUS ELEMENT EVENT HANDLERS
  *********************************************/
+txtCommand.addEventListener('change', () => {
+    commandSelected();
+});
 txtCommand.addEventListener('input', () => {
     commandSelected();
 });
@@ -932,6 +954,9 @@ btnUndoCommand.addEventListener('click', () => {
     undoSelection("command");
 });
 
+txtChart.addEventListener('change', () => {
+    chartSelected();
+});
 txtChart.addEventListener('input', () => {
     chartSelected();
 });
