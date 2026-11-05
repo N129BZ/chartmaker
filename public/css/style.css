@@ -83,7 +83,46 @@ html, body {
     text-align: left;
     position: relative;
     width: 300px;
-    height: 18px;
+    height: 28px;
+}
+select.listitem {
+    height: 28px;
+    padding: 2px 4px;
+    border: 1px solid #777;
+    border-radius: 3px;
+    background-color: #fff;
+}
+select.listitem:disabled {
+    background-color: #e0e0e0;
+    color: #666;
+    cursor: not-allowed;
+}
+.connectionStatus {
+    font-size: 13px;
+    font-weight: normal;
+    padding: 3px 10px;
+    border-radius: 12px;
+    display: inline-block;
+    margin-top: 4px;
+    transition: background-color 0.3s ease;
+}
+.status-connected {
+    background-color: #2e7d32;
+    color: white;
+}
+.status-connecting {
+    background-color: #f57c00;
+    color: white;
+}
+.status-disconnected {
+    background-color: #c62828;
+    color: white;
+}
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
 }
 .undobutton {
     width: 24px;

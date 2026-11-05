@@ -22,7 +22,6 @@
 
         "webservermode": false,
         "httpport": 5062,
-        "wsport": 5070,
         "pinginterval": 30000,
         "opendefaultbrowser": true,
         "useauthentication": false,

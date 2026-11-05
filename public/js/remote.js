@@ -50,7 +50,7 @@ if (parseInt(URL_PORT) > 0) {
 
 const URL_HOST_PROTOCOL       = `${URL_PROTOCOL}//`;
 const URL_SERVER              = `${URL_HOST_PROTOCOL}${URL_HOST_BASE}`;
-const URL_WINSOCK             = `ws://${URL_LOCATION}:`;
+const WS_PROTOCOL             = URL_PROTOCOL === "https:" ? "wss:" : "ws:";
 const URL_GET_SETTINGS        = `${URL_SERVER}/settings`;
 const URL_GET_EXISTINGCOUNT   = `${URL_SERVER}/existingcount`;
 const URL_POST_SENDEXISTING   = `${URL_SERVER}/sendexisting`;
@@ -58,15 +58,10 @@ const URL_GET_STATUS          = `${URL_SERVER}/status`;
 const URL_POST_MAKE           = `${URL_SERVER}/make`;
 const URL_POST_DOWNLOAD       = `${URL_SERVER}/download`;
 
-const fclist = document.getElementById("fclist");
-const aclist = document.getElementById("aclist");
 const confwindow = document.getElementById("confwindow");
 const txtCommand = document.getElementById("txtCommand");
 const txtChart = document.getElementById("txtChart");
-const commandOptions = document.getElementById("commandOptions");
-const chartOptions = document.getElementById("chartOptions");
 const commandbody = document.getElementById("commandbody");
-const download = document.getElementById("download");
 const downloadExisting = document.getElementById("downloadExisting");
 
 const addItemsMenu = document.getElementById("addItemsMenu");
@@ -167,14 +162,41 @@ function setChartNameArrays() {
     }
 };
 
+let reconnectTimer = null;
+let reconnectDelay = 1000;
+const MAX_RECONNECT_DELAY = 10000;
+
+function updateConnectionStatus(status, text) {
+    const el = document.getElementById("connectionStatus");
+    if (!el) return;
+    el.className = `connectionStatus status-${status}`;
+    el.textContent = text;
+}
+
 /**
  * Websocket connection and message handling
  */
 function startWebsocketClient() { 
+    if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+    }
     try {
-        let wsurl = `${URL_WINSOCK}${settings.wsport}`;
-        console.log(`OPENING: ${wsurl}`);
+        let wsurl;
+        if (settings.wsport && settings.wsport !== settings.httpport) {
+            wsurl = `${WS_PROTOCOL}//${URL_LOCATION}:${settings.wsport}`;
+        } else {
+            wsurl = `${WS_PROTOCOL}//${URL_HOST_BASE}`;
+        }
+        console.log(`OPENING WEBSOCKET: ${wsurl}`);
+        updateConnectionStatus("connecting", "● Connecting...");
         websocket = new WebSocket(wsurl);
+
+        websocket.onopen = function(evt) {
+            console.log("Websocket CONNECTED.");
+            reconnectDelay = 1000;
+            updateConnectionStatus("connected", "● Connected");
+        }
 
         websocket.onmessage = (event) => {
             try {
@@ -192,18 +214,25 @@ function startWebsocketClient() {
                         updateCommandBody(message);
                         break;
                     case AppMessage.mtCommandResponse:
-                        if (message.payload === "success") {
+                        if (message.payload === "success" || message.payload === "accepted") {
                             message.payload = "Server response: chart processing has started...";
                             updateCommandBody(message);
+                        }
+                        else if (message.payload === "busy") {
+                            message.payload = "Server response: another processing job is already in progress";
+                            message.css = ["boldyellow"];
+                            updateCommandBody(message);
+                            blinkSendButton(false);
                         }
                         else {
                             message.payload = "Server response: status unknown, possible command error";
                             message.css = ["boldred"];
                             updateCommandBody(message);
+                            blinkSendButton(false);
                         }
                         break;
                     case AppMessage.mtDownload:
-                        updateCommandBody(message)
+                        updateCommandBody(message);
                         break;
                     case AppMessage.mtSettings:
                         let payload = JSON.parse(message.payload);
@@ -220,23 +249,31 @@ function startWebsocketClient() {
                         break;
                 }
             }
-            finally { }
-        }
+            catch (err) {
+                console.error("Websocket message parsing error:", err);
+            }
+        };
 
         websocket.onerror = function(evt){
-            console.log("Websocket ERROR: " + evt.data);
-        }
-        
-        websocket.onopen = function(evt) {
-            console.log("Websocket CONNECTED.");
+            console.log("Websocket ERROR");
+            updateConnectionStatus("connecting", "● Connection Error");
         }
         
         websocket.onclose = function(evt) {
             console.log("Websocket CLOSED.");
+            updateConnectionStatus("disconnected", "● Disconnected (Reconnecting...)");
+            if (!reconnectTimer) {
+                reconnectTimer = setTimeout(() => {
+                    reconnectTimer = null;
+                    reconnectDelay = Math.min(reconnectDelay * 1.5, MAX_RECONNECT_DELAY);
+                    startWebsocketClient();
+                }, reconnectDelay);
+            }
         }
     }
     catch (error) {
         console.log(error);
+        updateConnectionStatus("disconnected", "● Offline");
     }
 };
 

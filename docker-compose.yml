@@ -1,0 +1,22 @@
+services:
+  chartmaker:
+    build: .
+    image: chartmaker:latest
+    container_name: chartmaker
+    stdin_open: true # Keeps STDIN open (equivalent to -i)
+    tty: true        # Allocates a pseudo-TTY (equivalent to -t)
+    command: ["node", "make.js"]
+    # restart: unless-stopped
+    # ports:
+    #   - "5062:5062" # HTTP UI
+    #   - "5070:5070" # WebSocket
+    volumes:
+      # Persistent cache for downloaded FAA zip archives (avoids re-downloading)
+      - ./chartcache:/chartmaker/chartcache
+      # Host output directory for finished .mbtiles
+      - ./externalcharts:/chartmaker/externalcharts
+      # Configuration
+      - ./settings.json:/chartmaker/settings.json
+    environment:
+      - DOCKER=true
+      - TZ=America/Chicago

@@ -1,5 +1,6 @@
 
 import fs from 'node:fs';
+import http from 'node:http';
 import { execSync, spawn } from 'node:child_process';
 import readlineSync from 'readline-sync';
 import path from 'node:path';
@@ -100,6 +101,9 @@ function isRunningInDocker() {
         indocker = (r.search("/docker/") > -1);
     }
     catch {}
+    if (!indocker) {
+        indocker = fs.existsSync("/.dockerenv") || process.env.DOCKER === "true";
+    }
     if (indocker) {
         console.log("Running in docker!");
         appdir = "/chartmaker";
@@ -955,7 +959,7 @@ async function processMakeCommands(message) {
                     break;
                 case 2:
                     if (opt >= 0 && opt <= 7) {
-                        let ridx = i + 1;
+                        let ridx = i;
                         parray.push(opt);
                         let rmt = new AppMessage(AppMessage.mtRunning);
                         rmt.rowindex = ridx;
@@ -1073,11 +1077,12 @@ function getUniqueUserId(){
 (() => {
     if (useWebServer) {
         const app = express();
+        const server = http.createServer(app);
         
         try {
 
             app.use(express.urlencoded({ extended: true }));
-            app.listen(settings.httpport, () => { 
+            server.listen(settings.httpport, () => { 
                 console.log(`Web Server listening on port ${settings.httpport}`);
             });
 
@@ -1111,6 +1116,14 @@ function getUniqueUserId(){
                 res.end();
             });
             
+            app.get("/status", (req, res) => {
+                res.json({
+                    running: inMakeLoop,
+                    chartdate: chartdate,
+                    currentChart: chartname || ""
+                });
+            });
+
             app.get("/existingcount", async (req, res) => {
                 let data = await getExistingCount();
                 res.send(JSON.stringify({ existingcount: data }));
@@ -1123,7 +1136,15 @@ function getUniqueUserId(){
             });
 
             app.post("/make", async (req, res) => {
-                await processMakeCommands(req.body);
+                if (inMakeLoop) {
+                    return res.status(409).json({ status: "busy", message: "Chart processing is already in progress" });
+                }
+                res.status(202).json({ status: "accepted", message: "Chart processing initiated" });
+                try {
+                    await processMakeCommands(req.body);
+                } catch (err) {
+                    console.error("Error during processMakeCommands:", err);
+                }
             });
 
             app.post("/download", async (req, res) => {
@@ -1131,8 +1152,9 @@ function getUniqueUserId(){
                 await uploadArchiveFile(req.body, res);
             });
 
-            const wss = new WebSocketServer({ port: settings.wsport });
-            console.log(`WebSocket server listening on port ${settings.wsport}`);
+            // Unified single-port WebSocket server attached directly to the HTTP server
+            const wss = new WebSocketServer({ server });
+            console.log(`WebSocket server listening on port ${settings.httpport}`);
             let msg = {};
 
             wss.on('connection', (ws) => {
@@ -1166,22 +1188,31 @@ function getUniqueUserId(){
                 });
 
                 ws.onmessage = async(event) => {
-                    let message = JSON.parse(event.data);
-                    let msgclist = processCommandMessage(message);
-                    if (!inMakeLoop) {
-                        msg = messagetypes.commandresponse;
-                        msg.uid = ws.tag.uid;
-                        msg.payload = "success";
-                        ws.send(JSON.stringify(msg));
-                        ws.send(JSON.stringify(msgclist));
-                        await processMakeCommands(message);
+                    try {
+                        let message = JSON.parse(event.data);
+                        let msgclist = processCommandMessage(message);
+                        if (!inMakeLoop) {
+                            let msg = new AppMessage(AppMessage.mtCommandResponse);
+                            msg.uid = ws.tag.uid;
+                            msg.payload = "success";
+                            ws.send(JSON.stringify(msg));
+                            ws.send(JSON.stringify(msgclist));
+                            await processMakeCommands(message);
+                        } else {
+                            let busyMsg = new AppMessage(AppMessage.mtCommandResponse);
+                            busyMsg.uid = ws.tag.uid;
+                            busyMsg.payload = "busy";
+                            ws.send(JSON.stringify(busyMsg));
+                        }
+                    } catch (err) {
+                        console.error("Websocket onmessage error:", err);
                     }
                 };
             });
 
             startPingSender();
 
-            if (settings.opendefaultbrowser && !isdocker) {
+            if (settings.opendefaultbrowser && !isdocker && process.env.DOCKER !== 'true') {
                 spawn('open', [`http://localhost:${settings.httpport}`]);
             }
         }
@@ -1191,6 +1222,71 @@ function getUniqueUserId(){
         
     }
 })();
+
+/**
+ * Create and upload a ZIP archive with the user's selected charts
+ * @param {*} message This is the controller message
+ * @param {*} response Send the chart to the ZIP file via response
+ */
+async function uploadArchiveFile(message, response) {
+    const charts = message.charts || [];
+    const uid = message.uid || "";
+
+    if (!charts.length) {
+        return response.status(400).json({ error: "No charts selected for download" });
+    }
+
+    const tmpZipName = `charts_${Date.now()}.zip`;
+    const tmpZipPath = path.join(workarea, tmpZipName);
+
+    // Collect valid file paths
+    const filesToZip = [];
+    charts.forEach((item, index) => {
+        const filePath = path.join(dbfolder, item.dbfilename);
+        if (fs.existsSync(filePath)) {
+            filesToZip.push(filePath);
+            let msg = new AppMessage(AppMessage.mtDownload);
+            msg.uid = uid;
+            msg.dbfilename = item.dbfilename;
+            msg.rowindex = item.rowindex !== undefined ? item.rowindex : index;
+            msg.completed = false;
+            sendMessageToClients(msg, uid);
+        }
+    });
+
+    if (filesToZip.length === 0) {
+        return response.status(404).json({ error: "Selected chart databases not found on server" });
+    }
+
+    try {
+        const quotedFiles = filesToZip.map(f => `"${f}"`).join(" ");
+        execSync(`zip -j -1 "${tmpZipPath}" ${quotedFiles}`);
+
+        response.download(tmpZipPath, settings.zipfilename || "Charts.zip", (err) => {
+            try {
+                if (fs.existsSync(tmpZipPath)) {
+                    fs.unlinkSync(tmpZipPath);
+                }
+            } catch {}
+            if (err) {
+                console.error('File download failed:', err);
+            } else {
+                console.log('Archive file downloaded successfully.');
+                let dlcmsg = new AppMessage(AppMessage.mtDownload);
+                dlcmsg.completed = true;
+                sendMessageToClients(dlcmsg, uid);
+            }
+        });
+    } catch (err) {
+        console.error("Failed to create zip archive:", err);
+        if (fs.existsSync(tmpZipPath)) {
+            try { fs.unlinkSync(tmpZipPath); } catch {}
+        }
+        if (!response.headersSent) {
+            response.status(500).json({ error: "Failed to generate zip archive: " + err.message });
+        }
+    }
+}
 
 /**
  * Get the count of current pre-existing database files
