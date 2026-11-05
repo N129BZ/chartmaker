@@ -40,7 +40,7 @@ RUN mkdir -p /chartmaker/chartcache /chartmaker/externalcharts /chartmaker/publi
     && ln -s /chartmaker/externalcharts /chartmaker/public/charts
 
 # Expose web server and websocket ports
-EXPOSE 5062 5070
+EXPOSE 5062
 
 # Default entrypoint
 CMD ["node", "make.js"]
