@@ -190,12 +190,13 @@ if (!fs.existsSync(workarea)) fs.mkdirSync(workarea)
 let chartcache = path.join(appdir, "chartcache");
 if (!fs.existsSync(chartcache)) fs.mkdirSync(chartcache);
 
-let chartsfolder = path.join(appdir, "public", "charts");
-if (!fs.existsSync(chartsfolder)) fs.mkdirSync(chartsfolder)
+let dbfolder = settings.mbtilesfolder;
+if (!fs.existsSync(dbfolder)) fs.mkdirSync(dbfolder, { recursive: true })
 
-let dbfolder = path.join(chartsfolder, chartdate);
-if (!fs.existsSync(dbfolder)) fs.mkdirSync(dbfolder)
-    
+let chartcachefolder = settings.chartcachefolder;
+if (!fs.existsSync(chartcachefolder)) fs.mkdirSync(chartcachefolder);
+
+
 if (isdocker) {
     //see if we have an external chart folder volume
     let extcharts = path.join(appdir, "externalcharts");

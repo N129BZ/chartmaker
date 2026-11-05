@@ -6,10 +6,9 @@ services:
     stdin_open: true # Keeps STDIN open (equivalent to -i)
     tty: true        # Allocates a pseudo-TTY (equivalent to -t)
     command: ["node", "make.js"]
-    # restart: unless-stopped
-    # ports:
-    #   - "5062:5062" # HTTP UI
-    #   - "5070:5070" # WebSocket
+    restart: unless-stopped
+    ports:
+       - "5062:5062" # HTTP UI
     volumes:
       # Persistent cache for downloaded FAA zip archives (avoids re-downloading)
       - ./chartcache:/chartmaker/chartcache
