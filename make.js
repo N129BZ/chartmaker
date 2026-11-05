@@ -118,7 +118,17 @@ function processPrompt(message) {
     return readlineSync.question(message); 
 }
 
-const settings = JSON.parse(fs.readFileSync(path.join(appdir, "settings.json"), "utf-8")).settings;
+let settingspath = path.join(appdir, "settings.json");
+if (isdocker) {
+    // see if we have an external settings file volume
+    let extsettings = path.join(appdir, "externalsettings.json");
+    if (fs.existsSync(extsettings)) {
+        settingspath = extsettings;
+        console.log(`Using external settings file: ${settingspath}`);
+    }
+}
+
+const settings = JSON.parse(fs.readFileSync(settingspath, "utf-8")).settings;
 let useWebServer = settings.webservermode;
 let timings = new Map();
 

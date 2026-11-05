@@ -15,7 +15,7 @@ services:
       # Host output directory for finished .mbtiles
       - ./externalcharts:/chartmaker/externalcharts
       # Configuration
-      - ./settings.json:/chartmaker/settings.json
+      - ./settings.json:/chartmaker/externalsettings.json
     environment:
       - DOCKER=true
       - TZ=America/Chicago
