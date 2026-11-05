@@ -605,6 +605,13 @@ function updateCommandBody(message) {
             let span = td.firstChild;
             span.textContent = message.payload;
             td.classList.remove("running");
+            btnReset.style.visibility = "hidden";
+            btnRemove.style.visibility = "hidden";
+            btnSelectAll.style.visibility = "hidden";
+            btnUnselectAll.style.visibility = "hidden";
+            btnProcessCharts.style.visibility = "hidden";
+            btnDownload.style.visibility = "visible";
+
             processitems.push(message);
         }
         else if (message.type === AppMessage.mtExistingDb) {
