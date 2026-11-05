@@ -1,6 +1,9 @@
 services:
   chartmaker:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    pull_policy: build
     image: chartmaker:latest
     container_name: chartmaker
     stdin_open: true # Keeps STDIN open (equivalent to -i)
@@ -8,7 +11,7 @@ services:
     command: ["node", "make.js"]
     restart: unless-stopped
     ports:
-       - "5062:5062" # HTTP UI
+      - "5062:5062" # HTTP UI
     volumes:
       # Persistent cache for downloaded FAA zip archives (avoids re-downloading)
       - ./chartcache:/chartmaker/chartcache
