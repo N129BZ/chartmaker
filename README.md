@@ -1,13 +1,14 @@
 # Chartmaker - Create VFR and IFR digital raster chart MBTILES databases from downloaded FAA geo-referenced TIF images for OpenLayers or Leaflet mapping applications
 ### Check out my chart viewing application at https://github.com/n129bz/mapclient - which also shows Metars, TAFs, Pireps, Animated Weather, Airport Information including frequencies and runways - and more! Also check out the companion express web server application at https://github.com/n129bz/mapserver.
-
-### Requirements: gdal-bin (v3.6.2 minimum,) build-essential, libgdal-dev, libssl-dev, sqlite3, curl, unzip, and nodejs + npm (LTS) 
+### NEW! To run this app with Docker: download the settings.json file and the docker-compose.yml file and run it with the docker compose command "docker compose up -d" from the directory you downloaded to. (The web page will be at localhost:5062)
+### Required installations to run the app locally: gdal-bin (v3.6.2 minimum,) build-essential, libgdal-dev, libssl-dev, sqlite3, curl, unzip, and nodejs + npm (LTS) 
 
 #### Installation:
 1.) This node.js application is designed to run on Linux, and also runs well on **WSL** (Windows Subsystem for Linux) and assumes a pre-existing node js installation   
 2.) After installing all requirements, clone this repository, change directory to **chartmaker**, open a terminal and enter **npm install**        
-4.) Run the application in a terminal with the command **node make** or to see command line options, **node make --help**    
-5.) If not passing a chart number argument, respond to the prompt for what to process    
+3.) Run the application in a terminal with the command **node make.js** or to see command line options, **node make.js --help** 
+4.) To run the application as a web server, edit two settings in **settings.json:** **"usecommandline": false**, and **"webservermode": true** (The default is to run from the terminal.)    
+5.) If not passing a chart number argument, respond to the prompt for what to process      
 6.) Go do something else... depending on the number of charts and image quality, the process can take several hours to complete.     
 
 ### Process Control Files
