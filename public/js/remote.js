@@ -13,7 +13,7 @@ class AppMessage {
     static mtConnection = "connection";
     static mtCommandPackage = "commandpackage";
     static mtExistingDb = "existingdb";
-    
+
     constructor(msgtype) {
         this.type = msgtype;
         this.css = [];
@@ -38,24 +38,24 @@ class MakeCommand {
     }
 }
 
-const URL_LOCATION            =  location.hostname;
-const URL_PROTOCOL            =  location.protocol;
-const URL_PORT                =  location.port;
+const URL_LOCATION = location.hostname;
+const URL_PROTOCOL = location.protocol;
+const URL_PORT = location.port;
 
-var URL_HOST_BASE           =  URL_LOCATION;
+var URL_HOST_BASE = URL_LOCATION;
 if (parseInt(URL_PORT) > 0) {
     URL_HOST_BASE += `:${URL_PORT}`;
 }
 
-const URL_HOST_PROTOCOL       = `${URL_PROTOCOL}//`;
-const URL_SERVER              = `${URL_HOST_PROTOCOL}${URL_HOST_BASE}`;
-const WS_PROTOCOL             = URL_PROTOCOL === "https:" ? "wss:" : "ws:";
-const URL_GET_SETTINGS        = `${URL_SERVER}/settings`;
-const URL_GET_EXISTINGCOUNT   = `${URL_SERVER}/existingcount`;
-const URL_POST_SENDEXISTING   = `${URL_SERVER}/sendexisting`;
-const URL_GET_STATUS          = `${URL_SERVER}/status`;
-const URL_POST_MAKE           = `${URL_SERVER}/make`;
-const URL_POST_DOWNLOAD       = `${URL_SERVER}/download`;
+const URL_HOST_PROTOCOL = `${URL_PROTOCOL}//`;
+const URL_SERVER = `${URL_HOST_PROTOCOL}${URL_HOST_BASE}`;
+const WS_PROTOCOL = URL_PROTOCOL === "https:" ? "wss:" : "ws:";
+const URL_GET_SETTINGS = `${URL_SERVER}/settings`;
+const URL_GET_EXISTINGCOUNT = `${URL_SERVER}/existingcount`;
+const URL_POST_SENDEXISTING = `${URL_SERVER}/sendexisting`;
+const URL_GET_STATUS = `${URL_SERVER}/status`;
+const URL_POST_MAKE = `${URL_SERVER}/make`;
+const URL_POST_DOWNLOAD = `${URL_SERVER}/download`;
 
 const confwindow = document.getElementById("confwindow");
 const txtCommand = document.getElementById("txtCommand");
@@ -79,9 +79,11 @@ const processInfo = document.getElementById("processInformation");
 var thisUserId = "";
 var websocket;
 var indexlist = [];
-var commandpackage = { type: "commandpackage",
-                       commandlist: [],
-                       uid: "" };
+var commandpackage = {
+    type: "commandpackage",
+    commandlist: [],
+    uid: ""
+};
 var processitems = [];
 var confcommands = [];
 var settings = {};
@@ -106,18 +108,18 @@ window.addEventListener("resize", () => {
 
 async function getSettingsFromServer() {
     try {
-        const data = await fetch(URL_GET_SETTINGS); 
+        const data = await fetch(URL_GET_SETTINGS);
         if (!data.ok) {
             throw new Error(`HTTP error! status: ${data.status}`);
-        } 
+        }
         settings = await data.json();
         console.log(settings);
         checkForExistingDatabases();
         setChartNameArrays();
         startWebsocketClient();
-        
+
     }
-    catch(err) {
+    catch (err) {
         console.log(err.message);
     }
 }
@@ -132,7 +134,7 @@ getSettingsFromServer();
  */
 async function checkForExistingDatabases() {
     let hasexisting = await hasExistingDatabases();
-    if(hasexisting) {
+    if (hasexisting) {
         downloadExisting.style.visibility = "visible";
     }
     else {
@@ -174,7 +176,7 @@ function updateConnectionStatus(status, text) {
 /**
  * Websocket connection and message handling
  */
-function startWebsocketClient() { 
+function startWebsocketClient() {
     if (reconnectTimer) {
         clearTimeout(reconnectTimer);
         reconnectTimer = null;
@@ -190,7 +192,7 @@ function startWebsocketClient() {
         updateConnectionStatus("connecting", "● Connecting...");
         websocket = new WebSocket(wsurl);
 
-        websocket.onopen = function(evt) {
+        websocket.onopen = function (evt) {
             console.log("Websocket CONNECTED.");
             reconnectDelay = 1000;
             updateConnectionStatus("connected", "● Connected");
@@ -200,7 +202,7 @@ function startWebsocketClient() {
             try {
                 let message = JSON.parse(event.data);
                 switch (message.type) {
-                    case AppMessage.mtTiming: 
+                    case AppMessage.mtTiming:
                         blinkSendButton(false);
                         postTimingMessaqe(message);
                         break;
@@ -240,7 +242,7 @@ function startWebsocketClient() {
                         thisUserId = message.uid;
                         commandpackage = new AppMessage(AppMessage.mtCommandPackage);
                         commandpackage.uid = thisUserId;
-                        break; 
+                        break;
                     case AppMessage.mtCommand:
                     default:
                         console.log(message.payload);
@@ -252,12 +254,12 @@ function startWebsocketClient() {
             }
         };
 
-        websocket.onerror = function(evt){
+        websocket.onerror = function (evt) {
             console.log("Websocket ERROR");
             updateConnectionStatus("connecting", "● Connection Error");
         }
-        
-        websocket.onclose = function(evt) {
+
+        websocket.onclose = function (evt) {
             console.log("Websocket CLOSED.");
             updateConnectionStatus("disconnected", "● Disconnected (Reconnecting...)");
             if (!reconnectTimer) {
@@ -288,7 +290,7 @@ function getJSON(data) {
     try {
         let output = JSON.parse(data);
         return { isJSON: true, message: output }; // Successfully parsed, return JSON
-    } 
+    }
     catch (error) {
         return { isJSON: false }; // Parsing failed, return false
     }
@@ -305,7 +307,7 @@ function removeLastEntry() {
             let td = lastitem.firstChild;
             if (td.textContent !== "") {
                 td.textContent = "";
-                break;        
+                break;
             }
         }
     }
@@ -316,7 +318,7 @@ function removeLastEntry() {
  */
 function resetFromDownloadState() {
     console.log("RESETTING FROM DOWNLOAD STATE!");
-    processitems.forEach((item) =>{
+    processitems.forEach((item) => {
         let ckbid = `${dlchkPrefix}-${item.rowindex}`;
         let ckb = document.getElementById(ckbid);
         ckb.checked = false;
@@ -334,11 +336,11 @@ function resetEverything() {
     selectedcommand = -1;
     processitems.splice(0, processitems.length);
     addItemsMenu.style.display = "block";
-    resetCommandOptions(); 
-    resetChartOptions();  
+    resetCommandOptions();
+    resetChartOptions();
     setupCommandBody();
     setDownloadButtonVisible(false);
-    confwindow.scroll({left: 0, top: 0}); 
+    confwindow.scroll({ left: 0, top: 0 });
     btnReset.style.visibility = "visible";
     btnSelectAll.style.display = "none";
     btnUnselectAll.style.display = "none";
@@ -348,10 +350,12 @@ function resetEverything() {
     downloadInProgress = false;
     blinking = false;
     btnProcessCharts.innerText = "Process Charts";
-    btnProcessCharts.classList.remove("start-animation"); 
-    commandpackage = { type: "commandpackage",
-                       commandlist: [],
-                       uid: "" };
+    btnProcessCharts.classList.remove("start-animation");
+    commandpackage = {
+        type: "commandpackage",
+        commandlist: [],
+        uid: ""
+    };
     commandpackage.uid = thisUserId;
 }
 
@@ -364,17 +368,19 @@ async function sendCommandsToServer() {
         addItemsMenu.style.display = "none";
         inResponseView = true;
         blinkSendButton(true);
-        const response = await fetch(URL_POST_MAKE, { method: 'POST',
-                                                      headers: {'Content-Type': 'application/json'},  
-                                                      body: JSON.stringify(commandpackage) }); 
-        if (response.ok) {    
+        const response = await fetch(URL_POST_MAKE, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(commandpackage)
+        });
+        if (response.ok) {
             resetCommandOptions();
             resetChartOptions();
             btnRemove.style.visibility = "hidden";
             btnSelectAll.style.visibility = "hidden";
             btnUnselectAll.style.visibility = "hidden";
             btnReset.style.visibility = "hidden";
-        }  
+        }
     }
 }
 
@@ -383,17 +389,17 @@ async function sendCommandsToServer() {
  * @param {*} message 
  */
 function postTimingMessaqe(message) {
-    processInfo.classList.add( ... message.css);
+    processInfo.classList.add(...message.css);
     processInfo.textContent = `Total time for chart processing: ${message.payload}`;
-    resetCommandOptions(); 
-    resetChartOptions(); 
+    resetCommandOptions();
+    resetChartOptions();
     commandpackage = new AppMessage(AppMessage.mtCommandPackage);
-    
+
     processitems.forEach((item) => {
         let ckbid = `${dlchkPrefix}-${item.rowindex}`;
         let ckb = document.getElementById(ckbid);
         ckb.style.display = "inline";
-        ckb.addEventListener("change", handleCheckboxChange); 
+        ckb.addEventListener("change", handleCheckboxChange);
     });
 }
 
@@ -469,7 +475,6 @@ function setDownloadButtonVisible(isVisible) {
         chkForExisting.checked = false;
         btnSelectAll.style.display = "none";
         btnUnselectAll.style.display = "none";
-        //btnUnselectAll.style.display = "inline";
     }
     else {
         btnDownload.classList.remove("running");
@@ -479,7 +484,7 @@ function setDownloadButtonVisible(isVisible) {
         btnSelectAll.style.display = "visible";
         btnProcessCharts.style.visibility = "visible";
         addItemsMenu.style.visibility = "visible";
-        checkForExistingDatabases(); 
+        checkForExistingDatabases();
     }
 }
 
@@ -501,10 +506,10 @@ function addCommandRequest() {
             return;
         }
     }
-    
+
     // If one of the "all charts" options has been selected, 
     // initialize the list len number to match the option.
-    let listlen = 1; 
+    let listlen = 1;
     let isfullList = true;
     let cmdtext = "";
     let list = [];
@@ -526,21 +531,21 @@ function addCommandRequest() {
         //     selectedchart = 0;
         //     break;
     }
-    
+
     let idx = commandpackage.commandlist.length;
-    
+
     for (let i = idx; i < idx + list.length; i++) {
-        let infomessage = new AppMessage(AppMessage.mtInfo); 
+        let infomessage = new AppMessage(AppMessage.mtInfo);
         let chartname = list[selectedchart];
-        infomessage.payload = `${cmdtext} ${chartname}` ;
+        infomessage.payload = `${cmdtext} ${chartname}`;
         infomessage.uid = thisUserId;
         updateCommandBody(infomessage);
 
         let ridx = i + 1;
         let entry = new MakeCommand(selectedcommand, selectedchart, ridx, chartname);
-        commandpackage.commandlist.push(entry); 
+        commandpackage.commandlist.push(entry);
         if (isfullList) {
-            selectedchart = selectedchart + 1; 
+            selectedchart = selectedchart + 1;
         }
         else {
             break;
@@ -573,9 +578,9 @@ function blinkSendButton(isVisible) {
  * @param {*} message 
  * @returns 
  */
-function updateCommandBody(message) { 
+function updateCommandBody(message) {
     if (message.type === "commandresponse") {
-        processInfo.classList.add(... message.css);
+        processInfo.classList.add(...message.css);
         processInfo.textContent = message.payload;
     }
     else {
@@ -584,7 +589,7 @@ function updateCommandBody(message) {
             let tr = commandbody.rows[rowidx];
             let td = tr.children[0];
             td.classList.add("running");
-            td = tr.children[1]; 
+            td = tr.children[1];
             let span = td.firstChild;
             span.textContent = "* in progress *";
             td.classList.add("running");
@@ -599,7 +604,7 @@ function updateCommandBody(message) {
             let span = td.firstChild;
             span.textContent = message.payload;
             td.classList.remove("running");
-            btnReset.style.visibility = "hidden";
+            btnReset.style.visibility = "visible";
             btnRemove.style.visibility = "hidden";
             btnSelectAll.style.visibility = "hidden";
             btnUnselectAll.style.visibility = "hidden";
@@ -646,8 +651,8 @@ function updateCommandBody(message) {
             for (let i = 0; i < commandbody.rows.length; i++) {
                 let tr = commandbody.rows[i];
                 let td = tr.firstChild;
-                if (td.innerText === "") { 
-                    td.classList.add(... message.css);
+                if (td.innerText === "") {
+                    td.classList.add(...message.css);
                     td.innerText = message.payload;
                     return;
                 }
@@ -686,7 +691,7 @@ function commandSelected() {
     if (isNaN(selectedcommand)) {
         selectedcommand = -1;
     }
-    
+
     if (chkForExisting.checked) {
         chkForExisting.checked = false;
         setupCommandBody();
@@ -755,13 +760,13 @@ function setupCommandBody() {
         td.id = nmid;
         td.className = "leftcell";
         tr.appendChild(td);
-        
+
         td = document.createElement("td");
         nmid = `rightcell-${i}`;
         td.name = nmid;
         td.id = nmid;
         td.className = "rightcell";
-        
+
         // create the <span> text container
         let span = document.createElement("span");
         nmid = `span-${i}`;
@@ -769,7 +774,7 @@ function setupCommandBody() {
         span.name = nmid;
         span.className = "resultspan";
         td.appendChild(span)
-        
+
         // create the hidden checkbox
         let ckb = document.createElement("input");
         nmid = `${dlchkPrefix}-${i}`;
@@ -778,7 +783,7 @@ function setupCommandBody() {
         ckb.type = "checkbox";
         ckb.className = "dlcheckbox";
         td.appendChild(ckb);
-        
+
         tr.appendChild(td);
 
         // Now append the new <tr> to the command body
@@ -831,15 +836,17 @@ function resetChartOptions() {
 async function downloadZipfile(dlitems) {
     downloadInProgress = true;
     chkForExisting.checked = false;
-    try {    
+    try {
         // dlitems is an array of AppMessage type "complete"...       
-        const response = await fetch(URL_POST_DOWNLOAD, { method: 'POST',
-                                                          headers: {'Content-Type': 'application/json'},  
-                                                          body: JSON.stringify(dlitems) }); 
+        const response = await fetch(URL_POST_DOWNLOAD, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dlitems)
+        });
         if (!response.ok) {
             resetEverything();
             return;
-        } 
+        }
         const stream = response.body;
         const reader = stream.getReader();
         const chunks = [];
@@ -855,7 +862,7 @@ async function downloadZipfile(dlitems) {
             });
         }
         await pump();
-    } 
+    }
     catch (err) {
         console.error("Download failed:", err.message);
     }
@@ -870,7 +877,7 @@ function processChunks(chunks) {
     const fileURL = URL.createObjectURL(blob);
 
     const downloadLink = document.createElement("a");
-    downloadLink.style.display = "none"; 
+    downloadLink.style.display = "none";
     downloadLink.href = fileURL;
     downloadLink.download = settings.zipfilename;
 
@@ -891,9 +898,11 @@ async function getExistingDatabaseList() {
 
     dlreq.uid = thisUserId;
     dlreq.getexisting = true;
-    const response = await fetch(URL_POST_SENDEXISTING, { method: 'POST',
-                                 headers: {'Content-Type': 'application/json'},  
-                                 body: JSON.stringify(dlreq) }); 
+    const response = await fetch(URL_POST_SENDEXISTING, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dlreq)
+    });
     const data = await response.json();
     const items = data.items.existingdblist;
     if (items.length > 0) {
@@ -923,7 +932,7 @@ async function getExistingDatabaseList() {
  * @returns true if the returned count > 0
  */
 async function hasExistingDatabases() {
-    const response = await fetch(URL_GET_EXISTINGCOUNT, { method: 'GET' }); 
+    const response = await fetch(URL_GET_EXISTINGCOUNT, { method: 'GET' });
     const data = await response.json();
     return (data.existingcount > 0);
 }
@@ -995,7 +1004,7 @@ chkForExisting.addEventListener('change', async () => {
 
 btnSelectAll.addEventListener('click', () => {
     let found = false;
-    for(let i = 0; i < commandbody.rows.length; i++) {
+    for (let i = 0; i < commandbody.rows.length; i++) {
         const ckbid = `${dlchkPrefix}-${i}`;
         const ckb = document.getElementById(ckbid);
         if (ckb.checkVisibility()) {
@@ -1012,7 +1021,7 @@ btnSelectAll.addEventListener('click', () => {
 });
 
 btnUnselectAll.addEventListener('click', () => {
-    for(let i = 0; i < commandbody.rows.length; i++) {
+    for (let i = 0; i < commandbody.rows.length; i++) {
         const ckbid = `${dlchkPrefix}-${i}`;
         const ckb = document.getElementById(ckbid);
         ckb.checked = false;
