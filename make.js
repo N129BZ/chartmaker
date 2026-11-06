@@ -1088,7 +1088,7 @@ function getUniqueUserId(){
         try {
 
             app.use(express.urlencoded({ extended: true }));
-            server.listen(settings.httpport, () => { 
+            server.listen(settings.httpport, '0.0.0.0', () => { 
                 console.log(`Web Server listening on port ${settings.httpport}`);
             });
 
