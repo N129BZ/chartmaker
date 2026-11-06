@@ -1215,12 +1215,7 @@ function getUniqueUserId(){
                     }
                 };
             });
-
             startPingSender();
-
-            if (settings.opendefaultbrowser && !isdocker && process.env.DOCKER !== 'true') {
-                spawn('open', [`http://localhost:${settings.httpport}`]);
-            }
         }
         catch (err) {
             console.log(err);

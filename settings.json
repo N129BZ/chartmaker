@@ -23,7 +23,6 @@
         "webservermode": true,
         "httpport": 8500,
         "pinginterval": 30000,
-        "opendefaultbrowser": true,
         "useauthentication": false,
         "zipfilename": "Charts.zip",
 
