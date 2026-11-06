@@ -177,7 +177,7 @@ let expiredate = "";
 const chartdate = getBestChartDate();
 const users = JSON.parse(fs.readFileSync(path.join(appdir, "users.json"), "utf-8")).users;
 const zipfilename = settings.zipfilename;
-const zipfilepath = path.join(appdir, "public", "charts", chartdate, zipfilename); 
+
 
 // used for process timing
 const startdate = new Date(new Date().toLocaleString());
@@ -190,20 +190,8 @@ if (!fs.existsSync(workarea)) fs.mkdirSync(workarea)
 let chartcache = path.join(appdir, "chartcache");
 if (!fs.existsSync(chartcache)) fs.mkdirSync(chartcache);
 
-let dbfolder = settings.mbtilesfolder;
-if (!fs.existsSync(dbfolder)) fs.mkdirSync(dbfolder, { recursive: true })
-
-let chartcachefolder = settings.chartcachefolder;
-if (!fs.existsSync(chartcachefolder)) fs.mkdirSync(chartcachefolder);
-
-
-if (isdocker) {
-    //see if we have an external chart folder volume
-    let extcharts = path.join(appdir, "charts");
-    if (fs.existsSync(extcharts)) {
-        dbfolder = extcharts;
-    }
-}
+let dbfolder = path.join(appdir, "charts");
+if (!fs.existsSync(dbfolder)) fs.mkdirSync(dbfolder);
 
 let imageformat = settings.tiledrivers[settings.tiledriverindex];
 let chartworkname = "";
@@ -703,8 +691,8 @@ function processImages() {
     console.log(`UPDATE RESULT\n: ${output}`);
 
     // run post processing to move the new database
-    let outputDbFolder = settings.mbtilesfolder;
-    if (!fs.existsSync(settings.mbtilesfolder)) {
+    let outputDbFolder = dbfolder;
+    if (!fs.existsSync(outputDbFolder)) {
         // if the path doesnt exist, put it as a subfolder of the app path
         outputDbFolder = path.join(appdir, outputDbFolder);
         fs.mkdirSync(outputDbFolder, { recursive: true });
@@ -1244,7 +1232,7 @@ async function uploadArchiveFile(message, response) {
         const quotedFiles = filesToZip.map(f => `"${f}"`).join(" ");
         execSync(`zip -j -1 "${tmpZipPath}" ${quotedFiles}`);
 
-        response.download(tmpZipPath, settings.zipfilename || "Charts.zip", (err) => {
+        response.download(tmpZipPath, zipfilename, (err) => {
             try {
                 if (fs.existsSync(tmpZipPath)) {
                     fs.unlinkSync(tmpZipPath);
