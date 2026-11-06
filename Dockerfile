@@ -46,5 +46,8 @@ RUN mkdir -p /chartmaker/chartcache /chartmaker/externalcharts /chartmaker/exter
 # Expose single application port
 EXPOSE 8500
 
-# STEP 3: Check if the external volume is empty. If yes, copy default template, then start server.
-CMD sh -c "if [ ! -f /chartmaker/externalsettings/settings.json ]; then echo 'Initializing default settings.json...'; cp /app/defaults/settings.json /chartmaker/externalsettings/settings.json; fi && node make.js"
+# Copy the default configuration to the expected volume path ONLY if it isn't already mounted
+RUN cp /app/defaults/settings.json /chartmaker/externalsettings/settings.json
+
+# Launch the Node process directly from your safe app environment directory
+CMD ["node", "make.js"]
