@@ -448,7 +448,6 @@ function processFulls(msgid = -1) {
             clippedShapeFolder = path.join(appdir, "clipshapes", lcasename);
             chartname = chart[2]; // use alias value for IFR
             chartfolder = path.join(workarea, chartname);
-            updateMetadata = true;
         }
         else { // vfr
             if (lcasename === "us_vfr_wall_planning") {
