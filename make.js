@@ -455,6 +455,9 @@ function processAllFulls() {
 
 function processFulls(msgid = -1) {
     for (let idx = 0; idx < parray.length; idx++) { 
+        const cpt = new ProcessTime(chartname);
+        timings.set(chartname, cpt);
+        console.log(`${cpt.startdate}\n`);
         const chart = settings.fullchartlist[parray[idx]];
         const charttype = chart[1];
         let lcasename = chart[0].toLowerCase();
