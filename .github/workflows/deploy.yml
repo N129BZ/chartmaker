@@ -1,0 +1,51 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main  # Triggers the workflow whenever you push to the main branch
+
+env:
+  REGISTRY: ghcr.io
+  # Converts your repository name to lowercase automatically to prevent Docker naming errors
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      # Step 1: Clone the repository onto the GitHub runner
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Step 2: Log into the GitHub Container Registry
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }} # Generated automatically by GitHub
+
+      # Step 3: Extract short Git commit hash and metadata for tagging
+      - name: Extract Docker Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,format=short
+            type=raw,value=latest
+
+      # Step 4: Build and Push the image cleanly without caching old layers
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          no-cache: true  # Guarantees a fresh build every single time
+          tags: ${{ id.meta.outputs.tags }}
+          labels: ${{ id.meta.outputs.labels }}

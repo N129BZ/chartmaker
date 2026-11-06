@@ -1,5 +1,7 @@
 FROM ghcr.io/osgeo/gdal:ubuntu-small-latest
 
+LABEL org.opencontainers.image.source=https://github.com
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     unzip \
@@ -12,7 +14,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libgdal-dev \
     libssl-dev \
-    git
+    git \
+	&& rm -rf /var/lib/apt/lists/*
     
 RUN mkdir -p /etc/apt/keyrings \
     && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
