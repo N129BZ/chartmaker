@@ -1,6 +1,6 @@
 services:
   chartmaker:
-    image: ghcr.io/your_github_username/chartmaker:latest
+    image: ghcr.io/n129bz/chartmaker:latest
     container_name: chartmaker
     restart: unless-stopped
     ports:
