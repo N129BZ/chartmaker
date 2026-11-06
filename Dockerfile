@@ -23,7 +23,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 WORKDIR /app
 
 # Clone application from GitHub repository
-RUN git clone https://github.com .
+RUN git clone https://github.com/n129bz/chartmaker .
 
 # Fix Docker environment detection in cgroups v2 / container runtimes
 RUN sed -i 's/indocker = (r.search("\/docker\/") > -1);/indocker = (r.search("\/docker\/") > -1) || fs.existsSync("\/\.dockerenv") || process.env.DOCKER === "true";/' make.js
