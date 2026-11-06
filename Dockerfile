@@ -7,24 +7,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     zip \
     sqlite3 \
-    procps \
     ca-certificates \
-    gnupg \
-    nano \
     build-essential \
     libgdal-dev \
     libssl-dev \
     git \
-	&& rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*
     
 # Ensure prerequisites are present, set up the GPG key, and add the correct repository
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl gnupg \
-    && mkdir -p /etc/apt/keyrings \
-    && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
-    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://nodesource.com nodistro main" | tee /etc/apt/sources.list.d/nodesource.list \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends nodejs \
-    && rm -rf /var/lib/apt/lists/*
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+ && apt-get install -y --no-install-recommends nodejs \
+ && rm -rf /var/lib/apt/lists/*
   
 # STEP 1: Keep app code isolated inside /app so volume mounts don't overwrite it
 WORKDIR /app
