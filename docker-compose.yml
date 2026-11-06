@@ -8,7 +8,6 @@ services:
     volumes:
       - ./chartcache:/chartmaker/chartcache
       - ./externalcharts:/chartmaker/externalcharts
-      - ./externalsettings:/chartmaker/externalsettings
     environment:
       - DOCKER=true
       - TZ=America/Chicago

@@ -118,27 +118,9 @@ function processPrompt(message) {
     return readlineSync.question(message); 
 }
 
-let settingspath = path.join(appdir, "settings.json");
-if (isdocker) {
-    // see if we have an external settings file volume
-    let extsettingsdir = path.join(appdir, "externalsettings");
-    let extsettings = path.join(extsettingsdir, "settings.json");
-    if (fs.existsSync(extsettings)) {
-        settingspath = extsettings;
-        console.log(`Using external settings file: ${settingspath}`);
-    }
-    else {
-        if (!fs.existsSync(extsettingsdir)) {
-            fs.mkdirSync(extsettingsdir, { recursive: true });
-        }
-        fs.copyFileSync(settingspath, extsettings);
-        console.log(`External settings.json was not found. Copied default settings.json to ${extsettings}.\nPlease examine the external settings.json file before re-launching.`);
-        process.exit(0);
-    }
-}
-
+const settingspath = path.join(appdir, "settings.json")
 const settings = JSON.parse(fs.readFileSync(settingspath, "utf-8")).settings;
-let useWebServer = settings.webservermode;
+const useWebServer = settings.webservermode;
 let timings = new Map();
 
 /** 
