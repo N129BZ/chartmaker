@@ -11,7 +11,7 @@ services:
     command: ["node", "make.js"]
     restart: unless-stopped
     ports:
-      - "5062:5062" # HTTP UI
+      - "8500:8500" # HTTP UI
     volumes:
       # Persistent cache for downloaded FAA zip archives (avoids re-downloading)
       - ./chartcache:/chartmaker/chartcache
