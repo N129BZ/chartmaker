@@ -1,18 +1,14 @@
 services:
   chartmaker:
-    image: ghcr.io/n129bz/chartmaker:latest
+    image: ghcr.io/your_github_username/chartmaker:latest
     container_name: chartmaker
-    command: ["node", "make.js"]
     restart: unless-stopped
     ports:
-      - "8500:8500" # HTTP UI
+      - "8500:8500" 
     volumes:
-      # Persistent cache for downloaded FAA zip archives (avoids re-downloading)
       - ./chartcache:/chartmaker/chartcache
-      # Host output directory for finished .mbtiles
       - ./externalcharts:/chartmaker/externalcharts
-      # Configuration
-      - ./externalsettings:/chartmaker
+      - ./externalsettings:/chartmaker/externalsettings
     environment:
       - DOCKER=true
       - TZ=America/Chicago

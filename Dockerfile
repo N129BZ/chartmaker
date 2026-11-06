@@ -18,17 +18,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	&& rm -rf /var/lib/apt/lists/*
     
 RUN mkdir -p /etc/apt/keyrings \
-    && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
-    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list \
+    && curl -fsSL https://nodesource.com | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://nodesource.com nodistro main" | tee /etc/apt/sources.list.d/nodesource.list \
     && apt-get update \
     && apt-get install -y --no-install-recommends nodejs npm \
     && rm -rf /var/lib/apt/lists/*
   
-# Work directory expected by make.js
-WORKDIR /chartmaker
+# STEP 1: Keep app code isolated inside /app so volume mounts don't overwrite it
+WORKDIR /app
 
 # Clone application from GitHub repository
-RUN git clone https://github.com/n129bz/chartmaker .
+RUN git clone https://github.com .
 
 # Fix Docker environment detection in cgroups v2 / container runtimes
 RUN sed -i 's/indocker = (r.search("\/docker\/") > -1);/indocker = (r.search("\/docker\/") > -1) || fs.existsSync("\/\.dockerenv") || process.env.DOCKER === "true";/' make.js
@@ -36,13 +36,15 @@ RUN sed -i 's/indocker = (r.search("\/docker\/") > -1);/indocker = (r.search("\/
 # Install dependencies directly from the cloned repository
 RUN npm install
 
-# Ensure externalized directories exist and symlink mbtilesfolder (public/charts) to externalcharts
-RUN mkdir -p /chartmaker/chartcache /chartmaker/externalcharts /chartmaker/externalsettings /chartmaker/public \
-    && rm -rf /chartmaker/public/charts \
-    && ln -s /chartmaker/externalcharts /chartmaker/public/charts
+# STEP 2: Prepare externalized directory targets and cache default settings template
+RUN mkdir -p /chartmaker/chartcache /chartmaker/externalcharts /chartmaker/externalsettings /app/public \
+    && mkdir -p /app/defaults \
+    && cp settings.json /app/defaults/settings.json \
+    && rm -rf /app/public/charts \
+    && ln -s /chartmaker/externalcharts /app/public/charts
 
-# Expose web server and websocket ports
+# Expose single application port
 EXPOSE 8500
 
-# Default entrypoint
-CMD ["node", "make.js"]
+# STEP 3: Check if the external volume is empty. If yes, copy default template, then start server.
+CMD sh -c "if [ ! -f /chartmaker/externalsettings/settings.json ]; then echo 'Initializing default settings.json...'; cp /app/defaults/settings.json /chartmaker/externalsettings/settings.json; fi && node make.js"
