@@ -47,5 +47,5 @@ jobs:
           context: .
           push: true
           no-cache: true  # Guarantees a fresh build every single time
-          tags: ${{ id.meta.outputs.tags }}
-          labels: ${{ id.meta.outputs.labels }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
