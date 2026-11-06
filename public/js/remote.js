@@ -705,19 +705,7 @@ function commandSelected() {
             populateAreaChartList();
             break;
         case 1:
-            resetChartOptions();
-            txtChart.disabled = true;
-            break;
-        case 2:
             populateFullChartList();
-            break;
-        case 3:
-            resetChartOptions();
-            txtChart.disabled = true;
-            break;
-        default:
-            resetChartOptions();
-            txtChart.disabled = true;
             break;
     }
     validateAddButton();
