@@ -21,7 +21,7 @@
         "debug": false,
 
         "webservermode": true,
-        "httpport": 5062,
+        "httpport": 8500,
         "pinginterval": 30000,
         "opendefaultbrowser": true,
         "useauthentication": false,

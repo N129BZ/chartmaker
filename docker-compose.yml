@@ -1,11 +1,7 @@
-version: '3.8'
-
 services:
   chartmaker:
     image: ghcr.io/n129bz/chartmaker:latest
     container_name: chartmaker
-    stdin_open: true # Keeps STDIN open (equivalent to -i)
-    tty: true        # Allocates a pseudo-TTY (equivalent to -t)
     command: ["node", "make.js"]
     restart: unless-stopped
     ports:
