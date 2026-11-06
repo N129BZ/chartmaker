@@ -496,7 +496,7 @@ function addCommandRequest() {
         return;
     }
 
-    if (selectedcommand === 0 || selectedcommand === 2) {
+    if (selectedcommand === 0 || selectedcommand === 1) {
         if (txtChart.value === "") {
             return;
         }
@@ -515,22 +515,16 @@ function addCommandRequest() {
             isfullList = false;
             break;
         case 1:
-            cmdtext = "Process area chart :";
-            list = areaChartNames;
-            selectedcommand --;
-            selectedchart = 0;
-            break;
-        case 2:
             cmdtext = "Process full chart :";
             list = fullChartNames;
             isfullList = false;
             break;
-        case 3:
-            cmdtext = "Process full chart :";
-            list = fullChartNames;
-            selectedcommand --;
-            selectedchart = 0;
-            break;
+        // case 3:
+        //     cmdtext = "Process full chart :";
+        //     list = fullChartNames;
+        //     selectedcommand --;
+        //     selectedchart = 0;
+        //     break;
     }
     
     let idx = commandpackage.commandlist.length;
