@@ -20,7 +20,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
  && rm -rf /var/lib/apt/lists/*
   
 # Keep app code isolated inside /app so volume mounts don't overwrite it
-WORKDIR /app
+WORKDIR /chartmaker
+
 
 # Clone application from GitHub repository
 RUN git clone https://github.com/n129bz/chartmaker .
@@ -31,22 +32,13 @@ RUN sed -i 's/indocker = (r.search("\/docker\/") > -1);/indocker = (r.search("\/
 # Install dependencies directly from the cloned repository
 RUN npm install
 
-# Prepare externalized directory targets and cache default settings template
-RUN mkdir -p /chartmaker/chartcache /chartmaker/externalcharts /chartmaker/externalsettings /app/public \
-    && mkdir -p /app/defaults \
-    && cp settings.json /app/defaults/settings.json \
-    && rm -rf /app/public/charts \
-    && ln -s /chartmaker/externalcharts /app/public/charts
-
-# FIX: Copy chartdates.json and users.json to the /chartmaker folder where your code expects them
-RUN cp chartdates.json /chartmaker/chartdates.json \
-    && cp users.json /chartmaker/users.json
+# Prepare externalized directory targets
+RUN mkdir -p /chartmaker/chartcache /chartmaker/charts /chartmaker/public \
+    && rm -rf /chartmaker/public/charts \
+    && ln -s /chartmaker/charts /chartmaker/public/charts
 
 # Expose single application port
 EXPOSE 8500
-
-# Pre-seed the configuration to the path expected by the compose mount targets
-RUN cp /app/defaults/settings.json /chartmaker/externalsettings/settings.json
 
 # Default entrypoint
 CMD ["node", "make.js"]

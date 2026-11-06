@@ -199,7 +199,7 @@ if (!fs.existsSync(chartcachefolder)) fs.mkdirSync(chartcachefolder);
 
 if (isdocker) {
     //see if we have an external chart folder volume
-    let extcharts = path.join(appdir, "externalcharts");
+    let extcharts = path.join(appdir, "charts");
     if (fs.existsSync(extcharts)) {
         dbfolder = extcharts;
     }
@@ -218,7 +218,6 @@ let dir_3_clipped = "";
 let dir_4_mbtiles = "";
 let isifrchart = false;
 let metadataDescription = "";
-let chartlayertype = "";
 
 /**
  * Chart processing starts here
