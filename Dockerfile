@@ -34,7 +34,7 @@ RUN sed -i 's/indocker = (r.search("\/docker\/") > -1);/indocker = (r.search("\/
 RUN npm install
 
 # Ensure externalized directories exist and symlink mbtilesfolder (public/charts) to externalcharts
-RUN mkdir -p /chartmaker/chartcache /chartmaker/externalcharts /chartmaker/public \
+RUN mkdir -p /chartmaker/chartcache /chartmaker/externalcharts /chartmaker/externalsettings /chartmaker/public \
     && rm -rf /chartmaker/public/charts \
     && ln -s /chartmaker/externalcharts /chartmaker/public/charts
 
