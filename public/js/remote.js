@@ -677,10 +677,8 @@ function chartSelected() {
  * Validate and toggle the Add Chart button
  */
 function validateAddButton() {
-    if (selectedcommand === 0 || selectedcommand === 2) {
+    if (selectedcommand === 0 || selectedcommand === 1) {
         btnAddCommand.disabled = (selectedchart === -1 || isNaN(selectedchart));
-    } else if (selectedcommand === 1 || selectedcommand === 3) {
-        btnAddCommand.disabled = false;
     } else {
         btnAddCommand.disabled = true;
     }
