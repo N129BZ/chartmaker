@@ -17,11 +17,11 @@
         "centerzoomlevel": "7",
         "chartcachefolder": "chartcache", 
         "mbtilesfolder": "public/charts",
-        "usecommandline": false,
+        "usecommandline": true,
         "timezone": "America/Chicago",
         "debug": false,
 
-        "webservermode": true,
+        "webservermode": false,
         "httpport": 5062,
         "pinginterval": 30000,
         "opendefaultbrowser": true,
