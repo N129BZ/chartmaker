@@ -118,7 +118,18 @@ function processPrompt(message) {
     return readlineSync.question(message); 
 }
 
-const settingspath = path.join(appdir, "settings.json")
+let settingspath = path.join(appdir, "settings.json");
+if (isdocker) {
+    const externalConfigDir = path.join(appdir, "config");
+    const externalSettingsPath = path.join(externalConfigDir, "settings.json");
+    if (!fs.existsSync(externalConfigDir)) {
+        fs.mkdirSync(externalConfigDir, { recursive: true });
+    }
+    if (!fs.existsSync(externalSettingsPath)) {
+        fs.copyFileSync(settingspath, externalSettingsPath);
+    }
+    settingspath = externalSettingsPath;
+}
 const settings = JSON.parse(fs.readFileSync(settingspath, "utf-8")).settings;
 const useWebServer = settings.webservermode;
 let timings = new Map();

@@ -8,6 +8,7 @@ services:
     volumes:
       - ./chartcache:/chartmaker/chartcache
       - ./charts:/chartmaker/charts
+      - .:/chartmaker/config
     environment:
       - DOCKER=true
       - TZ=America/Chicago
