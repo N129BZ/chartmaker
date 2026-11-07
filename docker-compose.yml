@@ -7,11 +7,8 @@ services:
       - "8500:8500" 
     volumes:
       - ./chartcache:/chartmaker/chartcache
-      - ./charts:/chartmaker/charts
+      - ./mbtiles:/chartmaker/mbtiles
       - .:/chartmaker/config
-      - /:/host
     environment:
       - DOCKER=true
       - TZ=America/Chicago
-      - HOST_HOME=${HOME}
-      - HOST_PWD=${PWD}

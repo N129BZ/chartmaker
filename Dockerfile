@@ -33,9 +33,9 @@ RUN sed -i 's/indocker = (r.search("\/docker\/") > -1);/indocker = (r.search("\/
 RUN npm install
 
 # Prepare externalized directory targets
-RUN mkdir -p /chartmaker/chartcache /chartmaker/charts /chartmaker/config \ 
+RUN mkdir -p /chartmaker/chartcache /chartmaker/mbtiles /chartmaker/config \ 
     && ln -s /chartmaker/chartcache /chartmaker/chartcache \
-    && ln -s /chartmaker/charts /chartmaker/charts
+    && ln -s /chartmaker/mbtiles /chartmaker/mbtiles
 
 # Expose single application port
 EXPOSE 8500

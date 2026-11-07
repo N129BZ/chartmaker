@@ -13,8 +13,6 @@
         "outputgrayscale": false,
         "tileimagequality" : 95,
         "blendpixels" : 5,
-        "chartcachefolder": "chartcache", 
-        "mbtilesfolder": "~/mbtiles",
         "timezone": "America/Chicago",
         "debug": false,
 

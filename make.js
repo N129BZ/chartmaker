@@ -201,31 +201,8 @@ if (!fs.existsSync(workarea)) fs.mkdirSync(workarea)
 let chartcache = path.join(appdir, "chartcache");
 if (!fs.existsSync(chartcache)) fs.mkdirSync(chartcache);
 
-function resolveOutputDbFolder() {
-    let outputDbFolder = settings.mbtilesfolder;
-    if (outputDbFolder && (outputDbFolder === "~" || outputDbFolder.startsWith("~/"))) {
-        const homeDir = (isdocker && process.env.HOST_HOME) ? process.env.HOST_HOME : (process.env.HOME || "");
-        if (homeDir) {
-            outputDbFolder = path.join(homeDir, outputDbFolder.slice(1));
-        }
-    }
-    if (isdocker && outputDbFolder && fs.existsSync("/host")) {
-        if (!path.isAbsolute(outputDbFolder) && process.env.HOST_PWD) {
-            outputDbFolder = path.resolve(process.env.HOST_PWD, outputDbFolder);
-        }
-        outputDbFolder = path.isAbsolute(outputDbFolder)
-            ? path.join("/host", outputDbFolder)
-            : path.join(appdir, "config", outputDbFolder);
-    }
-    if (!outputDbFolder || !fs.existsSync(outputDbFolder)) {
-        // if the path doesnt exist, put it as a subfolder of the app path
-        outputDbFolder = path.join(appdir, "mbtiles");
-        fs.mkdirSync(outputDbFolder, { recursive: true });
-    }
-    return outputDbFolder;
-}
-
-let dbfolder = resolveOutputDbFolder();
+let dbfolder = path.join(appdir, "mbtiles");
+if (!fs.existsSync(dbfolder)) fs.mkdirSync(dbfolder, { recursive: true });
 
 let imageformat = settings.tiledrivers[settings.tiledriverindex];
 let chartworkname = "";
@@ -696,12 +673,13 @@ function processImages() {
             break;
     }
 
-    // run post processing to move the new database
-    let outputDbFolder = resolveOutputDbFolder();
-    dbfolder = outputDbFolder;
+    // ensure output database folder exists
+    if (!fs.existsSync(dbfolder)) {
+        fs.mkdirSync(dbfolder, { recursive: true });
+    }
 
     const imgfmt = imageformat.toUpperCase();
-    const mbtiles = path.join(outputDbFolder, chartname) + ".mbtiles";
+    const mbtiles = path.join(dbfolder, chartname) + ".mbtiles";
     const bigvrt = path.join(dir_3_clipped, chartname) + ".vrt";
     const infiles =`${dir_3_clipped}/*.vrt`;
     logEntry(`>> Building single chart VRT file: ${bigvrt}`);
