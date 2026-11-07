@@ -13,3 +13,5 @@ services:
     environment:
       - DOCKER=true
       - TZ=America/Chicago
+      - HOST_HOME=${HOME}
+      - HOST_PWD=${PWD}

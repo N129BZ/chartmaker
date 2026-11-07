@@ -14,7 +14,7 @@
         "tileimagequality" : 95,
         "blendpixels" : 5,
         "chartcachefolder": "chartcache", 
-        "mbtilesfolder": "/home/bro/sources/mapserver/tiles",
+        "mbtilesfolder": "../mbtiles",
         "timezone": "America/Chicago",
         "debug": false,
 

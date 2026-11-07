@@ -203,7 +203,16 @@ if (!fs.existsSync(chartcache)) fs.mkdirSync(chartcache);
 
 function resolveOutputDbFolder() {
     let outputDbFolder = settings.mbtilesfolder;
+    if (outputDbFolder && (outputDbFolder === "~" || outputDbFolder.startsWith("~/"))) {
+        const homeDir = (isdocker && process.env.HOST_HOME) ? process.env.HOST_HOME : (process.env.HOME || "");
+        if (homeDir) {
+            outputDbFolder = path.join(homeDir, outputDbFolder.slice(1));
+        }
+    }
     if (isdocker && outputDbFolder && fs.existsSync("/host")) {
+        if (!path.isAbsolute(outputDbFolder) && process.env.HOST_PWD) {
+            outputDbFolder = path.resolve(process.env.HOST_PWD, outputDbFolder);
+        }
         outputDbFolder = path.isAbsolute(outputDbFolder)
             ? path.join("/host", outputDbFolder)
             : path.join(appdir, "config", outputDbFolder);
