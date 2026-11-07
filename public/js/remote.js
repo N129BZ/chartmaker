@@ -481,7 +481,7 @@ function setDownloadButtonVisible(isVisible) {
         btnDownload.innerText = "Download Checked Items"
         btnDownload.style.visibility = "hidden";
         btnRemove.style.visibility = "visible";
-        btnSelectAll.style.display = "visible";
+        btnSelectAll.style.display = "none";
         btnProcessCharts.style.visibility = "visible";
         addItemsMenu.style.visibility = "visible";
         checkForExistingDatabases();

@@ -1,10 +1,8 @@
-html, body {
-	font-family: Arial, Helvetica, sans-serif;
-	font-size: medium;
+html,
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: medium;
     margin: 0 auto;
-}
-@media screen and (max-width: 600px) {
-  /* Apply styles here for screens 600px or narrower */
 }
 
 #application {
@@ -14,77 +12,89 @@ html, body {
     overflow-x: hidden;
     overflow-y: hidden;
 }
+
 .header {
     font-family: Arial, Helvetica, sans-serif;
-    font-size:x-large;
+    font-size: x-large;
     font-weight: bold;
     text-align: center;
     align-content: center;
     margin: 0 auto;
-    display: float;  /* inline-block; */
+    display: float;
+    /* inline-block; */
     flex-wrap: nowrap;
-    position:relative;
+    position: relative;
     width: max-content;
     left: -45px;
 }
+
 .application {
     width: 50%;
     margin: 0 auto;
 }
+
 .commandMenu {
-	font-family: Arial, Helvetica, sans-serif;
-	font-size: medium;
-	width: 342px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: medium;
+    width: 342px;
     text-align: left;
 }
+
 .chartMenu {
-	font-family: Arial, Helvetica, sans-serif;
-	font-size: medium;
-	width: 342px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: medium;
+    width: 342px;
     text-align: left;
 }
+
 .processInformation {
     outline: 3px solid rgb(67, 67, 207);
-	font-family: Arial, Helvetica, sans-serif;
-	font-size: medium;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: medium;
     font-weight: bold;
     align-content: center;
-	width: 513px;
+    width: 513px;
     text-align: center;
-    position:relative;
+    position: relative;
     top: -21px;
     left: 0px;
-    height:20px;
+    height: 20px;
     background-color: darkgreen;
     color: white;
 }
+
 .command {
-	font-family: Arial, Helvetica, sans-serif;
-	font-size: medium;
-	width: 30px;
-	text-align: left;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: medium;
+    width: 30px;
+    text-align: left;
 }
+
 .label {
-	font-family: Arial, Helvetica, sans-serif;
-	font-size: medium;
-	width: 150px;
-	text-align: right;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: medium;
+    width: 150px;
+    text-align: right;
 }
+
 .table {
-	font-family: Arial, Helvetica, sans-serif;
-	font-size: medium;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: medium;
 }
+
 #addItemsMenu {
     display: block;
 }
+
 .listitem {
     font-family: Arial, Helvetica, sans-serif;
-	font-size: medium;
+    font-size: medium;
     text-align: left;
     position: relative;
     width: 300px;
     height: 28px;
 }
+
 select.listitem {
     height: 28px;
     padding: 2px 4px;
@@ -92,11 +102,13 @@ select.listitem {
     border-radius: 3px;
     background-color: #fff;
 }
+
 select.listitem:disabled {
     background-color: #e0e0e0;
     color: #666;
     cursor: not-allowed;
 }
+
 .connectionStatus {
     font-size: 13px;
     font-weight: normal;
@@ -106,32 +118,38 @@ select.listitem:disabled {
     margin-top: 4px;
     transition: background-color 0.3s ease;
 }
+
 .status-connected {
     background-color: #2e7d32;
     color: white;
 }
+
 .status-connecting {
     background-color: #f57c00;
     color: white;
 }
+
 .status-disconnected {
     background-color: #c62828;
     color: white;
 }
+
 button:disabled {
     opacity: 0.5;
     cursor: not-allowed !important;
     transform: none !important;
     box-shadow: none !important;
 }
+
 .undobutton {
     width: 24px;
     height: 24px;
     top: 4px;
-    position:relative;
+    position: relative;
     margin-right: 2px;
     z-index: 0;
 }
+
 .udimage {
     width: 24px;
     height: 24px;
@@ -141,165 +159,183 @@ button:disabled {
     margin-right: 2px;
     z-index: 12;
 }
+
 .btnSeeCurrent {
     font-family: Arial, Helvetica, sans-serif;
-	font-size: medium;
-	font-weight: bold;
+    font-size: medium;
+    font-weight: bold;
     background-color: rgb(70, 70, 180);
     color: white;
-	border-radius:10px; 
+    border-radius: 10px;
     border-width: 1px;
-    padding:0px;
-    position:absolute;
+    padding: 0px;
+    position: absolute;
     top: 117px;
     left: 510px;
     height: 38px;
     width: 150px;
 }
+
 .btnSeeCurrent:active {
-  transform: translateY(2px);
-  box-shadow: 0 5px #666;
+    transform: translateY(2px);
+    box-shadow: 0 5px #666;
 }
+
 .btnAddCommand {
-	font-family: Arial, Helvetica, sans-serif;
-	font-size: medium;
-	font-weight: bold;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: medium;
+    font-weight: bold;
     background-color: rgb(70, 70, 180);
     color: white;
-	border-radius:10px; 
+    border-radius: 10px;
     border-width: 1px;
-    padding:0px;
-    position:relative;
+    padding: 0px;
+    position: relative;
     top: -75px;
     left: 364px;
     height: 38px;
     width: 150px;
     display: block;
 }
+
 .btnAddCommand:active {
-  transform: translateY(2px);
-  box-shadow: 0 5px #666;
+    on transform: translateY(2px);
+    box-shadow: 0 5px #666;
 }
+
 .btnUndoCommand {
     width: 24px;
     height: 24px;
     top: 4px;
-    position:relative;
+    position: relative;
     margin-right: 2px;
     z-index: 0;
 }
+
 .btnSelectAll {
     font-family: Arial, Helvetica, sans-serif;
-	font-size: medium;
-	font-weight: bold;
+    font-size: medium;
+    font-weight: bold;
     background-color: rgb(70, 70, 180);
     color: white;
-	border-radius:10px; 
+    border-radius: 10px;
     border-width: 1px;
-    padding:0px;
-	position: relative;
+    padding: 0px;
+    position: relative;
     top: 0px;
     left: 18px;
     height: 38px;
-    width: 150px;
+    on width: 150px;
     display: none;
 }
+
 .btnSelectAll:active {
-  transform: translateY(2px);
-  box-shadow: 0 5px #666;
+    transform: translateY(2px);
+    box-shadow: 0 5px #666;
 }
+
 .btnUnselectAll {
-	font-family: Arial, Helvetica, sans-serif;
-	font-size: medium;
-	font-weight: bold;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: medium;
+    font-weight: bold;
     background-color: rgb(70, 70, 180);
     color: white;
-	border-radius:10px; 
+    border-radius: 10px;
     border-width: 1px;
-    padding:0px;
-	position: relative;
+    padding: 0px;
+    position: relative;
     top: 0px;
     left: -16px;
     height: 38px;
     width: 150px;
     display: none;
 }
+
 .btnUnselectAll:active {
-  transform: translateY(2px);
-  box-shadow: 0 5px #666;
+    transform: translateY(2px);
+    box-shadow: 0 5px #666;
 }
+
 .spacer {
     height: 8px;
 }
+
 .btnReset {
     font-family: Arial, Helvetica, sans-serif;
-	font-size: medium;
-	font-weight: bold;
-    text-align:center;
+    font-size: medium;
+    font-weight: bold;
+    text-align: center;
     align-content: center;
     background-color: black;
     color: white;
-	border-radius:10px;
-    border-width: 1px; 
-    padding:0px;
+    border-radius: 10px;
+    border-width: 1px;
+    padding: 0px;
     position: relative;
     top: 0px;
     left: 0px;
     height: 38px;
     width: 102px;
 }
+
 .btnReset:active {
-  transform: translateY(2px); 
-  box-shadow: 0 5px #666; 
+    transform: translateY(2px);
+    box-shadow: 0 5px #666;
 }
+
 .btnRemove {
     font-family: Arial, Helvetica, sans-serif;
-	font-size: medium;
-	font-weight: bold;
-    background-color:yellow;
+    font-size: medium;
+    font-weight: bold;
+    background-color: yellow;
     color: black;
-	border-radius:10px; 
+    border-radius: 10px;
     border-width: 1px;
-    padding:0px;
-	position: relative;
+    padding: 0px;
+    position: relative;
     top: 0px;
     left: 18px;
     height: 38px;
     width: 200px;
 }
+
 .btnRemove:active {
-  transform: translateY(2px); 
-  box-shadow: 0 5px #666; 
+    transform: translateY(2px);
+    box-shadow: 0 5px #666;
 }
+
 .btnProcessCharts {
     font-family: Arial, Helvetica, sans-serif;
-	font-size: medium;
-	font-weight: bold;
-    background-color:rgb(70, 70, 180);
+    font-size: medium;
+    font-weight: bold;
+    background-color: rgb(70, 70, 180);
     color: #fff;
-	border-radius:10px; 
+    border-radius: 10px;
     border-width: 1px;
-    padding:0px;
+    padding: 0px;
     position: relative;
     top: 0px;
     left: 35px;
     height: 38px;
-    width:165px;
+    width: 165px;
 }
+
 .btnProcessCharts:active {
-  transform: translateY(2px);
-  box-shadow: 0 5px #666;
+    transform: translateY(2px);
+    box-shadow: 0 5px #666;
 }
+
 .buttongroup {
-    position:relative;
+    position: relative;
     display: flex;
     justify-content: space-between;
     flex-wrap: nowrap;
-    top:0px;
+    top: 0px;
     left: 0px;
-    height:40px;
+    height: 40px;
     width: 480px;
 }
+
 .btnDownload {
     font-family: Arial, Helvetica, sans-serif;
     font-size: medium;
@@ -316,10 +352,12 @@ button:disabled {
     width: 230px;
     visibility: hidden;
 }
+
 .btnDownload:active {
-  transform: translateY(2px);
-  box-shadow: 0 5px #666;
+    transform: translateY(2px);
+    box-shadow: 0 5px #666;
 }
+
 .confwindow {
     outline: 3px solid rgb(67, 67, 207);
     font-family: Arial, Helvetica, sans-serif;
@@ -331,6 +369,7 @@ button:disabled {
     overflow-x: hidden;
     overflow-y: scroll;
 }
+
 .commandtable {
     position: relative;
     font-family: Arial, Helvetica, sans-serif;
@@ -341,8 +380,9 @@ button:disabled {
     width: 490px;
     margin: 10px;
     padding: 0px;
-    display:block;
+    display: block;
 }
+
 .tablerow {
     font-family: Arial, Helvetica, sans-serif;
     font-size: medium;
@@ -350,10 +390,11 @@ button:disabled {
     height: 20px;
     width: 480px;
 }
+
 .centeredcell {
     font-family: Arial, Helvetica, sans-serif;
     font-size: medium;
-    text-align:center;
+    text-align: center;
     background-color: white;
     height: 20px;
     width: 480px;
@@ -369,8 +410,10 @@ button:disabled {
     padding: 0px;
     color: black;
     height: 20px;
-    width: 350px; /* 65%; */
+    width: 350px;
+    /* 65%; */
 }
+
 .rightcell {
     font-family: Arial, Helvetica, sans-serif;
     font-size: medium;
@@ -382,8 +425,10 @@ button:disabled {
     overflow-y: hidden;
     color: black;
     height: 20px;
-    width: 150px; /* 35%; */
+    width: 150px;
+    /* 35%; */
 }
+
 .resultspan {
     font-family: Arial, Helvetica, sans-serif;
     font-size: medium;
@@ -394,28 +439,31 @@ button:disabled {
     overflow-y: hidden;
     height: 20px;
 }
+
 .dlcheckbox {
     font-family: Arial, Helvetica, sans-serif;
-    font-size: medium; 
+    font-size: medium;
     position: relative;
     top: 0px;
     left: 0px;
     float: right;
     height: 14px;
     width: 14px;
-    padding:0px;
+    padding: 0px;
     outline: 1px solid black;
     display: none;
 }
+
 .datediv {
     font-family: Arial, Helvetica, sans-serif;
-    font-size: medium; 
+    font-size: medium;
     position: relative;
     top: 0px;
     left: 0px;
-    float:inline-start;
+    float: inline-start;
     height: 20px;
 }
+
 .normal {
     font-family: Arial, Helvetica, sans-serif;
     font-size: medium;
@@ -425,56 +473,274 @@ button:disabled {
     height: 20px;
     width: 480px;
 }
+
 .boldgreen {
     font-weight: bold;
     text-align: center;
     background-color: darkgreen;
     color: white;
 }
+
 .boldyellow {
     font-weight: bold;
     background-color: yellow;
     color: black;
 }
+
 .boldred {
     font-weight: bold;
     background-color: red;
     color: white;
 }
+
 .timingheader {
     font-weight: bold;
     background-color: lightgreen;
     color: black;
 }
+
 .largeLabel {
     font-family: Arial, Helvetica, sans-serif;
     font-size: large;
     /* text-align: left; */
 }
+
 .blueInput {
     padding-bottom: 10px;
     accent-color: rgb(70, 70, 180);
     height: 20px;
     width: 20px;
 }
+
 .running {
     animation: runningProcess 3s infinite
 }
+
 .start-animation {
-    animation: colorChange 4s infinite; 
+    animation: colorChange 4s infinite;
 }
+
 .stop-animation {
-  animation:  none !important;
-  transition: none !important;
+    animation: none !important;
+    transition: none !important;
 }
+
 /* For animations */
 @keyframes colorChange {
-    0% { background-color: darkgreen ; color: white;}
-    50% { background-color: yellow; color: black; }
-    100% { background-color: darkgreen; color: white;}
+    0% {
+        background-color: darkgreen;
+        color: white;
+    }
+
+    50% {
+        background-color: yellow;
+        color: black;
+    }
+
+    100% {
+        background-color: darkgreen;
+        color: white;
+    }
 }
+
 @keyframes runningProcess {
-    0% { background-color: yellow; color: black; }
-    50% { background-color: lightgreen; color: black; }
-    100% { background-color: yellow; color: black; }
+    0% {
+        background-color: yellow;
+        color: black;
+    }
+
+    50% {
+        background-color: lightgreen;
+        color: black;
+    }
+
+    100% {
+        background-color: yellow;
+        color: black;
+    }
+}
+
+@media screen and (max-width: 600px) {
+
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+    }
+
+    html,
+    body {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+    }
+
+    #application,
+    .application {
+        width: 100%;
+        max-width: 100%;
+        padding: 0 12px 24px 12px;
+        margin: 0 auto;
+        overflow-x: hidden;
+        overflow-y: visible;
+    }
+
+    .header {
+        width: 100%;
+        left: 0;
+        font-size: large;
+        line-height: 1.3;
+    }
+
+    .commandMenu,
+    .chartMenu {
+        width: 100%;
+    }
+
+    .listitem,
+    select.listitem {
+        width: calc(100% - 36px);
+        height: 36px;
+        font-size: 16px;
+    }
+
+    .undobutton {
+        width: 28px;
+        height: 28px;
+        top: 6px;
+    }
+
+    .udimage {
+        left: 1px;
+        top: 0px;
+    }
+
+    .btnAddCommand {
+        position: static;
+        width: 100%;
+        height: 40px;
+        margin-top: 4px;
+    }
+
+    .processInformation {
+        width: 100%;
+        height: auto;
+        min-height: 28px;
+        padding: 4px 6px;
+        top: 0;
+        left: 0;
+        margin-bottom: 4px;
+    }
+
+    .confwindow {
+        width: 100%;
+        height: 260px;
+        top: 0;
+        margin-bottom: 12px;
+    }
+
+    .commandtable {
+        width: calc(100% - 12px);
+        height: auto;
+        margin: 6px;
+        display: table;
+        table-layout: fixed;
+    }
+
+    .tablerow,
+    .centeredcell,
+    .normal {
+        width: 100%;
+        height: 24px;
+    }
+
+    .leftcell {
+        width: 65%;
+        font-size: 14px;
+        padding: 2px 4px;
+        word-break: break-word;
+    }
+
+    .rightcell {
+        width: 35%;
+        font-size: 14px;
+        padding: 2px 4px;
+    }
+
+    .dlcheckbox {
+        height: 18px;
+        width: 18px;
+    }
+
+    .buttongroup {
+        width: 100%;
+        height: auto;
+        min-height: 42px;
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 6px;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .btnReset,
+    .btnRemove,
+    .btnProcessCharts,
+    .btnSelectAll,
+    .btnUnselectAll {
+        position: static;
+        left: auto;
+        top: auto;
+        height: 40px;
+        font-size: 14px;
+        padding: 0 6px;
+    }
+
+    .btnReset {
+        width: 22%;
+        min-width: 64px;
+    }
+
+    .btnRemove {
+        width: 42%;
+    }
+
+    .btnProcessCharts {
+        width: 36%;
+    }
+
+    .btnSelectAll,
+    .btnUnselectAll {
+        width: 38%;
+    }
+
+    .btnDownload {
+        left: auto;
+        right: 0;
+        top: 0;
+        width: 74%;
+        height: 40px;
+        font-size: 14px;
+    }
+
+    .downloadExisting {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        width: 100%;
+        margin-top: 8px;
+    }
+
+    .largeLabel {
+        font-size: medium;
+        flex: 1;
+    }
+
+    .blueInput {
+        height: 24px;
+        width: 24px;
+        flex-shrink: 0;
+    }
 }
