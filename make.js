@@ -201,8 +201,22 @@ if (!fs.existsSync(workarea)) fs.mkdirSync(workarea)
 let chartcache = path.join(appdir, "chartcache");
 if (!fs.existsSync(chartcache)) fs.mkdirSync(chartcache);
 
-let dbfolder = path.join(appdir, "charts");
-if (!fs.existsSync(dbfolder)) fs.mkdirSync(dbfolder);
+function resolveOutputDbFolder() {
+    let outputDbFolder = settings.mbtilesfolder;
+    if (isdocker && outputDbFolder && fs.existsSync("/host")) {
+        outputDbFolder = path.isAbsolute(outputDbFolder)
+            ? path.join("/host", outputDbFolder)
+            : path.join(appdir, "config", outputDbFolder);
+    }
+    if (!outputDbFolder || !fs.existsSync(outputDbFolder)) {
+        // if the path doesnt exist, put it as a subfolder of the app path
+        outputDbFolder = path.join(appdir, "charts");
+        fs.mkdirSync(outputDbFolder, { recursive: true });
+    }
+    return outputDbFolder;
+}
+
+let dbfolder = resolveOutputDbFolder();
 
 let imageformat = settings.tiledrivers[settings.tiledriverindex];
 let chartworkname = "";
@@ -674,12 +688,8 @@ function processImages() {
     }
 
     // run post processing to move the new database
-    let outputDbFolder = settings.mbtilesfolder;
-    if (!fs.existsSync(outputDbFolder)) {
-        // if the path doesnt exist, put it as a subfolder of the app path
-        outputDbFolder = path.join(appdir, dbfolder); 
-        fs.mkdirSync(outputDbFolder, { recursive: true });
-    }
+    let outputDbFolder = resolveOutputDbFolder();
+    dbfolder = outputDbFolder;
 
     const imgfmt = imageformat.toUpperCase();
     const mbtiles = path.join(outputDbFolder, chartname) + ".mbtiles";

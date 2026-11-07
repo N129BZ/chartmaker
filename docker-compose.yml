@@ -9,6 +9,7 @@ services:
       - ./chartcache:/chartmaker/chartcache
       - ./charts:/chartmaker/charts
       - .:/chartmaker/config
+      - /:/host
     environment:
       - DOCKER=true
       - TZ=America/Chicago
