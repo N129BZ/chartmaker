@@ -708,8 +708,9 @@ function processImages() {
     executeCommand(`sqlite3 ${mbtiles} "${sql}"`, { encoding: 'utf-8' });
 
     // Insert the metadata attribution information
+    const attribution = settings.attribution.replaceAll("'", "''");
     sql = `INSERT OR REPLACE INTO metadata (name, value) ` + 
-          `VALUES ('attribution', '${settings.attribution}');`
+          `VALUES ('attribution', '${attribution}');`
     executeCommand(`sqlite3 ${mbtiles} "${sql}"`, { encoding: 'utf-8' });
 }
 
