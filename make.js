@@ -679,7 +679,8 @@ function processImages() {
     }
 
     const imgfmt = imageformat.toUpperCase();
-    const mbtiles = path.join(dbfolder, chartname) + ".mbtiles";
+    const mbtiles = path.join(dir_4_mbtiles, chartname) + ".mbtiles";
+    const finalmbtiles = path.join(dbfolder, chartname) + ".mbtiles";
     const bigvrt = path.join(dir_3_clipped, chartname) + ".vrt";
     const infiles =`${dir_3_clipped}/*.vrt`;
     logEntry(`>> Building single chart VRT file: ${bigvrt}`);
@@ -709,6 +710,10 @@ function processImages() {
     sql = `INSERT OR REPLACE INTO metadata (name, value) ` + 
           `VALUES ('attribution', '${attribution}');`
     executeCommand(`sqlite3 ${mbtiles} "${sql}"`, { encoding: 'utf-8' });
+
+    // Move the finished mbtiles database to the external mbtiles folder
+    logEntry(`>> Moving finished MBTILES file to: ${finalmbtiles}`);
+    executeCommand(`mv -f "${mbtiles}" "${finalmbtiles}"`);
 }
 
 /**
