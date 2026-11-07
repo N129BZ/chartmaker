@@ -696,10 +696,9 @@ function processImages() {
               `WHERE name IN ('name', 'description');`;
     executeCommand(`sqlite3 ${mbtiles} "${sql}"`, { encoding: 'utf-8' });
 
-     // Add the map attribution information to the metadata table
-    metadataDescription = "Charts by https://github.com/n129bz/chartmaker";
+    // Insert the metadata attribution information
     sql = `INSERT OR REPLACE INTO metadata (name, value) ` + 
-          `VALUES ('attribution', '${metadataDescription}');`
+          `VALUES ('attribution', '${settings.attribution}');`
     executeCommand(`sqlite3 ${mbtiles} "${sql}"`, { encoding: 'utf-8' });
 }
 
