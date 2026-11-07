@@ -219,7 +219,7 @@ function resolveOutputDbFolder() {
     }
     if (!outputDbFolder || !fs.existsSync(outputDbFolder)) {
         // if the path doesnt exist, put it as a subfolder of the app path
-        outputDbFolder = path.join(appdir, "charts");
+        outputDbFolder = path.join(appdir, "mbtiles");
         fs.mkdirSync(outputDbFolder, { recursive: true });
     }
     return outputDbFolder;
