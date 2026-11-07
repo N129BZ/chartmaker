@@ -1,7 +1,7 @@
 # Chartmaker - Create VFR and IFR digital raster chart MBTILES databases from downloaded FAA geo-referenced TIF images for OpenLayers or Leaflet mapping applications   
 
 ### Run this application in Docker     
-Create a new directory, download and place the the docker-compose.yml file in that directory and from that directory, open a terminal and enter the docker compose command ***docker compose pull && docker compose up*** (the web page will be at localhost:8500, see screen shots below.) Two local folders will be created within your new directory: ***chartcache***, and ***mbtiles***. The ***settings.json*** file will be created in ***[yourdirectoryname]***, all downloaded raster charts will be placed in ***[yourdirectoryname]/chartcache***, and the generated charts will be placed in ***[yourdirectoryname]/mbtiles***.
+Create a new directory, download and place the the docker-compose.yml file in that directory and from that directory, open a terminal and enter the docker compose command ***docker compose pull && docker compose up*** (the web server default is ***localhost:8500***, see screen shots below.) Two local folders will be created within your new directory: ***chartcache***, and ***mbtiles***. The ***settings.json*** file will be created in ***[yourdirectoryname]***, all downloaded raster charts will be placed in ***[yourdirectoryname]/chartcache***, and the generated charts will be placed in ***[yourdirectoryname]/mbtiles***.
 
 ### Check out my chart viewing application at https://github.com/n129bz/mapclient
  Shows Metars, TAFs, Pireps, Animated Weather, Airport Information including frequencies and runways - and more! Also check out the companion express web server application at https://github.com/n129bz/mapserver    
