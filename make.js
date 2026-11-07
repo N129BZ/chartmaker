@@ -662,8 +662,16 @@ function processImages() {
             break;
     }
 
+    // run post processing to move the new database
+    let outputDbFolder = settings.mbtilesfolder;
+    if (!fs.existsSync(outputDbFolder)) {
+        // if the path doesnt exist, put it as a subfolder of the app path
+        outputDbFolder = path.join(appdir, dbfolder); 
+        fs.mkdirSync(outputDbFolder, { recursive: true });
+    }
+
     const imgfmt = imageformat.toUpperCase();
-    const mbtiles = path.join(dir_4_mbtiles, chartname) + ".mbtiles";
+    const mbtiles = path.join(outputDbFolder, chartname) + ".mbtiles";
     const bigvrt = path.join(dir_3_clipped, chartname) + ".vrt";
     const infiles =`${dir_3_clipped}/*.vrt`;
     logEntry(`>> Building single chart VRT file: ${bigvrt}`);
@@ -693,18 +701,6 @@ function processImages() {
     sql = `INSERT OR REPLACE INTO metadata (name, value) ` + 
           `VALUES ('attribution', '${metadataDescription}');`
     executeCommand(`sqlite3 ${mbtiles} "${sql}"`, { encoding: 'utf-8' });
-
-    // run post processing to move the new database
-    let outputDbFolder = settings.mbtilesfolder;
-    if (!fs.existsSync(outputDbFolder)) {
-        // if the path doesnt exist, put it as a subfolder of the app path
-        outputDbFolder = path.join(appdir, dbfolder); 
-        fs.mkdirSync(outputDbFolder, { recursive: true });
-    }
-    outputDbFolder = path.join(outputDbFolder, chartname) + ".mbtiles";
-    cmd = `mv ${mbtiles} ${outputDbFolder}`;
-    logEntry(`>> Executing post processing command: ${cmd}`);
-    executeCommand(cmd);
 }
 
 /**
