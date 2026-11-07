@@ -671,7 +671,7 @@ function processImages() {
     executeCommand(cmd);
 
     logEntry(`>> Creating MBTILES database file at: ${mbtiles}`);
-    cmd = `gdal_translate ${bigvrt} ${mbtiles} -of MBTILES -mo TILES_PRODUCER="N129BZ Chartmaker" ` + 
+    cmd = `gdal_translate ${bigvrt} ${mbtiles} -of MBTILES ` + 
           `--config GDAL_CACHEMAX 4096 --config GDAL_MAX_DATASET_POOL_SIZE 500 ` +
           `--config OGR_SQLITE_JOURNALMODE MEMORY --config OGR_SQLITE_SYNCHRONOUS OFF ` +
           `-co TILE_FORMAT=${imgfmt} -co QUALITY=${settings.tileimagequality}`;
@@ -679,21 +679,26 @@ function processImages() {
 
     logEntry(`>> Adding gdaladdo overviews to ${mbtiles}`);
     configargs =  `--config GDAL_CACHEMAX 4096 --config GDAL_NUM_THREADS ALL_CPUS`;
-    cmd = `gdaladdo -r average ${configargs} ${mbtiles} ${settings.overviewrange}`;
+    cmd = `gdaladdo -r average ${configargs} ${mbtiles}`;
     executeCommand(cmd)
 
-    // Update the metadata table to remove underscore characters from chart name and description
+    // Update the metadata table to remove underscore characters from chart name
     metadataDescription = chartname.replaceAll("_", " ");
     let sql = `UPDATE metadata SET value = '${metadataDescription}' ` + 
-              `WHERE name IN ('name', 'description') RETURNING name, value`;
-    const output = execSync(`sqlite3 -json ${mbtiles} "${sql}"`, { encoding: 'utf-8' });
-    console.log(`UPDATE RESULT\n: ${output}`);
+              `WHERE name IN ('name', 'description');`;
+    executeCommand(`sqlite3 ${mbtiles} "${sql}"`, { encoding: 'utf-8' });
+
+     // Add the map attribution information to the metadata table
+    metadataDescription = "Charts by https://github.com/n129bz/chartmaker";
+    sql = `INSERT OR REPLACE INTO metadata (name, value) ` + 
+          `VALUES ('attribution', '${metadataDescription}');`
+    executeCommand(`sqlite3 ${mbtiles} "${sql}"`, { encoding: 'utf-8' });
 
     // run post processing to move the new database
-    let outputDbFolder = dbfolder;
+    let outputDbFolder = settings.mbtilesfolder;
     if (!fs.existsSync(outputDbFolder)) {
         // if the path doesnt exist, put it as a subfolder of the app path
-        outputDbFolder = path.join(appdir, outputDbFolder);
+        outputDbFolder = path.join(appdir, dbfolder); 
         fs.mkdirSync(outputDbFolder, { recursive: true });
     }
     outputDbFolder = path.join(outputDbFolder, chartname) + ".mbtiles";
