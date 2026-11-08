@@ -1,7 +1,7 @@
 
 import fs from 'node:fs';
 import http from 'node:http';
-import { execSync, spawn } from 'node:child_process';
+import { exec, execSync, spawn } from 'node:child_process';
 import readlineSync from 'readline-sync';
 import path from 'node:path';
 import express from 'express';
@@ -80,6 +80,119 @@ class ProcessTime {
         return ttime;
     }
 };
+
+class ChartTaskContext {
+    constructor(workarea, chartworkname, chartname, charturl, clippedShapeFolder, isifrchart = false) {
+        this.chartworkname = chartworkname;
+        this.chartname = chartname;
+        this.charturl = charturl;
+        this.clippedShapeFolder = clippedShapeFolder;
+        this.isifrchart = isifrchart;
+        this.metadataDescription = chartname.replaceAll("_", " ");
+        this.chartfolder = path.join(workarea, chartname);
+        this.dir_1_unzipped = path.join(this.chartfolder, "1_unzipped");
+        this.dir_2_expanded = path.join(this.chartfolder, "2_expanded");
+        this.dir_3_clipped = path.join(this.chartfolder, "3_clipped");
+        this.dir_4_mbtiles = path.join(this.chartfolder, "4_mbtiles");
+    }
+}
+
+class JobQueue {
+    constructor() {
+        this.queue = [];
+        this.currentJob = null;
+        this.currentChart = "";
+    }
+
+    get isBusy() {
+        return this.currentJob !== null;
+    }
+
+    enqueue(message) {
+        const jobId = `job-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        const job = {
+            jobId,
+            uid: message.uid || "",
+            commandlist: message.commandlist || [],
+            message,
+            status: "queued",
+            createdAt: new Date(new Date().toLocaleString()),
+            startedAt: null,
+            timings: new Map()
+        };
+
+        this.queue.push(job);
+        const position = this.queue.length;
+        const wasBusy = this.isBusy;
+
+        if (wasBusy) {
+            let msg = new AppMessage(AppMessage.mtCommandResponse);
+            msg.uid = job.uid;
+            msg.payload = "queued";
+            msg.items = [{ jobId, position }];
+            sendMessageToClients(msg, job.uid);
+        } else {
+            this.processNext();
+        }
+
+        return {
+            status: wasBusy ? "queued" : "accepted",
+            jobId,
+            position: wasBusy ? position : 0
+        };
+    }
+
+    notifyWaitingClients() {
+        this.queue.forEach((queuedJob, index) => {
+            const position = index + 1;
+            let msg = new AppMessage(AppMessage.mtCommandResponse);
+            msg.uid = queuedJob.uid;
+            msg.payload = "queued";
+            msg.items = [{ jobId: queuedJob.jobId, position }];
+            sendMessageToClients(msg, queuedJob.uid);
+        });
+    }
+
+    async processNext() {
+        if (this.currentJob !== null || this.queue.length === 0) {
+            return;
+        }
+
+        const job = this.queue.shift();
+        this.currentJob = job;
+        inMakeLoop = true;
+        job.status = "running";
+        job.startedAt = new Date(new Date().toLocaleString());
+        this.notifyWaitingClients();
+
+        try {
+            await executeMakeJob(job);
+            job.status = "completed";
+        } catch (err) {
+            job.status = "failed";
+            console.error(`Error executing job ${job.jobId}:`, err);
+        } finally {
+            this.currentJob = null;
+            this.currentChart = "";
+            inMakeLoop = this.queue.length > 0;
+            if (this.queue.length > 0) {
+                this.processNext();
+            }
+        }
+    }
+
+    getStatus() {
+        return {
+            running: this.isBusy,
+            chartdate: chartdate,
+            currentChart: this.currentChart || chartname || "",
+            currentJobId: this.currentJob ? this.currentJob.jobId : null,
+            queueLength: this.queue.length
+        };
+    }
+}
+
+const jobQueue = new JobQueue();
 
 // create websocket variables
 const connections = new Map();
