@@ -52,13 +52,17 @@ body {
     font-family: Arial, Helvetica, sans-serif;
     font-size: medium;
     font-weight: bold;
-    align-content: center;
+    box-sizing: border-box;
     width: 513px;
+    height: auto;
+    min-height: 28px;
+    padding: 4px 8px;
+    line-height: 1.3;
+    overflow-wrap: break-word;
     text-align: center;
     position: relative;
     top: -21px;
     left: 0px;
-    height: 20px;
     background-color: darkgreen;
     color: white;
 }

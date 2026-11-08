@@ -220,7 +220,7 @@ function startWebsocketClient() {
                         }
                         else if (message.payload === "queued") {
                             let position = (message.items && message.items[0] && message.items[0].position) || 1;
-                            message.payload = `Server response: job queued (position #${position}), waiting for current job to finish...`;
+                            message.payload = `Server response: job queued (position #${position}), waiting for prior job to finish...`;
                             message.css = ["boldyellow"];
                             updateCommandBody(message);
                             blinkSendButton(true);
