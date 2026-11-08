@@ -218,6 +218,17 @@ function startWebsocketClient() {
                             message.payload = "Server response: chart processing has started...";
                             updateCommandBody(message);
                         }
+                        else if (message.payload === "queued") {
+                            let position = (message.items && message.items[0] && message.items[0].position) || 1;
+                            message.payload = `Server response: job queued (position #${position}), waiting for current job to finish...`;
+                            message.css = ["boldyellow"];
+                            updateCommandBody(message);
+                            blinkSendButton(true);
+                            btnRemove.style.visibility = "hidden";
+                            btnSelectAll.style.visibility = "hidden";
+                            btnUnselectAll.style.visibility = "hidden";
+                            btnReset.style.visibility = "hidden";
+                        }
                         else if (message.payload === "busy") {
                             message.payload = "Server response: another processing job is already in progress";
                             message.css = ["boldyellow"];
@@ -351,6 +362,9 @@ function resetEverything() {
     blinking = false;
     btnProcessCharts.innerText = "Process Charts";
     btnProcessCharts.classList.remove("start-animation");
+    btnProcessCharts.style.visibility = "visible";
+    processInfo.classList.remove("boldyellow", "boldred");
+    processInfo.textContent = "";
     commandpackage = {
         type: "commandpackage",
         commandlist: [],
@@ -368,18 +382,36 @@ async function sendCommandsToServer() {
         addItemsMenu.style.display = "none";
         inResponseView = true;
         blinkSendButton(true);
-        const response = await fetch(URL_POST_MAKE, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(commandpackage)
-        });
-        if (response.ok) {
-            resetCommandOptions();
-            resetChartOptions();
-            btnRemove.style.visibility = "hidden";
-            btnSelectAll.style.visibility = "hidden";
-            btnUnselectAll.style.visibility = "hidden";
-            btnReset.style.visibility = "hidden";
+        try {
+            const response = await fetch(URL_POST_MAKE, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(commandpackage)
+            });
+            if (response.ok) {
+                const resData = await response.json().catch(() => null);
+                if (resData && resData.status === "queued") {
+                    processInfo.classList.remove("boldred");
+                    processInfo.classList.add("boldyellow");
+                    processInfo.textContent = `Server response: job queued (position #${resData.position || 1}), waiting for current job to finish...`;
+                }
+                resetCommandOptions();
+                resetChartOptions();
+                btnRemove.style.visibility = "hidden";
+                btnSelectAll.style.visibility = "hidden";
+                btnUnselectAll.style.visibility = "hidden";
+                btnReset.style.visibility = "hidden";
+            } else {
+                blinkSendButton(false);
+                processInfo.classList.remove("boldyellow");
+                processInfo.classList.add("boldred");
+                processInfo.textContent = `Server response: HTTP error ${response.status}`;
+            }
+        } catch (err) {
+            blinkSendButton(false);
+            processInfo.classList.remove("boldyellow");
+            processInfo.classList.add("boldred");
+            processInfo.textContent = `Server response: network error (${err.message})`;
         }
     }
 }
@@ -389,11 +421,15 @@ async function sendCommandsToServer() {
  * @param {*} message 
  */
 function postTimingMessaqe(message) {
-    processInfo.classList.add(...message.css);
+    processInfo.classList.remove("boldyellow", "boldred");
+    if (message.css && message.css.length > 0) {
+        processInfo.classList.add(...message.css);
+    }
     processInfo.textContent = `Total time for chart processing: ${message.payload}`;
     resetCommandOptions();
     resetChartOptions();
     commandpackage = new AppMessage(AppMessage.mtCommandPackage);
+    blinkSendButton(false);
 
     processitems.forEach((item) => {
         let ckbid = `${dlchkPrefix}-${item.rowindex}`;
@@ -580,7 +616,10 @@ function blinkSendButton(isVisible) {
  */
 function updateCommandBody(message) {
     if (message.type === "commandresponse") {
-        processInfo.classList.add(...message.css);
+        processInfo.classList.remove("boldyellow", "boldred");
+        if (message.css && message.css.length > 0) {
+            processInfo.classList.add(...message.css);
+        }
         processInfo.textContent = message.payload;
     }
     else {

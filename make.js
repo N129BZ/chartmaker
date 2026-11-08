@@ -372,10 +372,10 @@ if (useWebServer === false) {
             enterWebserverMode();
         }
         else if (sarg === "area-all") {
-            processAllAreas();
+            await processAllAreas();
         }
         else if (sarg === "full-all") {
-            processFulls();
+            await processFulls();
         }
         else if (sarg.search("area-single") > -1) {
             try {
@@ -383,7 +383,7 @@ if (useWebServer === false) {
                 chart = settings.areachartlist[nm][1].replace("_", " ");
                 console.log(`Processing area chart: ${chart}`);
                 parray.push(nm);
-                processSingles();
+                await processSingles();
             }
             catch {
                 console.log("Index error in argument, format is: area-single=X where X is a valid vfr chart index number (see settings.json.) Exiting chartmaker!");
@@ -397,7 +397,7 @@ if (useWebServer === false) {
                 if (chart === "DDECUS") chart = settings.fullchartlist[nm][2].replace("_", " ");
                 console.log(`Processing full chart: ${chart}`);
                 parray.push(nm);
-                processFulls();
+                await processFulls();
             }
             catch {
                 console.log("Index error in argument, format is: full-single=X where X is a valid full chart index number (see settings.json.) Exiting chartmaker!");
@@ -418,16 +418,16 @@ if (useWebServer === false) {
                                 "Your selection: "); 
         switch (response) {
             case "1":
-                processOneArea();
+                await processOneArea();
                 break;
             case "2":
-                processAllAreas();
+                await processAllAreas();
                 break;
             case "3":
-                processOneFull();
+                await processOneFull();
                 break;
             case "4":
-                processAllFulls();
+                await processAllFulls();
                 break;
             case "5":
                 enterWebserverMode();
@@ -443,7 +443,7 @@ if (useWebServer === false) {
     }
 }
 
-function processOneArea(area = -1) {
+async function processOneArea(area = -1) {
     if (area == -1) {
         let lst = "\nSelect the chart number you want to process from this list\r\n\r\n";
         for (let i = 0; i <  settings.areachartlist.length; i++) {
@@ -460,7 +460,7 @@ function processOneArea(area = -1) {
     try {
         if (nm >= 0 && nm < settings.areachartlist.length) {
             parray.push(nm);
-            processSingles();
+            await processSingles();
         }
         else {
             console.log("Invalid response, exiting chartmaker!");
@@ -472,28 +472,71 @@ function processOneArea(area = -1) {
     }
 }
 
-function processAllAreas() {    
+async function processAllAreas() {    
     console.log("\r\nProcessing all 53 chart areas...\r\n");
     for (let i = 0; i < 53; i++) {
         parray.push(i);
     }
-    processSingles();
+    await processSingles();
 }
 
-function processSingles(msgid = -1) {
-    for (let idx = 0; idx < parray.length; idx++) {
-        const cpt = new ProcessTime(chartname);
-        timings.set(chartname, cpt);
-        console.log(`${cpt.startdate}\n`);
-        let doProcessing = true;
-        chartworkname = settings.areachartlist[parray[idx]];
-        chartname = chartworkname;
-        clippedShapeFolder = path.join(appdir, "clipshapes", "sectional");
-        chartfolder = path.join(workarea, chartworkname);
-        charturl = `${settings.vfrindividualtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
-        console.log(charturl);
+function createAreaChartContext(opt) {
+    const chartworkname = settings.areachartlist[opt];
+    const chartname = chartworkname;
+    const clippedShapeFolder = path.join(appdir, "clipshapes", "sectional");
+    const charturl = `${settings.vfrindividualtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
+    return new ChartTaskContext(workarea, chartworkname, chartname, charturl, clippedShapeFolder, false);
+}
 
-        let chartdbfile = path.join(dbfolder, `${chartname}.mbtiles`);
+function createFullChartContext(opt) {
+    const chart = settings.fullchartlist[opt];
+    const charttype = chart[1];
+    let lcasename = chart[0].toLowerCase();
+    const chartworkname = chart[0];
+    let isifrchart = false;
+    let chartname = "";
+    let charturl = "";
+    let clippedShapeFolder = "";
+
+    if (charttype === "ifr") {
+        isifrchart = true;
+        lcasename = chart[2].toLowerCase();
+        charturl = settings.ifrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
+        clippedShapeFolder = path.join(appdir, "clipshapes", lcasename);
+        chartname = chart[2]; // use alias value for IFR
+    } else {
+        if (lcasename === "us_vfr_wall_planning") {
+            charturl = `${settings.usvfrwallplanningtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
+        } else {
+            charturl = settings.vfrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
+        }
+        clippedShapeFolder = path.join(appdir, "clipshapes", lcasename);
+        chartname = chartworkname;
+    }
+    return new ChartTaskContext(workarea, chartworkname, chartname, charturl, clippedShapeFolder, isifrchart);
+}
+
+async function processSingles(msgid = -1, indices = null, timingsMap = timings) {
+    const listToProcess = indices !== null ? indices : parray;
+    for (let idx = 0; idx < listToProcess.length; idx++) {
+        const areaOpt = listToProcess[idx];
+        const ctx = createAreaChartContext(areaOpt);
+
+        chartworkname = ctx.chartworkname;
+        chartname = ctx.chartname;
+        chartfolder = ctx.chartfolder;
+        clippedShapeFolder = ctx.clippedShapeFolder;
+        charturl = ctx.charturl;
+        isifrchart = ctx.isifrchart;
+        metadataDescription = ctx.metadataDescription;
+
+        const cpt = new ProcessTime(ctx.chartname);
+        timingsMap.set(ctx.chartname, cpt);
+        console.log(`${cpt.startdate}\n`);
+        console.log(ctx.charturl);
+
+        let doProcessing = true;
+        let chartdbfile = path.join(dbfolder, `${ctx.chartname}.mbtiles`);
         if (fs.existsSync(chartdbfile)) {
             let stat = fs.statSync(chartdbfile);    
             const birthDate = stat.birthtime;
@@ -507,9 +550,10 @@ function processSingles(msgid = -1) {
             }
         }
         if (doProcessing) {
-            runProcessing();
+            await runProcessing(ctx);
         }
         
+        cpt.calculateProcessTime();
         console.log(`${cpt.totaltime}\r\n`);
         
         // if this was a single chart process request,
@@ -520,7 +564,7 @@ function processSingles(msgid = -1) {
     }
 }
 
-function processOneFull() {
+async function processOneFull() {
     let lst = "\nSelect the full chart number you want to process from this list\r\n\r\n";
     let i = 1;
     settings.fullchartlist.forEach((fullchart) => {
@@ -542,94 +586,77 @@ function processOneFull() {
 	const cpt = new ProcessTime(chartname);
 	timings.set(chartname, cpt);
     console.log(`${cpt.startdate}\n`);
-    processFulls();
+    await processFulls();
 }
 
-function processAllFulls() {
+async function processAllFulls() {
     settings.fullchartlist.forEach((fullchart) => {
         parray.push(settings.fullchartlist.indexOf(fullchart))
     });
     const cpt = new ProcessTime(chartname);
     timings.set(chartname, cpt);
     console.log(`${cpt.startdate}\n`);
-    processFulls();
+    await processFulls();
 }
 
-function processFulls(msgid = -1) {
-    for (let idx = 0; idx < parray.length; idx++) { 
-        const cpt = new ProcessTime(chartname);
-        timings.set(chartname, cpt);
-        const chart = settings.fullchartlist[parray[idx]];
-        const charttype = chart[1];
-        let lcasename = chart[0].toLowerCase();
+async function processFulls(msgid = -1, indices = null, timingsMap = timings) {
+    const listToProcess = indices !== null ? indices : parray;
+    for (let idx = 0; idx < listToProcess.length; idx++) { 
+        const fullOpt = listToProcess[idx];
+        const ctx = createFullChartContext(fullOpt);
 
-        chartworkname = chart[0]; 
-        
-        if (charttype === "ifr") {
-            isifrchart = true;
-            lcasename = chart[2].toLowerCase();
-            charturl = settings.ifrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
-            clippedShapeFolder = path.join(appdir, "clipshapes", lcasename);
-            chartname = chart[2]; // use alias value for IFR
-            chartfolder = path.join(workarea, chartname);
-        }
-        else { // vfr
-            if (lcasename === "us_vfr_wall_planning") {
-                charturl = `${settings.usvfrwallplanningtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
-            }
-            else {
-                charturl = settings.vfrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
-            }
-            clippedShapeFolder = path.join(appdir, "clipshapes", lcasename);
-            chartname = chartworkname;
-            chartfolder = path.join(workarea, chartworkname);
-        }
+        chartworkname = ctx.chartworkname;
+        chartname = ctx.chartname;
+        chartfolder = ctx.chartfolder;
+        clippedShapeFolder = ctx.clippedShapeFolder;
+        charturl = ctx.charturl;
+        isifrchart = ctx.isifrchart;
+        metadataDescription = ctx.metadataDescription;
 
-        metadataDescription = chartname.replaceAll("_", " ");
+        const cpt = new ProcessTime(ctx.chartname);
+        timingsMap.set(ctx.chartname, cpt);
+        console.log(`${cpt.startdate}\n`);
 
-        let chartdbfile = path.join(dbfolder, `${chartname}.mbtiles`);
+        let chartdbfile = path.join(dbfolder, `${ctx.chartname}.mbtiles`);
         if (!fs.existsSync(chartdbfile)) {
-            runProcessing();
+            await runProcessing(ctx);
         }
         
+        cpt.calculateProcessTime();
         if (msgid > -1) {
             return cpt;
         }
     };
 }
 
-function generateGeoTIFF() {
+async function generateGeoTIFF() {
     let question = "Enter the full path and filename of your mbtiles file: ";
     let mbtilesfile = processPrompt(question);
     if (fs.existsSync(mbtilesfile)) {
         question = "Enter the full path and filename of the geoTIFF that will be created: "
         let geotiff = processPrompt(question);
         cmd = `gdal_translate -of GTiff -co BIGTIFF=YES ${mbtilesfile} ${geotiff}`;
-        executeCommand(cmd);
+        await execCommandAsync(cmd);
     }
     else {
         console.log("ERROR: The specified mbtiles file does not exist, exiting chartmaker!");
     }
 }
 
-function runProcessing() {
-    dir_1_unzipped = path.join(chartfolder, "1_unzipped");
-    dir_2_expanded = path.join(chartfolder, "2_expanded");
-    dir_3_clipped = path.join(chartfolder, "3_clipped");
-    dir_4_mbtiles = path.join(chartfolder, "4_mbtiles");
-    
-    setupEnvironment();
-    downloadCharts();
-    unzipCharts();
-    normalizeChartNames();
-    processImages();
+async function runProcessing(ctx = null) {
+    if (!ctx) {
+        ctx = new ChartTaskContext(workarea, chartworkname, chartname, charturl, clippedShapeFolder, isifrchart);
+    }
+    setupEnvironment(ctx);
+    await downloadCharts(ctx);
+    await unzipCharts(ctx);
+    normalizeChartNames(ctx);
+    await processImages(ctx);
     
     if (settings.cleanprocessfolders === true) {
-        cmd = `rm -rf ${workarea}`
-        executeCommand(cmd);
-
-        cmd = `mkdir ${workarea}`
-        executeCommand(cmd);
+        if (fs.existsSync(ctx.chartfolder)) {
+            fs.rmSync(ctx.chartfolder, { recursive: true, force: true });
+        }
     }   
     
     if (!useWebServer) {
@@ -640,30 +667,39 @@ function runProcessing() {
 /**
  * Generate all of the working folders for image processing
  */
-function setupEnvironment() {
-    
+function setupEnvironment(ctx = null) {
+    const cfolder = ctx ? ctx.chartfolder : chartfolder;
+    const d1 = ctx ? ctx.dir_1_unzipped : dir_1_unzipped;
+    const d2 = ctx ? ctx.dir_2_expanded : dir_2_expanded;
+    const d3 = ctx ? ctx.dir_3_clipped : dir_3_clipped;
+    const d4 = ctx ? ctx.dir_4_mbtiles : dir_4_mbtiles;
+    const cname = ctx ? ctx.chartname : chartname;
+
     // make sure the working folder for this chart is cleared out
-    if (fs.existsSync(chartfolder)) {
-        fs.rmSync(chartfolder, { recursive: true, force: true });
+    if (fs.existsSync(cfolder)) {
+        fs.rmSync(cfolder, { recursive: true, force: true });
     }
 
     // Create the base workarea chart folder
-    fs.mkdirSync(chartfolder);
+    fs.mkdirSync(cfolder, { recursive: true });
 
     // OK, now create all of the workarea sub folders
-    if (!fs.existsSync(dir_1_unzipped)) fs.mkdirSync(dir_1_unzipped);
-    if (!fs.existsSync(dir_2_expanded)) fs.mkdirSync(dir_2_expanded);
-    if (!fs.existsSync(dir_3_clipped)) fs.mkdirSync(dir_3_clipped);
-    if (!fs.existsSync(dir_4_mbtiles)) fs.mkdirSync(dir_4_mbtiles);
-    if (settings.logtofile) setupDebugLog(chartfolder);
-    logEntry("Created all workarea subfolders");
+    if (!fs.existsSync(d1)) fs.mkdirSync(d1, { recursive: true });
+    if (!fs.existsSync(d2)) fs.mkdirSync(d2, { recursive: true });
+    if (!fs.existsSync(d3)) fs.mkdirSync(d3, { recursive: true });
+    if (!fs.existsSync(d4)) fs.mkdirSync(d4, { recursive: true });
+    if (settings.logtofile) setupDebugLog(cfolder);
+    logEntry(`Created all workarea subfolders for ${cname}`);
 }
 
 /**
  * Get the desired chart zip file from the FAA's digital sources URL
  */
-function downloadCharts() {
-    let chartzip = path.join(chartcache, `${chartworkname}-${chartdate}.zip`);
+async function downloadCharts(ctx = null) {
+    const cworkname = ctx ? ctx.chartworkname : chartworkname;
+    const curl = ctx ? ctx.charturl : charturl;
+
+    let chartzip = path.join(chartcache, `${cworkname}-${chartdate}.zip`);
     if (fs.existsSync(chartzip)) {
         logEntry(`Using cached ${chartzip}`);
         return;
@@ -671,88 +707,88 @@ function downloadCharts() {
     else { 
         let oldfiles = fs.readdirSync(chartcache);
         for (let i = 0; i < oldfiles.length; i++) {
-            if (oldfiles[i].startsWith(chartworkname)) {
+            if (oldfiles[i].startsWith(cworkname)) {
                 fs.rmSync(path.join(chartcache, oldfiles[i]));
                 break;
             }
         }
         logEntry(`Downloading ${chartzip}`);
-        cmd = `curl ${charturl} -v -o ${chartzip}`;
-        executeCommand(cmd, true);
+        const dlcmd = `curl ${curl} -v -o ${chartzip}`;
+        await execCommandAsync(dlcmd, true);
     }
 }
 
 /**
  * Unzip chart file
  */
-function unzipCharts() {
-    let chartzip = path.join(chartcache, `${chartworkname}-${chartdate}.zip`);
-    cmd = `unzip -o ${chartzip} -x '*.htm' -d ${dir_1_unzipped}`;
-    executeCommand(cmd);
+async function unzipCharts(ctx = null) {
+    const cworkname = ctx ? ctx.chartworkname : chartworkname;
+    const cname = ctx ? ctx.chartname : chartname;
+    const d1 = ctx ? ctx.dir_1_unzipped : dir_1_unzipped;
+    const isifr = ctx ? ctx.isifrchart : isifrchart;
 
-    if (isifrchart) { // we now have a work area full of IFR zip files
-        let zipfiles = fs.readdirSync(dir_1_unzipped);
-        zipfiles.forEach(zipfile => {
-            let srchstr = chartname === "Enroute_High" ? "ENR_H" : "ENR_L" // only unzip the indicated type
+    let chartzip = path.join(chartcache, `${cworkname}-${chartdate}.zip`);
+    let unzipcmd = `unzip -o ${chartzip} -x '*.htm' -d ${d1}`;
+    await execCommandAsync(unzipcmd);
+
+    if (isifr) { // we now have a work area full of IFR zip files
+        let zipfiles = fs.readdirSync(d1);
+        for (const zipfile of zipfiles) {
+            let srchstr = cname === "Enroute_High" ? "ENR_H" : "ENR_L"; // only unzip the indicated type
             if (zipfile.search(srchstr) > -1) {
-                cmd = `unzip -o ${path.join(dir_1_unzipped, zipfile)} -d ${dir_1_unzipped}`;
-                executeCommand(cmd);
+                let ifrcmd = `unzip -o ${path.join(d1, zipfile)} -d ${d1}`;
+                await execCommandAsync(ifrcmd);
             }
-        });
+        }
     }
 
     // now clean out all of the irrelevant files...
-    cmd = `rm -r -f ${path.join(dir_1_unzipped, "*.pdf")}`;
-    executeCommand(cmd);
-
-    cmd = `rm -r -f ${path.join(dir_1_unzipped, "*.htm")}`;
-    executeCommand(cmd);
-
-    cmd = `rm -r -f ${path.join(dir_1_unzipped, "*.zip")}`;
-    executeCommand(cmd);
-
-    // This chart is a recent addition to the zip file from the FAA.
-    // It does not have a processing option, but as it is included 
-    // in the .zip file, it has no matching .tfw file with wsgbounds 
-    // and crashes the process, so we will just eliminate it.
-    // Maybe in the future it could be added as a separate option.
-    cmd = `rm -r -f "${path.join(dir_1_unzipped, 'Caribbean Planning Chart.tif')}"`;
-    executeCommand(cmd);
+    await executeCommand(`rm -r -f ${path.join(d1, "*.pdf")}`);
+    await executeCommand(`rm -r -f ${path.join(d1, "*.htm")}`);
+    await executeCommand(`rm -r -f ${path.join(d1, "*.zip")}`);
+    await executeCommand(`rm -r -f "${path.join(d1, 'Caribbean Planning Chart.tif')}"`);
 }
 
 /** 
  * Clean up chart tif names by converting spaces and dashes to underscores
  */
-function normalizeChartNames() {
-    let files = fs.readdirSync(dir_1_unzipped);
-    files.forEach((file) => {
+function normalizeChartNames(ctx = null) {
+    const d1 = ctx ? ctx.dir_1_unzipped : dir_1_unzipped;
+    let files = fs.readdirSync(d1);
+    for (const file of files) {
         if (file.endsWith(".tif") || file.endsWith(".tfw") || file.endsWith(".tfwx")) {
             let newfile = normalizeFileName(file);
-            fs.renameSync(path.join(dir_1_unzipped, file), path.join(dir_1_unzipped, newfile));
+            fs.renameSync(path.join(d1, file), path.join(d1, newfile));
         }
-    });
+    }
 }
 
 /**
  * Perform GDAL operations on all the unzipped chart tif images 
  */
-function processImages() {
-    const chartareas = buildChartNameArray();
+async function processImages(ctx = null) {
+    const chartareas = buildChartNameArray(ctx);
     const cblend = settings.blendpixels;
+    const shapeFolder = ctx ? ctx.clippedShapeFolder : clippedShapeFolder;
+    const d1 = ctx ? ctx.dir_1_unzipped : dir_1_unzipped;
+    const d2 = ctx ? ctx.dir_2_expanded : dir_2_expanded;
+    const d3 = ctx ? ctx.dir_3_clipped : dir_3_clipped;
+    const d4 = ctx ? ctx.dir_4_mbtiles : dir_4_mbtiles;
+    const cname = ctx ? ctx.chartname : chartname;
 
-    chartareas.forEach((area) => {
+    for (const area of chartareas) {
         logEntry(`* chart ${area}`);
         const shpfile = `${area}.shp`;
         const vrtfile = `${area}.vrt`;
         const srcfile = `${area}.tif`;
-        const shapefile = path.join(clippedShapeFolder, shpfile);
-        const sourcetif = path.join(dir_1_unzipped, srcfile);
-        const expanded = path.join(dir_2_expanded, vrtfile);
-        const clipped = path.join(dir_3_clipped, vrtfile);
+        const shapefile = path.join(shapeFolder, shpfile);
+        const sourcetif = path.join(d1, srcfile);
+        const expanded = path.join(d2, vrtfile);
+        const clipped = path.join(d3, vrtfile);
         
         // determine if RGB expansion is required
-        cmd = `gdalinfo -json "${sourcetif}"`;
-        const infojson = JSON.parse(execSync(cmd));
+        let ginfoCmd = `gdalinfo -json "${sourcetif}"`;
+        const infojson = JSON.parse(await execCommandAsync(ginfoCmd, false));
         let expandopt = "";
         if (infojson.bands.length === 1) {
             if (settings.outputgrayscale) {
@@ -763,14 +799,14 @@ function processImages() {
         }
         
         logEntry(`>> gdal_translate ${sourcetif}`);
-        cmd = `gdal_translate -strict -of vrt -ovr NONE ${expandopt} ${sourcetif} ${expanded}`;
-        executeCommand(cmd);
+        let transCmd = `gdal_translate -strict -of vrt -ovr NONE ${expandopt} ${sourcetif} ${expanded}`;
+        await execCommandAsync(transCmd);
 
         logEntry(`>> gdalwarp warping and clipping ${clipped} using shapefile ${shapefile}`);
-        cmd = `gdalwarp -t_srs EPSG:3857 -dstalpha --config GDAL_CACHEMAX 512 ` + 
+        let warpCmd = `gdalwarp -t_srs EPSG:3857 -dstalpha --config GDAL_CACHEMAX 512 ` + 
               `-multi -cblend ${cblend} -cutline ${shapefile} -crop_to_cutline ${expanded} ${clipped}`;
-        executeCommand(cmd);
-    });
+        await execCommandAsync(warpCmd);
+    }
 
     // setup formatting arguments for overviews        
     let configargs = "";
@@ -792,49 +828,50 @@ function processImages() {
     }
 
     const imgfmt = imageformat.toUpperCase();
-    const mbtiles = path.join(dir_4_mbtiles, chartname) + ".mbtiles";
-    const finalmbtiles = path.join(dbfolder, chartname) + ".mbtiles";
-    const bigvrt = path.join(dir_3_clipped, chartname) + ".vrt";
-    const infiles =`${dir_3_clipped}/*.vrt`;
+    const mbtiles = path.join(d4, cname) + ".mbtiles";
+    const finalmbtiles = path.join(dbfolder, cname) + ".mbtiles";
+    const bigvrt = path.join(d3, cname) + ".vrt";
+    const infiles = `${d3}/*.vrt`;
     logEntry(`>> Building single chart VRT file: ${bigvrt}`);
-    cmd = `gdalbuildvrt ${bigvrt} ${infiles}`;
-    executeCommand(cmd);
+    let vrtCmd = `gdalbuildvrt ${bigvrt} ${infiles}`;
+    await execCommandAsync(vrtCmd);
 
     logEntry(`>> Creating MBTILES database file at: ${mbtiles}`);
-    cmd = `gdal_translate ${bigvrt} ${mbtiles} -of MBTILES ` + 
+    let mbCmd = `gdal_translate ${bigvrt} ${mbtiles} -of MBTILES ` + 
           `--config GDAL_CACHEMAX 4096 --config GDAL_MAX_DATASET_POOL_SIZE 500 ` +
           `--config OGR_SQLITE_JOURNALMODE MEMORY --config OGR_SQLITE_SYNCHRONOUS OFF ` +
           `-co TILE_FORMAT=${imgfmt} -co QUALITY=${settings.tileimagequality}`;
-    executeCommand(cmd);
+    await execCommandAsync(mbCmd);
 
     logEntry(`>> Adding gdaladdo overviews to ${mbtiles}`);
-    configargs =  `--config GDAL_CACHEMAX 4096 --config GDAL_NUM_THREADS ALL_CPUS`;
-    cmd = `gdaladdo -r average ${configargs} ${mbtiles}`;
-    executeCommand(cmd)
+    configargs = `--config GDAL_CACHEMAX 4096 --config GDAL_NUM_THREADS ALL_CPUS`;
+    let ovrCmd = `gdaladdo -r average ${configargs} ${mbtiles}`;
+    await execCommandAsync(ovrCmd);
 
     // Update the metadata table to remove underscore characters from chart name
-    metadataDescription = chartname.replaceAll("_", " ");
-    let sql = `UPDATE metadata SET value = '${metadataDescription}' ` + 
+    let metaDesc = cname.replaceAll("_", " ");
+    let sql = `UPDATE metadata SET value = '${metaDesc}' ` + 
               `WHERE name IN ('name', 'description');`;
-    executeCommand(`sqlite3 ${mbtiles} "${sql}"`, { encoding: 'utf-8' });
+    await execCommandAsync(`sqlite3 ${mbtiles} "${sql}"`, false);
 
     // Insert the metadata attribution information
     const attribution = settings.attribution.replaceAll("'", "''");
     sql = `INSERT OR REPLACE INTO metadata (name, value) ` + 
-          `VALUES ('attribution', '${attribution}');`
-    executeCommand(`sqlite3 ${mbtiles} "${sql}"`, { encoding: 'utf-8' });
+          `VALUES ('attribution', '${attribution}');`;
+    await execCommandAsync(`sqlite3 ${mbtiles} "${sql}"`, false);
 
     // Move the finished mbtiles database to the external mbtiles folder
     logEntry(`>> Moving finished MBTILES file to: ${finalmbtiles}`);
-    executeCommand(`mv -f "${mbtiles}" "${finalmbtiles}"`);
+    await execCommandAsync(`mv -f "${mbtiles}" "${finalmbtiles}"`);
 }
 
 /**
  * Called by processImages() so it can iterate through all unzipped chart names
  * @returns array containing all of the chart names to be processed
  */
-function buildChartNameArray() {
-    let files = fs.readdirSync(dir_1_unzipped);
+function buildChartNameArray(ctx = null) {
+    const d1 = ctx ? ctx.dir_1_unzipped : dir_1_unzipped;
+    let files = fs.readdirSync(d1);
     let chartnames = [];
     files.forEach((file) => {
         if (file.search("new_york_vfr_plannings_.tif") === -1) {
@@ -916,34 +953,61 @@ function getBestChartDate() {
 }
 
 /**
- * Execute the passed in command and log the result
+ * Execute the passed in command asynchronously and log the result
  * @param {string} command 
+ * @param {boolean|null} logstdout 
+ * @returns {Promise<string>}
  */
-function executeCommand(command, logstdout = null) {
-    try {
+function execCommandAsync(command, logstdout = null) {
+    return new Promise((resolve, reject) => {
         if (logstdout == null) {
             logstdout = settings.debug;
         }
-        const stdout = execSync(command).toString();
-        if (logstdout) {
-            logEntry(stdout);
-        }
+        exec(command, { maxBuffer: 50 * 1024 * 1024 }, (error, stdout, stderr) => {
+            const outStr = stdout != null ? stdout.toString() : "";
+            if (error) {
+                logEntry(error.message);
+                if (stderr) {
+                    logEntry(stderr.toString());
+                }
+                reject(error);
+                return;
+            }
+            if (logstdout && outStr) {
+                logEntry(outStr);
+            }
+            resolve(outStr);
+        });
+    });
+}
+
+/**
+ * Execute the passed in command and log the result
+ * @param {string} command 
+ */
+async function executeCommand(command, logstdout = null) {
+    try {
+        return await execCommandAsync(command, logstdout);
     }
     catch (error) {
-        logEntry(error.message);
+        return "";
     }
 }
 
 /**
  * Utility to make sure clipping files are all lower-case
  */
-function normalizeClipNames() {
-    let files = fs.readdirSync(clippedShapeFolder);
+function normalizeClipNames(targetFolder = null) {
+    let folder = targetFolder || clippedShapeFolder;
+    if (!folder || !fs.existsSync(folder)) return;
+    let files = fs.readdirSync(folder);
     try {
         files.forEach((file) => {
-            let oldname = path.join(clippedShapeFolder, file);
+            let oldname = path.join(folder, file);
             let newname = oldname.toLowerCase();
-            fs.renameSync(oldname, newname);
+            if (oldname !== newname) {
+                fs.renameSync(oldname, newname);
+            }
         });
     }
     catch (err) {
@@ -1015,94 +1079,97 @@ process.on('SIGINT', () => {
 });
 
 /**
- * Parse a command JSON object and send jobs to the right place
- * 
- * 0 = Process a single area VFR chart
- * 1 = Process all 53 area VFR charts individually
- * 2 = Process a single full chart from the full chart list
- * 3 = Process all of the full charts in the full chart list
- * 4 = Return the settings.json file
- * @param {*} message JSON object message
+ * Execute a single chartmaker job from the queue
+ * @param {*} job 
  */
-async function processMakeCommands(message) {
+async function executeMakeJob(job) {
     let idx = -1;
     let opt = -1;
     let item = {};
-    let list = message.commandlist;
-    let userid = message.uid;
+    let list = job.commandlist;
+    let userid = job.uid;
+    let message = job.message;
 
     try {
-        if (!inMakeLoop) {
-            let msgclist = processCommandMessage(message);
-            let msg = new AppMessage(AppMessage.mtCommandResponse);
-            msg.uid = userid;
-            msg.payload = "success";
-            sendMessageToClients(msg, userid);
-            sendMessageToClients(msgclist, userid);
-        }
-        inMakeLoop = true;
+        let msgclist = processCommandMessage(message);
+        let msg = new AppMessage(AppMessage.mtCommandResponse);
+        msg.uid = userid;
+        msg.payload = "success";
+        sendMessageToClients(msg, userid);
+        sendMessageToClients(msgclist, userid);
+
         outerloop: for (let i = 0; i < list.length; i++) {
             resetGlobalVariables();
             item = list[i];
             idx = Number(item.command);
             opt = Number(item.chart);
 
-            console.log(`command: ${idx}, chart: ${opt}`);
+            console.log(`Job ${job.jobId} - command: ${idx}, chart: ${opt}`);
             switch (idx) {
                 case 0:
                     if (opt >= 0 && opt <= 52) {
-                        parray.push(opt);
                         let ridx = i; // + 1;
                         let rmt = new AppMessage(AppMessage.mtRunning); 
                         rmt.rowindex = ridx;
                         rmt.filename = item.chartname;
+                        jobQueue.currentChart = item.chartname;
                         sendMessageToClients(rmt, userid);
 
-                        let cpt = processSingles(i);
+                        let cpt = await processSingles(i, [opt], job.timings);
 
                         let cmt = new AppMessage(AppMessage.mtComplete); 
                         cmt.rowindex = ridx; 
                         cmt.payload = cpt.totaltime;
-                        cmt.dbfilename = `${chartname}.mbtiles`;
+                        cmt.dbfilename = `${cpt.processname.replaceAll(" ", "_")}.mbtiles`;
                         sendMessageToClients(cmt, userid);
                     }
                     break;
                 case 1:
                     if (opt >= 0 && opt <= 7) {
                         let ridx = i;
-                        parray.push(opt);
                         let rmt = new AppMessage(AppMessage.mtRunning);
                         rmt.rowindex = ridx;
 
                         let chart = settings.fullchartlist[opt][0].replace("_", " ");
                         if (chart === "DDECUS") chart = settings.fullchartlist[opt][2].replace("_", " ");
-                        console.log(`Processing full chart: ${chart}`);
-                        rmt.dbfilename = `${chartname}.mbtiles`;
+                        console.log(`Job ${job.jobId} - processing full chart: ${chart}`);
+                        rmt.filename = chart;
+                        rmt.dbfilename = `${chart.replaceAll(" ", "_")}.mbtiles`;
+                        jobQueue.currentChart = chart;
                         sendMessageToClients(rmt, userid);
 
-                        let cpt = processFulls(i);
+                        let cpt = await processFulls(i, [opt], job.timings);
 
                         let cmt = new AppMessage(AppMessage.mtComplete);
                         cmt.rowindex = ridx;
                         cmt.payload = cpt.totaltime;
-                        cmt.dbfilename = `${chartname}.mbtiles`;
+                        cmt.dbfilename = `${cpt.processname.replaceAll(" ", "_")}.mbtiles`;
                         sendMessageToClients(cmt, userid);
                     }
                     break;
             }
         }
-        let payload = ProcessTime.reportProcessingTime(startdate); 
+        let payload = ProcessTime.reportProcessingTime(job.startedAt || startdate); 
         let timemsg = new AppMessage(AppMessage.mtTiming); 
         timemsg.payload = payload;
         sendMessageToClients(timemsg, userid);
     }
-    catch(error){
-        console.error(error);
+    catch (error) {
+        console.error(`Error in executeMakeJob for ${job.jobId}:`, error);
+        throw error;
     }
+    finally {
+        jobQueue.currentChart = "";
+        resetGlobalVariables();
+    }
+}
 
-    timings = null;
-    timings = new Map();
-    inMakeLoop = false;
+/**
+ * Convenience wrapper: enqueues the command message into the FIFO jobQueue
+ * @param {*} message JSON object message
+ */
+async function processMakeCommands(message) {
+    return jobQueue.enqueue(message);
 }
 
 function resetGlobalVariables() {
@@ -1218,11 +1285,7 @@ function getUniqueUserId(){
             });
             
             app.get("/status", (req, res) => {
-                res.json({
-                    running: inMakeLoop,
-                    chartdate: chartdate,
-                    currentChart: chartname || ""
-                });
+                res.json(jobQueue.getStatus());
             });
 
             app.get("/existingcount", async (req, res) => {
@@ -1237,14 +1300,23 @@ function getUniqueUserId(){
             });
 
             app.post("/make", async (req, res) => {
-                if (inMakeLoop) {
-                    return res.status(409).json({ status: "busy", message: "Chart processing is already in progress" });
-                }
-                res.status(202).json({ status: "accepted", message: "Chart processing initiated" });
                 try {
-                    await processMakeCommands(req.body);
+                    const message = req.body || {};
+                    if (!message.commandlist || !Array.isArray(message.commandlist) || message.commandlist.length === 0) {
+                        return res.status(400).json({ error: "No chart commands provided in commandlist" });
+                    }
+                    const result = jobQueue.enqueue(message);
+                    res.status(202).json({
+                        status: result.status,
+                        jobId: result.jobId,
+                        position: result.position,
+                        message: result.status === "queued"
+                            ? `Chart processing job queued (position #${result.position})`
+                            : "Chart processing initiated"
+                    });
                 } catch (err) {
-                    console.error("Error during processMakeCommands:", err);
+                    console.error("Error during POST /make:", err);
+                    res.status(500).json({ error: err.message });
                 }
             });
 
@@ -1291,20 +1363,13 @@ function getUniqueUserId(){
                 ws.onmessage = async(event) => {
                     try {
                         let message = JSON.parse(event.data);
-                        let msgclist = processCommandMessage(message);
-                        if (!inMakeLoop) {
-                            let msg = new AppMessage(AppMessage.mtCommandResponse);
-                            msg.uid = ws.tag.uid;
-                            msg.payload = "success";
-                            ws.send(JSON.stringify(msg));
-                            ws.send(JSON.stringify(msgclist));
-                            await processMakeCommands(message);
-                        } else {
-                            let busyMsg = new AppMessage(AppMessage.mtCommandResponse);
-                            busyMsg.uid = ws.tag.uid;
-                            busyMsg.payload = "busy";
-                            ws.send(JSON.stringify(busyMsg));
+                        if (!message.commandlist || !Array.isArray(message.commandlist) || message.commandlist.length === 0) {
+                            return;
                         }
+                        if (!message.uid) {
+                            message.uid = ws.tag.uid;
+                        }
+                        jobQueue.enqueue(message);
                     } catch (err) {
                         console.error("Websocket onmessage error:", err);
                     }
@@ -1332,7 +1397,7 @@ async function uploadArchiveFile(message, response) {
         return response.status(400).json({ error: "No charts selected for download" });
     }
 
-    const tmpZipName = `charts_${Date.now()}.zip`;
+    const tmpZipName = `charts_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.zip`;
     const tmpZipPath = path.join(workarea, tmpZipName);
 
     // Collect valid file paths
@@ -1356,7 +1421,7 @@ async function uploadArchiveFile(message, response) {
 
     try {
         const quotedFiles = filesToZip.map(f => `"${f}"`).join(" ");
-        execSync(`zip -j -1 "${tmpZipPath}" ${quotedFiles}`);
+        await execCommandAsync(`zip -j -1 "${tmpZipPath}" ${quotedFiles}`);
 
         response.download(tmpZipPath, zipfilename, (err) => {
             try {
