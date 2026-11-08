@@ -510,7 +510,7 @@ function setDownloadButtonVisible(isVisible) {
         downloadExisting.style.visibility = "hidden";
         chkForExisting.checked = false;
         btnSelectAll.style.display = "none";
-        btnUnselectAll.style.display = "none";
+        //btnUnselectAll.style.display = "none";
     }
     else {
         btnDownload.classList.remove("running");
@@ -518,6 +518,7 @@ function setDownloadButtonVisible(isVisible) {
         btnDownload.style.visibility = "hidden";
         btnRemove.style.visibility = "visible";
         btnSelectAll.style.display = "none";
+        btnUnselectAll.style.display = "none";
         btnProcessCharts.style.visibility = "visible";
         addItemsMenu.style.visibility = "visible";
         checkForExistingDatabases();

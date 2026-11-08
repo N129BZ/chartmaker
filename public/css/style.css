@@ -203,7 +203,7 @@ button:disabled {
 }
 
 .btnAddCommand:active {
-    on transform: translateY(2px);
+    transform: translateY(2px);
     box-shadow: 0 5px #666;
 }
 
@@ -224,12 +224,12 @@ button:disabled {
     color: white;
     border-radius: 10px;
     border-width: 1px;
-    padding: 0px;
+    padding: 0 15px;
     position: relative;
     top: 0px;
     left: 18px;
     height: 38px;
-    on width: 150px;
+    width: fit-content;
     display: none;
 }
 
