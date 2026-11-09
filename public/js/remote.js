@@ -13,6 +13,7 @@ class AppMessage {
     static mtConnection = "connection";
     static mtCommandPackage = "commandpackage";
     static mtExistingDb = "existingdb";
+    static mtSyncState = "syncstate";
 
     constructor(msgtype) {
         this.type = msgtype;
@@ -73,16 +74,49 @@ const btnDownload = document.getElementById("btnDownload");
 const btnReset = document.getElementById("btnReset");
 const btnRemove = document.getElementById("btnRemove");
 const btnProcessCharts = document.getElementById("btnProcessCharts");
+const btnCancel = document.getElementById("btnCancel");
 const chkForExisting = document.getElementById("checkForExisting");
 const processInfo = document.getElementById("processInformation");
 
-var thisUserId = "";
+function showCancelButton(isVisible) {
+    if (btnCancel) {
+        btnCancel.style.display = isVisible ? "inline-block" : "none";
+        btnCancel.disabled = false;
+        btnCancel.textContent = "Cancel Job";
+    }
+    if (btnProcessCharts) {
+        if (isVisible) {
+            btnProcessCharts.style.display = "none";
+            btnProcessCharts.style.visibility = "hidden";
+        } else {
+            btnProcessCharts.style.display = "";
+        }
+    }
+}
+window.showCancelButton = showCancelButton;
+window.resetEverything = resetEverything;
+
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+        return decodeURIComponent(parts.pop().split(';').shift());
+    }
+    return "";
+}
+
+function setCookie(name, value, days = 30) {
+    const expires = new Date(Date.now() + days * 864e5).toUTCString();
+    document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+}
+
+var thisUserId = getCookie("chartmaker_uid");
 var websocket;
 var indexlist = [];
 var commandpackage = {
     type: "commandpackage",
     commandlist: [],
-    uid: ""
+    uid: thisUserId
 };
 var processitems = [];
 var confcommands = [];
@@ -116,11 +150,152 @@ async function getSettingsFromServer() {
         console.log(settings);
         checkForExistingDatabases();
         setChartNameArrays();
+        await checkJobStateOnLoad();
         startWebsocketClient();
 
     }
     catch (err) {
         console.log(err.message);
+    }
+}
+
+/**
+ * Check if the user has an active or completed job on initial page load
+ */
+async function checkJobStateOnLoad() {
+    try {
+        const uid = getCookie("chartmaker_uid");
+        if (!uid) return;
+        const res = await fetch(`/job-state?uid=${encodeURIComponent(uid)}`);
+        if (res.ok) {
+            const data = await res.json();
+            if (data && data.job) {
+                restoreUIFromState(data.job);
+            }
+        }
+    } catch (e) {
+        console.warn("Could not check initial job state:", e);
+    }
+}
+
+/**
+ * Restore the application UI and completed download items from persistent job state
+ * @param {*} state Job state object from server
+ */
+function restoreUIFromState(state) {
+    if (!state || !state.commandlist || state.commandlist.length === 0) {
+        return;
+    }
+
+    console.log("Restoring UI from job state:", state.status, state.jobId);
+    setupCommandBody();
+    inResponseView = true;
+    addItemsMenu.style.display = "none";
+    commandpackage = new AppMessage(AppMessage.mtCommandPackage);
+    commandpackage.commandlist = [...state.commandlist];
+    commandpackage.uid = thisUserId;
+    processitems = [];
+
+    // Populate rows with chart labels
+    state.commandlist.forEach((cmd, idx) => {
+        let tr = commandbody.rows[idx];
+        if (!tr) return;
+        let td1 = tr.children[0];
+        let cmdTypeStr = (+cmd.command === 0) ? "Process area chart :" : "Process full chart :";
+        td1.textContent = `${cmdTypeStr} ${cmd.chartname}`;
+    });
+
+    // Populate completed items
+    if (state.completedItems && Array.isArray(state.completedItems)) {
+        state.completedItems.forEach((item) => {
+            let rowidx = +item.rowindex;
+            let tr = commandbody.rows[rowidx];
+            if (tr) {
+                let td0 = tr.children[0];
+                let td1 = tr.children[1];
+                let span = td1.firstChild;
+                td0.classList.remove("running");
+                td1.classList.remove("running");
+                span.textContent = item.payload; // elapsed duration
+            }
+            if (!processitems.some(p => p.rowindex === item.rowindex)) {
+                processitems.push(item);
+            }
+        });
+    }
+
+    if (state.status === "queued") {
+        blinkSendButton(true);
+        showCancelButton(true);
+        processInfo.classList.remove("boldred");
+        processInfo.classList.add("boldyellow");
+        let pos = state.position || 1;
+        processInfo.textContent = `Server response: job queued (position #${pos}), waiting for prior job to finish...`;
+        btnRemove.style.visibility = "hidden";
+        btnSelectAll.style.display = "none";
+        btnUnselectAll.style.display = "none";
+        btnReset.style.visibility = "hidden";
+    }
+    else if (state.status === "running") {
+        blinkSendButton(true);
+        showCancelButton(true);
+        processInfo.classList.remove("boldyellow", "boldred");
+        processInfo.textContent = `Now processing: ${state.currentChart || "chart"}`;
+
+        if (state.currentRowIndex >= 0 && state.currentRowIndex < commandbody.rows.length) {
+            let tr = commandbody.rows[state.currentRowIndex];
+            if (tr) {
+                tr.children[0].classList.add("running");
+                tr.children[1].classList.add("running");
+                tr.children[1].firstChild.textContent = "* in progress *";
+            }
+        }
+        btnRemove.style.visibility = "hidden";
+        btnSelectAll.style.display = "none";
+        btnUnselectAll.style.display = "none";
+        btnReset.style.visibility = "hidden";
+    }
+    else if (state.status === "completed") {
+        blinkSendButton(false);
+        showCancelButton(false);
+        processInfo.classList.remove("boldyellow", "boldred");
+        processInfo.textContent = `Total time for chart processing: ${state.totalTime || "Complete"}`;
+
+        // Reveal download checkboxes on every completed row
+        processitems.forEach((item) => {
+            let ckbid = `${dlchkPrefix}-${item.rowindex}`;
+            let ckb = document.getElementById(ckbid);
+            if (ckb) {
+                ckb.style.display = "inline";
+                ckb.checked = false;
+                ckb.removeEventListener("change", handleCheckboxChange);
+                ckb.addEventListener("change", handleCheckboxChange);
+            }
+        });
+
+        btnDownload.style.visibility = "visible";
+        btnReset.style.visibility = "visible";
+        btnProcessCharts.style.visibility = "hidden";
+        btnRemove.style.visibility = "hidden";
+        btnSelectAll.style.display = "inline";
+        btnUnselectAll.style.display = "none";
+    }
+    else if (state.status === "failed") {
+        blinkSendButton(false);
+        showCancelButton(false);
+        processInfo.classList.remove("boldyellow");
+        processInfo.classList.add("boldred");
+        processInfo.textContent = "Server response: chart processing failed or was interrupted.";
+        btnReset.style.visibility = "visible";
+    }
+    else if (state.status === "cancelled") {
+        blinkSendButton(false);
+        showCancelButton(false);
+        processInfo.classList.remove("boldyellow");
+        processInfo.classList.add("boldred");
+        processInfo.textContent = "Server response: chart processing was cancelled by user.";
+        btnReset.style.visibility = "visible";
+        btnProcessCharts.style.visibility = "visible";
     }
 }
 
@@ -196,6 +371,9 @@ function startWebsocketClient() {
             console.log("Websocket CONNECTED.");
             reconnectDelay = 1000;
             updateConnectionStatus("connected", "● Connected");
+            if (thisUserId) {
+                websocket.send(JSON.stringify({ type: "init", uid: thisUserId }));
+            }
         }
 
         websocket.onmessage = (event) => {
@@ -217,6 +395,7 @@ function startWebsocketClient() {
                         if (message.payload === "success" || message.payload === "accepted") {
                             message.payload = "Server response: chart processing has started...";
                             updateCommandBody(message);
+                            showCancelButton(true);
                         }
                         else if (message.payload === "queued") {
                             let position = (message.items && message.items[0] && message.items[0].position) || 1;
@@ -224,22 +403,34 @@ function startWebsocketClient() {
                             message.css = ["boldyellow"];
                             updateCommandBody(message);
                             blinkSendButton(true);
+                            showCancelButton(true);
                             btnRemove.style.visibility = "hidden";
                             btnSelectAll.style.visibility = "hidden";
                             btnUnselectAll.style.visibility = "hidden";
                             btnReset.style.visibility = "hidden";
+                        }
+                        else if (message.payload === "cancelled") {
+                            message.payload = "Server response: chart processing was cancelled by user.";
+                            message.css = ["boldred"];
+                            updateCommandBody(message);
+                            blinkSendButton(false);
+                            showCancelButton(false);
+                            btnReset.style.visibility = "visible";
+                            btnProcessCharts.style.visibility = "visible";
                         }
                         else if (message.payload === "busy") {
                             message.payload = "Server response: another processing job is already in progress";
                             message.css = ["boldyellow"];
                             updateCommandBody(message);
                             blinkSendButton(false);
+                            showCancelButton(false);
                         }
                         else {
                             message.payload = "Server response: status unknown, possible command error";
                             message.css = ["boldred"];
                             updateCommandBody(message);
                             blinkSendButton(false);
+                            showCancelButton(false);
                         }
                         break;
                     case AppMessage.mtDownload:
@@ -251,8 +442,13 @@ function startWebsocketClient() {
                         break;
                     case AppMessage.mtConnection:
                         thisUserId = message.uid;
+                        setCookie("chartmaker_uid", thisUserId, 30);
                         commandpackage = new AppMessage(AppMessage.mtCommandPackage);
                         commandpackage.uid = thisUserId;
+                        break;
+                    case AppMessage.mtSyncState:
+                        console.log("Received job syncstate from server:", message.payload);
+                        restoreUIFromState(message.payload);
                         break;
                     case AppMessage.mtCommand:
                     default:
@@ -360,6 +556,7 @@ function resetEverything() {
     chkForExisting.checked = false;
     downloadInProgress = false;
     blinking = false;
+    showCancelButton(false);
     btnProcessCharts.innerText = "Process Charts";
     btnProcessCharts.classList.remove("start-animation");
     btnProcessCharts.style.visibility = "visible";
@@ -371,6 +568,17 @@ function resetEverything() {
         uid: ""
     };
     commandpackage.uid = thisUserId;
+    if (thisUserId) {
+        if (websocket && websocket.readyState === WebSocket.OPEN) {
+            websocket.send(JSON.stringify({ type: "clearjob", uid: thisUserId }));
+        } else {
+            fetch("/clearjob", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ uid: thisUserId })
+            }).catch(() => {});
+        }
+    }
 }
 
 /**
@@ -382,6 +590,7 @@ async function sendCommandsToServer() {
         addItemsMenu.style.display = "none";
         inResponseView = true;
         blinkSendButton(true);
+        showCancelButton(true);
         try {
             const response = await fetch(URL_POST_MAKE, {
                 method: 'POST',
@@ -403,12 +612,14 @@ async function sendCommandsToServer() {
                 btnReset.style.visibility = "hidden";
             } else {
                 blinkSendButton(false);
+                showCancelButton(false);
                 processInfo.classList.remove("boldyellow");
                 processInfo.classList.add("boldred");
                 processInfo.textContent = `Server response: HTTP error ${response.status}`;
             }
         } catch (err) {
             blinkSendButton(false);
+            showCancelButton(false);
             processInfo.classList.remove("boldyellow");
             processInfo.classList.add("boldred");
             processInfo.textContent = `Server response: network error (${err.message})`;
@@ -421,6 +632,7 @@ async function sendCommandsToServer() {
  * @param {*} message 
  */
 function postTimingMessaqe(message) {
+    showCancelButton(false);
     processInfo.classList.remove("boldyellow", "boldred");
     if (message.css && message.css.length > 0) {
         processInfo.classList.add(...message.css);
@@ -503,6 +715,7 @@ async function downloadCheckedItems() {
  */
 function setDownloadButtonVisible(isVisible) {
     if (isVisible) {
+        showCancelButton(false);
         btnDownload.style.visibility = "visible";
         btnRemove.style.visibility = "hidden";
         btnProcessCharts.style.visibility = "hidden";
@@ -1070,3 +1283,22 @@ btnUnselectAll.addEventListener('click', () => {
     btnUnselectAll.style.display = "none";
     btnSelectAll.style.display = "inline";
 });
+
+if (btnCancel) {
+    btnCancel.addEventListener('click', async () => {
+        btnCancel.disabled = true;
+        btnCancel.textContent = "Cancelling...";
+        try {
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                websocket.send(JSON.stringify({ type: "canceljob", uid: thisUserId }));
+            }
+            await fetch("/cancel", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ uid: thisUserId })
+            });
+        } catch (err) {
+            console.error("Error cancelling job:", err);
+        }
+    });
+}

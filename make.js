@@ -20,6 +20,7 @@ class AppMessage {
     static mtConnection = "connection";
     static mtCommandPackage = "commandpackage";
     static mtExistingDb = "existingdb";
+    static mtSyncState = "syncstate";
 
     constructor(msgtype) {
         this.type = msgtype;
@@ -43,6 +44,23 @@ class MakeCommand {
         this.chartname = chartname;
         this.layertype = layertype;
     }
+}
+
+function parseCookies(cookieHeader) {
+    const list = {};
+    if (!cookieHeader || typeof cookieHeader !== 'string') return list;
+    cookieHeader.split(';').forEach(cookie => {
+        let [name, ...rest] = cookie.split('=');
+        name = name?.trim();
+        if (!name) return;
+        const value = rest.join('=').trim();
+        try {
+            list[name] = decodeURIComponent(value);
+        } catch {
+            list[name] = value;
+        }
+    });
+    return list;
 }
 
 class ProcessTime {
@@ -82,7 +100,7 @@ class ProcessTime {
 };
 
 class ChartTaskContext {
-    constructor(workarea, chartworkname, chartname, charturl, clippedShapeFolder, isifrchart = false) {
+    constructor(workarea, chartworkname, chartname, charturl, clippedShapeFolder, isifrchart = false, signal = null) {
         this.chartworkname = chartworkname;
         this.chartname = chartname;
         this.charturl = charturl;
@@ -94,6 +112,7 @@ class ChartTaskContext {
         this.dir_2_expanded = path.join(this.chartfolder, "2_expanded");
         this.dir_3_clipped = path.join(this.chartfolder, "3_clipped");
         this.dir_4_mbtiles = path.join(this.chartfolder, "4_mbtiles");
+        this.signal = signal;
     }
 }
 
@@ -102,6 +121,8 @@ class JobQueue {
         this.queue = [];
         this.currentJob = null;
         this.currentChart = "";
+        this.currentContext = null;
+        this.userJobs = new Map();
     }
 
     get isBusy() {
@@ -110,16 +131,28 @@ class JobQueue {
 
     enqueue(message) {
         const jobId = `job-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        const abortController = new AbortController();
         const job = {
             jobId,
             uid: message.uid || "",
             commandlist: message.commandlist || [],
             message,
             status: "queued",
-            createdAt: new Date(new Date().toLocaleString()),
+            cancelled: false,
+            abortController,
+            createdAt: new Date(),
             startedAt: null,
-            timings: new Map()
+            completedAt: null,
+            timings: new Map(),
+            completedItems: [],
+            currentChart: "",
+            currentRowIndex: -1,
+            totalTime: ""
         };
+
+        if (job.uid) {
+            this.userJobs.set(job.uid, job);
+        }
 
         this.queue.push(job);
         const position = this.queue.length;
@@ -142,6 +175,60 @@ class JobQueue {
         };
     }
 
+    cancelJob(uid, jobId = null) {
+        if (!uid && !jobId) return { cancelled: false, error: "No user or job specified" };
+
+        // 1. Check if waiting in queue
+        const qIndex = this.queue.findIndex(j => (jobId && j.jobId === jobId) || (uid && j.uid === uid));
+        if (qIndex !== -1) {
+            const [cancelledJob] = this.queue.splice(qIndex, 1);
+            cancelledJob.cancelled = true;
+            cancelledJob.status = "cancelled";
+            this.notifyWaitingClients();
+            if (this.userJobs.has(cancelledJob.uid)) {
+                this.userJobs.delete(cancelledJob.uid);
+            }
+            let msg = new AppMessage(AppMessage.mtCommandResponse);
+            msg.uid = cancelledJob.uid;
+            msg.payload = "cancelled";
+            sendMessageToClients(msg, cancelledJob.uid);
+            console.log(`Cancelled queued job ${cancelledJob.jobId} for uid: ${cancelledJob.uid}`);
+            return { cancelled: true, wasRunning: false, jobId: cancelledJob.jobId };
+        }
+
+        // 2. Check if currently running
+        if (this.currentJob && ((jobId && this.currentJob.jobId === jobId) || (uid && this.currentJob.uid === uid))) {
+            const runningJob = this.currentJob;
+            runningJob.cancelled = true;
+            runningJob.status = "cancelled";
+            console.log(`Aborting running job ${runningJob.jobId} for uid: ${runningJob.uid}...`);
+            try {
+                runningJob.abortController.abort();
+            } catch (err) {
+                console.error("Error calling abort on running job:", err);
+            }
+            if (this.currentContext && this.currentContext.chartfolder) {
+                try {
+                    if (fs.existsSync(this.currentContext.chartfolder)) {
+                        fs.rmSync(this.currentContext.chartfolder, { recursive: true, force: true });
+                    }
+                } catch (e) {
+                    console.error("Error cleaning up aborted chart folder:", e);
+                }
+            }
+            let msg = new AppMessage(AppMessage.mtCommandResponse);
+            msg.uid = runningJob.uid;
+            msg.payload = "cancelled";
+            sendMessageToClients(msg, runningJob.uid);
+            if (this.userJobs.has(runningJob.uid)) {
+                this.userJobs.delete(runningJob.uid);
+            }
+            return { cancelled: true, wasRunning: true, jobId: runningJob.jobId };
+        }
+
+        return { cancelled: false, error: "Job not found" };
+    }
+
     notifyWaitingClients() {
         this.queue.forEach((queuedJob, index) => {
             const position = index + 1;
@@ -162,18 +249,29 @@ class JobQueue {
         this.currentJob = job;
         inMakeLoop = true;
         job.status = "running";
-        job.startedAt = new Date(new Date().toLocaleString());
+        job.startedAt = new Date();
+        if (job.uid) {
+            this.userJobs.set(job.uid, job);
+        }
         this.notifyWaitingClients();
 
         try {
             await executeMakeJob(job);
-            job.status = "completed";
+            if (!job.cancelled) {
+                job.status = "completed";
+            }
         } catch (err) {
-            job.status = "failed";
-            console.error(`Error executing job ${job.jobId}:`, err);
+            if (job.cancelled || err.name === 'AbortError') {
+                job.status = "cancelled";
+                console.log(`Job ${job.jobId} terminated due to cancellation.`);
+            } else {
+                job.status = "failed";
+                console.error(`Error executing job ${job.jobId}:`, err);
+            }
         } finally {
             this.currentJob = null;
             this.currentChart = "";
+            this.currentContext = null;
             inMakeLoop = this.queue.length > 0;
             if (this.queue.length > 0) {
                 this.processNext();
@@ -189,6 +287,41 @@ class JobQueue {
             currentJobId: this.currentJob ? this.currentJob.jobId : null,
             queueLength: this.queue.length
         };
+    }
+
+    getUserJobState(uid) {
+        if (!uid) return null;
+        const job = this.userJobs.get(uid);
+        if (!job) return null;
+
+        let position = 0;
+        if (job.status === "queued") {
+            const idx = this.queue.findIndex(q => q.jobId === job.jobId);
+            position = idx !== -1 ? idx + 1 : 1;
+        }
+
+        return {
+            jobId: job.jobId,
+            uid: job.uid,
+            status: job.status,
+            position,
+            commandlist: job.commandlist,
+            completedItems: job.completedItems,
+            currentChart: job.currentChart,
+            currentRowIndex: job.currentRowIndex,
+            totalTime: job.totalTime,
+            createdAt: job.createdAt,
+            startedAt: job.startedAt,
+            completedAt: job.completedAt
+        };
+    }
+
+    clearUserJob(uid) {
+        if (!uid) return;
+        const job = this.userJobs.get(uid);
+        if (job && (job.status === "completed" || job.status === "failed")) {
+            this.userJobs.delete(uid);
+        }
     }
 }
 
@@ -480,15 +613,15 @@ async function processAllAreas() {
     await processSingles();
 }
 
-function createAreaChartContext(opt) {
+function createAreaChartContext(opt, signal = null) {
     const chartworkname = settings.areachartlist[opt];
     const chartname = chartworkname;
     const clippedShapeFolder = path.join(appdir, "clipshapes", "sectional");
     const charturl = `${settings.vfrindividualtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
-    return new ChartTaskContext(workarea, chartworkname, chartname, charturl, clippedShapeFolder, false);
+    return new ChartTaskContext(workarea, chartworkname, chartname, charturl, clippedShapeFolder, false, signal);
 }
 
-function createFullChartContext(opt) {
+function createFullChartContext(opt, signal = null) {
     const chart = settings.fullchartlist[opt];
     const charttype = chart[1];
     let lcasename = chart[0].toLowerCase();
@@ -513,14 +646,14 @@ function createFullChartContext(opt) {
         clippedShapeFolder = path.join(appdir, "clipshapes", lcasename);
         chartname = chartworkname;
     }
-    return new ChartTaskContext(workarea, chartworkname, chartname, charturl, clippedShapeFolder, isifrchart);
+    return new ChartTaskContext(workarea, chartworkname, chartname, charturl, clippedShapeFolder, isifrchart, signal);
 }
 
-async function processSingles(msgid = -1, indices = null, timingsMap = timings) {
+async function processSingles(msgid = -1, indices = null, timingsMap = timings, signal = null) {
     const listToProcess = indices !== null ? indices : parray;
     for (let idx = 0; idx < listToProcess.length; idx++) {
         const areaOpt = listToProcess[idx];
-        const ctx = createAreaChartContext(areaOpt);
+        const ctx = createAreaChartContext(areaOpt, signal);
 
         chartworkname = ctx.chartworkname;
         chartname = ctx.chartname;
@@ -599,11 +732,11 @@ async function processAllFulls() {
     await processFulls();
 }
 
-async function processFulls(msgid = -1, indices = null, timingsMap = timings) {
+async function processFulls(msgid = -1, indices = null, timingsMap = timings, signal = null) {
     const listToProcess = indices !== null ? indices : parray;
     for (let idx = 0; idx < listToProcess.length; idx++) { 
         const fullOpt = listToProcess[idx];
-        const ctx = createFullChartContext(fullOpt);
+        const ctx = createFullChartContext(fullOpt, signal);
 
         chartworkname = ctx.chartworkname;
         chartname = ctx.chartname;
@@ -647,6 +780,7 @@ async function runProcessing(ctx = null) {
     if (!ctx) {
         ctx = new ChartTaskContext(workarea, chartworkname, chartname, charturl, clippedShapeFolder, isifrchart);
     }
+    jobQueue.currentContext = ctx;
     setupEnvironment(ctx);
     await downloadCharts(ctx);
     await unzipCharts(ctx);
@@ -714,7 +848,7 @@ async function downloadCharts(ctx = null) {
         }
         logEntry(`Downloading ${chartzip}`);
         const dlcmd = `curl ${curl} -v -o ${chartzip}`;
-        await execCommandAsync(dlcmd, true);
+        await execCommandAsync(dlcmd, true, ctx?.signal);
     }
 }
 
@@ -729,7 +863,7 @@ async function unzipCharts(ctx = null) {
 
     let chartzip = path.join(chartcache, `${cworkname}-${chartdate}.zip`);
     let unzipcmd = `unzip -o ${chartzip} -x '*.htm' -d ${d1}`;
-    await execCommandAsync(unzipcmd);
+    await execCommandAsync(unzipcmd, null, ctx?.signal);
 
     if (isifr) { // we now have a work area full of IFR zip files
         let zipfiles = fs.readdirSync(d1);
@@ -737,16 +871,16 @@ async function unzipCharts(ctx = null) {
             let srchstr = cname === "Enroute_High" ? "ENR_H" : "ENR_L"; // only unzip the indicated type
             if (zipfile.search(srchstr) > -1) {
                 let ifrcmd = `unzip -o ${path.join(d1, zipfile)} -d ${d1}`;
-                await execCommandAsync(ifrcmd);
+                await execCommandAsync(ifrcmd, null, ctx?.signal);
             }
         }
     }
 
     // now clean out all of the irrelevant files...
-    await executeCommand(`rm -r -f ${path.join(d1, "*.pdf")}`);
-    await executeCommand(`rm -r -f ${path.join(d1, "*.htm")}`);
-    await executeCommand(`rm -r -f ${path.join(d1, "*.zip")}`);
-    await executeCommand(`rm -r -f "${path.join(d1, 'Caribbean Planning Chart.tif')}"`);
+    await executeCommand(`rm -r -f ${path.join(d1, "*.pdf")}`, null, ctx?.signal);
+    await executeCommand(`rm -r -f ${path.join(d1, "*.htm")}`, null, ctx?.signal);
+    await executeCommand(`rm -r -f ${path.join(d1, "*.zip")}`, null, ctx?.signal);
+    await executeCommand(`rm -r -f "${path.join(d1, 'Caribbean Planning Chart.tif')}"`, null, ctx?.signal);
 }
 
 /** 
@@ -788,7 +922,7 @@ async function processImages(ctx = null) {
         
         // determine if RGB expansion is required
         let ginfoCmd = `gdalinfo -json "${sourcetif}"`;
-        const infojson = JSON.parse(await execCommandAsync(ginfoCmd, false));
+        const infojson = JSON.parse(await execCommandAsync(ginfoCmd, false, ctx?.signal));
         let expandopt = "";
         if (infojson.bands.length === 1) {
             if (settings.outputgrayscale) {
@@ -800,12 +934,12 @@ async function processImages(ctx = null) {
         
         logEntry(`>> gdal_translate ${sourcetif}`);
         let transCmd = `gdal_translate -strict -of vrt -ovr NONE ${expandopt} ${sourcetif} ${expanded}`;
-        await execCommandAsync(transCmd);
+        await execCommandAsync(transCmd, null, ctx?.signal);
 
         logEntry(`>> gdalwarp warping and clipping ${clipped} using shapefile ${shapefile}`);
         let warpCmd = `gdalwarp -t_srs EPSG:3857 -dstalpha --config GDAL_CACHEMAX 512 ` + 
               `-multi -cblend ${cblend} -cutline ${shapefile} -crop_to_cutline ${expanded} ${clipped}`;
-        await execCommandAsync(warpCmd);
+        await execCommandAsync(warpCmd, null, ctx?.signal);
     }
 
     // setup formatting arguments for overviews        
@@ -834,35 +968,35 @@ async function processImages(ctx = null) {
     const infiles = `${d3}/*.vrt`;
     logEntry(`>> Building single chart VRT file: ${bigvrt}`);
     let vrtCmd = `gdalbuildvrt ${bigvrt} ${infiles}`;
-    await execCommandAsync(vrtCmd);
+    await execCommandAsync(vrtCmd, null, ctx?.signal);
 
     logEntry(`>> Creating MBTILES database file at: ${mbtiles}`);
     let mbCmd = `gdal_translate ${bigvrt} ${mbtiles} -of MBTILES ` + 
           `--config GDAL_CACHEMAX 4096 --config GDAL_MAX_DATASET_POOL_SIZE 500 ` +
           `--config OGR_SQLITE_JOURNALMODE MEMORY --config OGR_SQLITE_SYNCHRONOUS OFF ` +
           `-co TILE_FORMAT=${imgfmt} -co QUALITY=${settings.tileimagequality}`;
-    await execCommandAsync(mbCmd);
+    await execCommandAsync(mbCmd, null, ctx?.signal);
 
     logEntry(`>> Adding gdaladdo overviews to ${mbtiles}`);
     configargs = `--config GDAL_CACHEMAX 4096 --config GDAL_NUM_THREADS ALL_CPUS`;
     let ovrCmd = `gdaladdo -r average ${configargs} ${mbtiles}`;
-    await execCommandAsync(ovrCmd);
+    await execCommandAsync(ovrCmd, null, ctx?.signal);
 
     // Update the metadata table to remove underscore characters from chart name
     let metaDesc = cname.replaceAll("_", " ");
     let sql = `UPDATE metadata SET value = '${metaDesc}' ` + 
               `WHERE name IN ('name', 'description');`;
-    await execCommandAsync(`sqlite3 ${mbtiles} "${sql}"`, false);
+    await execCommandAsync(`sqlite3 ${mbtiles} "${sql}"`, false, ctx?.signal);
 
     // Insert the metadata attribution information
     const attribution = settings.attribution.replaceAll("'", "''");
     sql = `INSERT OR REPLACE INTO metadata (name, value) ` + 
           `VALUES ('attribution', '${attribution}');`;
-    await execCommandAsync(`sqlite3 ${mbtiles} "${sql}"`, false);
+    await execCommandAsync(`sqlite3 ${mbtiles} "${sql}"`, false, ctx?.signal);
 
     // Move the finished mbtiles database to the external mbtiles folder
     logEntry(`>> Moving finished MBTILES file to: ${finalmbtiles}`);
-    await execCommandAsync(`mv -f "${mbtiles}" "${finalmbtiles}"`);
+    await execCommandAsync(`mv -f "${mbtiles}" "${finalmbtiles}"`, null, ctx?.signal);
 }
 
 /**
@@ -956,14 +1090,19 @@ function getBestChartDate() {
  * Execute the passed in command asynchronously and log the result
  * @param {string} command 
  * @param {boolean|null} logstdout 
+ * @param {AbortSignal|null} signal
  * @returns {Promise<string>}
  */
-function execCommandAsync(command, logstdout = null) {
+function execCommandAsync(command, logstdout = null, signal = null) {
     return new Promise((resolve, reject) => {
         if (logstdout == null) {
             logstdout = settings.debug;
         }
-        exec(command, { maxBuffer: 50 * 1024 * 1024 }, (error, stdout, stderr) => {
+        const execOptions = { maxBuffer: 50 * 1024 * 1024 };
+        if (signal) {
+            execOptions.signal = signal;
+        }
+        exec(command, execOptions, (error, stdout, stderr) => {
             const outStr = stdout != null ? stdout.toString() : "";
             if (error) {
                 logEntry(error.message);
@@ -984,12 +1123,15 @@ function execCommandAsync(command, logstdout = null) {
 /**
  * Execute the passed in command and log the result
  * @param {string} command 
+ * @param {boolean|null} logstdout
+ * @param {AbortSignal|null} signal
  */
-async function executeCommand(command, logstdout = null) {
+async function executeCommand(command, logstdout = null, signal = null) {
     try {
-        return await execCommandAsync(command, logstdout);
+        return await execCommandAsync(command, logstdout, signal);
     }
     catch (error) {
+        if (error.name === 'AbortError') throw error;
         return "";
     }
 }
@@ -1099,6 +1241,10 @@ async function executeMakeJob(job) {
         sendMessageToClients(msgclist, userid);
 
         outerloop: for (let i = 0; i < list.length; i++) {
+            if (job.cancelled) {
+                console.log(`Job ${job.jobId} cancelled. Exiting chart processing loop.`);
+                break;
+            }
             resetGlobalVariables();
             item = list[i];
             idx = Number(item.command);
@@ -1112,15 +1258,26 @@ async function executeMakeJob(job) {
                         let rmt = new AppMessage(AppMessage.mtRunning); 
                         rmt.rowindex = ridx;
                         rmt.filename = item.chartname;
+                        rmt.dbfilename = `${item.chartname.replaceAll(" ", "_")}.mbtiles`;
                         jobQueue.currentChart = item.chartname;
+                        job.currentChart = item.chartname;
+                        job.currentRowIndex = ridx;
                         sendMessageToClients(rmt, userid);
 
-                        let cpt = await processSingles(i, [opt], job.timings);
+                        let cpt = await processSingles(i, [opt], job.timings, job.abortController.signal);
 
                         let cmt = new AppMessage(AppMessage.mtComplete); 
                         cmt.rowindex = ridx; 
                         cmt.payload = cpt.totaltime;
+                        cmt.filename = item.chartname;
                         cmt.dbfilename = `${cpt.processname.replaceAll(" ", "_")}.mbtiles`;
+                        job.completedItems.push({
+                            type: AppMessage.mtComplete,
+                            rowindex: ridx,
+                            filename: item.chartname,
+                            dbfilename: cmt.dbfilename,
+                            payload: cpt.totaltime
+                        });
                         sendMessageToClients(cmt, userid);
                     }
                     break;
@@ -1136,30 +1293,59 @@ async function executeMakeJob(job) {
                         rmt.filename = chart;
                         rmt.dbfilename = `${chart.replaceAll(" ", "_")}.mbtiles`;
                         jobQueue.currentChart = chart;
+                        job.currentChart = chart;
+                        job.currentRowIndex = ridx;
                         sendMessageToClients(rmt, userid);
 
-                        let cpt = await processFulls(i, [opt], job.timings);
+                        let cpt = await processFulls(i, [opt], job.timings, job.abortController.signal);
 
                         let cmt = new AppMessage(AppMessage.mtComplete);
                         cmt.rowindex = ridx;
                         cmt.payload = cpt.totaltime;
+                        cmt.filename = chart;
                         cmt.dbfilename = `${cpt.processname.replaceAll(" ", "_")}.mbtiles`;
+                        job.completedItems.push({
+                            type: AppMessage.mtComplete,
+                            rowindex: ridx,
+                            filename: chart,
+                            dbfilename: cmt.dbfilename,
+                            payload: cpt.totaltime
+                        });
                         sendMessageToClients(cmt, userid);
                     }
                     break;
             }
         }
-        let payload = ProcessTime.reportProcessingTime(job.startedAt || startdate); 
-        let timemsg = new AppMessage(AppMessage.mtTiming); 
-        timemsg.payload = payload;
-        sendMessageToClients(timemsg, userid);
+        if (!job.cancelled) {
+            let payload = ProcessTime.reportProcessingTime(job.startedAt || startdate); 
+            job.totalTime = payload;
+            job.status = "completed";
+            job.completedAt = new Date();
+            job.currentChart = "";
+            job.currentRowIndex = -1;
+
+            let timemsg = new AppMessage(AppMessage.mtTiming); 
+            timemsg.payload = payload;
+            sendMessageToClients(timemsg, userid);
+        }
     }
     catch (error) {
-        console.error(`Error in executeMakeJob for ${job.jobId}:`, error);
-        throw error;
+        if (job.cancelled || error.name === 'AbortError') {
+            job.status = "cancelled";
+            console.log(`Job ${job.jobId} aborted by user.`);
+            let cmsg = new AppMessage(AppMessage.mtCommandResponse);
+            cmsg.uid = userid;
+            cmsg.payload = "cancelled";
+            sendMessageToClients(cmsg, userid);
+        } else {
+            job.status = "failed";
+            console.error(`Error in executeMakeJob for ${job.jobId}:`, error);
+            throw error;
+        }
     }
     finally {
         jobQueue.currentChart = "";
+        jobQueue.currentContext = null;
         resetGlobalVariables();
     }
 }
@@ -1273,6 +1459,23 @@ function getUniqueUserId(){
                 app.use(authentication);
             }
             app.use(express.json());
+
+            // Cookie & User Identity middleware
+            app.use((req, res, next) => {
+                const cookies = parseCookies(req.headers.cookie);
+                let uid = cookies.chartmaker_uid;
+                if (!uid) {
+                    uid = getUniqueUserId();
+                    res.cookie('chartmaker_uid', uid, {
+                        maxAge: 30 * 24 * 60 * 60 * 1000,
+                        httpOnly: false,
+                        sameSite: 'lax',
+                        path: '/'
+                    });
+                }
+                req.userUid = uid;
+                next();
+            });
             
             app.get("/", (req, res) => {
                 res.send(fs.readFileSync(path.join(publicdir, "index.html"), "utf-8"));
@@ -1286,6 +1489,25 @@ function getUniqueUserId(){
             
             app.get("/status", (req, res) => {
                 res.json(jobQueue.getStatus());
+            });
+
+            app.get("/job-state", (req, res) => {
+                const cookies = parseCookies(req.headers.cookie);
+                const uid = req.query.uid || cookies.chartmaker_uid || req.userUid;
+                if (!uid) {
+                    return res.json({ job: null });
+                }
+                const state = jobQueue.getUserJobState(uid);
+                res.json({ job: state });
+            });
+
+            app.post("/clearjob", (req, res) => {
+                const cookies = parseCookies(req.headers.cookie);
+                const uid = req.body?.uid || req.query.uid || cookies.chartmaker_uid || req.userUid;
+                if (uid) {
+                    jobQueue.clearUserJob(uid);
+                }
+                res.json({ success: true });
             });
 
             app.get("/existingcount", async (req, res) => {
@@ -1304,6 +1526,9 @@ function getUniqueUserId(){
                     const message = req.body || {};
                     if (!message.commandlist || !Array.isArray(message.commandlist) || message.commandlist.length === 0) {
                         return res.status(400).json({ error: "No chart commands provided in commandlist" });
+                    }
+                    if (!message.uid) {
+                        message.uid = req.userUid;
                     }
                     const result = jobQueue.enqueue(message);
                     res.status(202).json({
@@ -1325,13 +1550,29 @@ function getUniqueUserId(){
                 await uploadArchiveFile(req.body, res);
             });
 
+            app.post("/cancel", (req, res) => {
+                try {
+                    const cookies = parseCookies(req.headers.cookie);
+                    const uid = req.body?.uid || cookies.chartmaker_uid || req.userUid;
+                    const jobId = req.body?.jobId || null;
+                    const result = jobQueue.cancelJob(uid, jobId);
+                    res.json(result);
+                } catch (err) {
+                    console.error("Error during POST /cancel:", err);
+                    res.status(500).json({ error: err.message });
+                }
+            });
+
             // Unified single-port WebSocket server attached directly to the HTTP server
             const wss = new WebSocketServer({ server });
             console.log(`WebSocket server listening on port ${settings.httpport}`);
             let msg = {};
 
-            wss.on('connection', (ws) => {
-                ws.tag = { sent: false, uid: "" };
+            wss.on('connection', (ws, req) => {
+                const cookies = parseCookies(req?.headers?.cookie);
+                const clientUid = cookies.chartmaker_uid || "";
+
+                ws.tag = { sent: false, uid: clientUid };
                 ws.ping();
                 
                 ws.on('close', function() {
@@ -1341,8 +1582,8 @@ function getUniqueUserId(){
                 });
 
                 ws.on('pong', () => {
-                    if (ws.tag.sent === false && ws.tag.uid === "") {
-                        let uid = getUniqueUserId();
+                    if (ws.tag.sent === false) {
+                        let uid = ws.tag.uid || getUniqueUserId();
                         ws.tag.uid = uid;
                         ws.tag.sent = true;
                         console.log(`Websocket connected, id: ${uid}`);
@@ -1350,8 +1591,17 @@ function getUniqueUserId(){
                         connections.set(ws, uid);   
 
                         // Send a confirmation message back to the client
-                        let msg = { type: "connection", uid: uid }
+                        let msg = { type: "connection", uid: uid };
                         sendMessageToClients(msg, uid);
+
+                        // If user has an existing job state, send syncstate
+                        const userState = jobQueue.getUserJobState(uid);
+                        if (userState) {
+                            let syncMsg = new AppMessage(AppMessage.mtSyncState);
+                            syncMsg.uid = uid;
+                            syncMsg.payload = userState;
+                            ws.send(JSON.stringify(syncMsg));
+                        }
                     }
                 });
 
@@ -1363,6 +1613,31 @@ function getUniqueUserId(){
                 ws.onmessage = async(event) => {
                     try {
                         let message = JSON.parse(event.data);
+                        if (message.type === "init" || message.type === "connection") {
+                            if (message.uid) {
+                                ws.tag.uid = message.uid;
+                                connections.set(ws, message.uid);
+                                const userState = jobQueue.getUserJobState(message.uid);
+                                if (userState) {
+                                    let syncMsg = new AppMessage(AppMessage.mtSyncState);
+                                    syncMsg.uid = message.uid;
+                                    syncMsg.payload = userState;
+                                    ws.send(JSON.stringify(syncMsg));
+                                }
+                            }
+                            return;
+                        }
+                        if (message.type === "clearjob") {
+                            const uid = message.uid || ws.tag.uid;
+                            if (uid) jobQueue.clearUserJob(uid);
+                            return;
+                        }
+                        if (message.type === "canceljob") {
+                            const uid = message.uid || ws.tag.uid;
+                            const jobId = message.jobId || null;
+                            jobQueue.cancelJob(uid, jobId);
+                            return;
+                        }
                         if (!message.commandlist || !Array.isArray(message.commandlist) || message.commandlist.length === 0) {
                             return;
                         }

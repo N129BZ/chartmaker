@@ -329,6 +329,35 @@ button:disabled {
     box-shadow: 0 5px #666;
 }
 
+.btnCancel {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: medium;
+    font-weight: bold;
+    background-color: #c62828;
+    color: #fff;
+    border-radius: 10px;
+    border-width: 1px;
+    border-color: #b71c1c;
+    padding: 0 15px;
+    position: relative;
+    margin: 0 10px;
+    top: 0px;
+    left: 35px;
+    height: 38px;
+    width: 160px;
+    display: none;
+    cursor: pointer;
+}
+
+.btnCancel:hover {
+    background-color: #b71c1c;
+}
+
+.btnCancel:active {
+    transform: translateY(2px);
+    box-shadow: 0 5px #666;
+}
+
 .buttongroup {
     position: relative;
     display: flex;
@@ -691,6 +720,7 @@ button:disabled {
     .btnReset,
     .btnRemove,
     .btnProcessCharts,
+    .btnCancel,
     .btnSelectAll,
     .btnUnselectAll {
         position: static;
@@ -710,7 +740,8 @@ button:disabled {
         width: 42%;
     }
 
-    .btnProcessCharts {
+    .btnProcessCharts,
+    .btnCancel {
         width: 36%;
     }
 
