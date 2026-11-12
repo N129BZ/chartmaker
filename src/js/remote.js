@@ -359,9 +359,9 @@ function startWebsocketClient() {
     try {
         let wsurl;
         if (settings.wsport && settings.wsport !== settings.httpport) {
-            wsurl = `${WS_PROTOCOL}//${URL_LOCATION}:${settings.wsport}`;
+            wsurl = `${WS_PROTOCOL}//${URL_LOCATION}:${settings.wsport}/ws`;
         } else {
-            wsurl = `${WS_PROTOCOL}//${URL_HOST_BASE}`;
+            wsurl = `${WS_PROTOCOL}//${URL_HOST_BASE}/ws`;
         }
         console.log(`OPENING WEBSOCKET: ${wsurl}`);
         updateConnectionStatus("connecting", "● Connecting...");

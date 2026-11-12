@@ -1453,8 +1453,8 @@ function getUniqueUserId(){
                 }
             };
 
-            let publicdir = path.join(appdir, "public");
-            app.use(express.static(publicdir, options));
+            let distdir = path.join(appdir, "dist");
+            app.use(express.static(distdir, options));
             if (settings.useauthentication) {
                 app.use(authentication);
             }
@@ -1478,7 +1478,12 @@ function getUniqueUserId(){
             });
             
             app.get("/", (req, res) => {
-                res.send(fs.readFileSync(path.join(publicdir, "index.html"), "utf-8"));
+                const indexPath = path.join(distdir, "index.html");
+                if (!fs.existsSync(indexPath)) {
+                    res.status(503).send("Client build not found in dist/. Run 'npm run build' first.");
+                    return;
+                }
+                res.send(fs.readFileSync(indexPath, "utf-8"));
                 res.end();
             });
 

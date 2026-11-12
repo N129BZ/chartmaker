@@ -29,8 +29,8 @@ RUN git clone https://github.com/n129bz/chartmaker .
 # Fix Docker environment detection in cgroups v2 / container runtimes
 RUN sed -i 's/indocker = (r.search("\/docker\/") > -1);/indocker = (r.search("\/docker\/") > -1) || fs.existsSync("\/\.dockerenv") || process.env.DOCKER === "true";/' make.js
 
-# Install dependencies directly from the cloned repository
-RUN npm install
+# Install dependencies and build client directly from the cloned repository
+RUN npm install && npm run build
 
 # Prepare externalized directory targets
 RUN mkdir -p /chartmaker/chartcache /chartmaker/mbtiles /chartmaker/config \ 
