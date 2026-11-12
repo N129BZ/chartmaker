@@ -4,3 +4,10 @@ node_modules
 chartcache
 externalcharts
 workarea
+dist
+charts
+mbtiles
+mbutil
+tiledatabases
+appimages
+debug.log
