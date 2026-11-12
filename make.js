@@ -904,7 +904,6 @@ function normalizeChartNames(ctx = null) {
  */
 async function processImages(ctx = null) {
     const chartareas = buildChartNameArray(ctx);
-    const cblend = configuration.blendpixels;
     const shapeFolder = ctx ? ctx.clippedShapeFolder : clippedShapeFolder;
     const d1 = ctx ? ctx.dir_1_unzipped : dir_1_unzipped;
     const d2 = ctx ? ctx.dir_2_expanded : dir_2_expanded;
@@ -912,12 +911,15 @@ async function processImages(ctx = null) {
     const d4 = ctx ? ctx.dir_4_mbtiles : dir_4_mbtiles;
     const cname = ctx ? ctx.chartname : chartname;
 
+    // Derive chart_category from the existing .geojson file's chart
+    // category name (e.g., "sectional", "terminal", "enroute_low", etc.)
+    const chartCategory = path.basename(shapeFolder).toLowerCase().replace(/[- ]+/g, '_').replace(/'/g, '');
+    const cutlineGeoJson = path.join(path.dirname(shapeFolder), 'clipshapes.geojson')
+
     for (const area of chartareas) {
         logEntry(`* chart ${area}`);
-        const shpfile = `${area}.shp`;
         const vrtfile = `${area}.vrt`;
         const srcfile = `${area}.tif`;
-        const shapefile = path.join(shapeFolder, shpfile);
         const sourcetif = path.join(d1, srcfile);
         const expanded = path.join(d2, vrtfile);
         const clipped = path.join(d3, vrtfile);
@@ -938,9 +940,11 @@ async function processImages(ctx = null) {
         let transCmd = `gdal_translate -strict -of vrt -ovr NONE ${expandopt} ${sourcetif} ${expanded}`;
         await execCommandAsync(transCmd, null, ctx?.signal);
 
-        logEntry(`>> gdalwarp warping and clipping ${clipped} using shapefile ${shapefile}`);
+        const whereClause = `chart_category='${chartCategory}' AND chart_name='${area}'`;
+        logEntry(`>> gdalwarp warping and clipping ${clipped} using ${cutlineGeoJson} (${whereClause})`);
         let warpCmd = `gdalwarp -t_srs EPSG:3857 -dstalpha --config GDAL_CACHEMAX 512 ` + 
-              `-multi -cblend ${cblend} -cutline ${shapefile} -crop_to_cutline ${expanded} ${clipped}`;
+              `-multi -cutline "${cutlineGeoJson}" -cwhere "${whereClause}" ` +
+              `-crop_to_cutline ${expanded} ${clipped}`;
         await execCommandAsync(warpCmd, null, ctx?.signal);
     }
 

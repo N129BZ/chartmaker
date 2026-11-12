@@ -10,8 +10,7 @@ configuration:
   cleanprocessfolders: true
 
   outputgrayscale: false
-  tileimagequality: 95
-  blendpixels: 5
+  tileimagequality: 85
   timezone: "America/Chicago"
   debug: false
 
@@ -30,7 +29,7 @@ configuration:
   fullchartlist:
     - ["Sectional", "vfr", "VFR_Sectional"]
     - ["Caribbean", "vfr", "VFR_Caribbean"]
-    - ["Grand_Canyon", "vfr", "VFR_Grand_Canyon"]
+    - ["Grand_Canyon", "vfr", "Grand_Canyon_Air_Tour_Operators"]
     - ["Terminal", "vfr", "VFR_Terminal"]
     - ["Helicopter", "vfr", "VFR_Helicopter"]
     - ["DDECUS", "ifr", "Enroute_Low"]
