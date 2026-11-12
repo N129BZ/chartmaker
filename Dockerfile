@@ -31,7 +31,8 @@ ENV NODE_ENV=production
 
 RUN mkdir -p /chartmaker/chartcache /chartmaker/mbtiles /chartmaker/config \ 
     && ln -s /chartmaker/chartcache /chartmaker/chartcache \
-    && ln -s /chartmaker/mbtiles /chartmaker/mbtiles
+    && ln -s /chartmaker/mbtiles /chartmaker/mbtiles \
+    && chmod 777 /chartmaker
 
 EXPOSE 8500
 CMD ["node", "make.js"]

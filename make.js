@@ -1002,6 +1002,7 @@ async function processImages(ctx = null) {
     // Move the finished mbtiles database to the external mbtiles folder
     logEntry(`>> Moving finished MBTILES file to: ${finalmbtiles}`);
     await execCommandAsync(`mv -f "${mbtiles}" "${finalmbtiles}"`, null, ctx?.signal);
+    fs.chmodSync(finalmbtiles, 0o666);
 }
 
 /**
