@@ -2,14 +2,15 @@ import { defineConfig } from 'vite';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import * as yaml from 'js-yaml';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function getBackendPort() {
     try {
-        const settingsPath = path.resolve(__dirname, 'settings.json');
-        const raw = fs.readFileSync(settingsPath, 'utf-8');
-        const parsed = JSON.parse(raw);
+        const configPath = path.resolve(__dirname, 'config.yml');
+        const raw = fs.readFileSync(configPath, 'utf-8');
+        const parsed = yaml.load(raw);
         return parsed?.settings?.httpport || 8500;
     } catch {
         return 8500;

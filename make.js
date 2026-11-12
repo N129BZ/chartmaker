@@ -7,6 +7,7 @@ import path from 'node:path';
 import express from 'express';
 import { cwd } from 'node:process';
 import { WebSocketServer } from 'ws';
+import * as yaml from 'js-yaml';
 
 class AppMessage {
     static mtInfo = "info";
@@ -364,20 +365,24 @@ function processPrompt(message) {
     return readlineSync.question(message); 
 }
 
-let settingspath = path.join(appdir, "settings.json");
+let configpath = path.join(appdir, "config.yml");
 if (isdocker) {
     const externalConfigDir = path.join(appdir, "config");
-    const externalSettingsPath = path.join(externalConfigDir, "settings.json");
+    const externalConfigPath = path.join(externalConfigDir, "config.yml");
     if (!fs.existsSync(externalConfigDir)) {
         fs.mkdirSync(externalConfigDir, { recursive: true });
     }
-    if (!fs.existsSync(externalSettingsPath)) {
-        fs.copyFileSync(settingspath, externalSettingsPath);
+    if (!fs.existsSync(externalConfigPath)) {
+        fs.copyFileSync(configpath, externalConfigPath);
     }
-    settingspath = externalSettingsPath;
+    configpath = externalConfigPath;
 }
-const settings = JSON.parse(fs.readFileSync(settingspath, "utf-8")).settings;
-const useWebServer = settings.webservermode;
+const parsedConfig = yaml.load(fs.readFileSync(configpath, "utf-8"));
+if (!parsedConfig || !parsedConfig.configuration) {
+    throw new Error(`Invalid or missing 'configuration' section in ${configpath}`);
+}
+const configuration = parsedConfig.configuration;
+const useWebServer = configuration.webservermode;
 let timings = new Map();
 
 /** 
@@ -385,8 +390,8 @@ let timings = new Map();
  *  See https://en.wikipedia.org/wiki/List_of_tz_database_time_zones for
  *  for an exhaustive list of valid timezone string values. 
  */ 
-if (settings.timezone != "") {
-    process.env.TZ = settings.timezone; 
+if (configuration.timezone != "") {
+    process.env.TZ = configuration.timezone; 
 }
 
 /**
@@ -407,13 +412,13 @@ function getProcessCount() {
 // logging
 let logfd = 0;
 const setupDebugLog = function(logfolder) {
-    if (settings.logtofile) {
+    if (configuration.logtofile) {
         logfd = fs.openSync(path.join(logfolder, "debug.log"), 'w', 0o666);
     }
 }
 
 const logEntry = function(entry) {
-    if (settings.logtofile) {
+    if (configuration.logtofile) {
         fs.writeSync(logfd, `${entry}\n`)
     }
     else {
@@ -433,7 +438,7 @@ function pad2(n) {
 let expiredate = "";
 const chartdate = getBestChartDate();
 const users = JSON.parse(fs.readFileSync(path.join(appdir, "users.json"), "utf-8")).users;
-const zipfilename = settings.zipfilename;
+const zipfilename = configuration.zipfilename;
 
 
 // used for process timing
@@ -441,7 +446,7 @@ const startdate = new Date(new Date().toLocaleString());
 
 // make sure these base level folders exist
 let workarea = path.join(appdir, "workarea");
-if (settings.renameworkarea) workarea += `_${chartdate}`;
+if (configuration.renameworkarea) workarea += `_${chartdate}`;
 if (!fs.existsSync(workarea)) fs.mkdirSync(workarea)
 
 let chartcache = path.join(appdir, "chartcache");
@@ -450,7 +455,7 @@ if (!fs.existsSync(chartcache)) fs.mkdirSync(chartcache);
 let dbfolder = path.join(appdir, "mbtiles");
 if (!fs.existsSync(dbfolder)) fs.mkdirSync(dbfolder, { recursive: true });
 
-let imageformat = settings.tiledrivers[settings.tiledriverindex];
+let imageformat = configuration.tiledrivers[configuration.tiledriverindex];
 let chartworkname = "";
 let chartname = "";
 let charturl = "";
@@ -478,12 +483,12 @@ if (useWebServer === false) {
         let chart = "";
         let sarg = arg[0].toLowerCase();
         if (sarg.startsWith("-s")) {
-            // output settings.json
+            // output config.yml
             
             console.log("\r\n\r\n----------------------------------------------------------------------------------\r\n" +
-                        "Settings.json\r\n" +
+                        "config.yml\r\n" +
                         "----------------------------------------------------------------------------------\r\n");
-            console.log(settings);
+            console.log(configuration);
             console.log("\r\n\r\n\r\n");
             process.exit();
         }
@@ -491,7 +496,7 @@ if (useWebServer === false) {
             console.log("Command line options:\r\n" +
                         "----------------------------------------------------------------------------------\r\n" +
                         "-h, --help         Show this help\r\n" +
-                        "-s, --settings     Show all values in settings.json\r\n" +
+                        "-s, --settings     Show all values in config.yml\r\n" +
                         "-w, --webserver    Start the web server\r\n" +
                         "----------------------------------------------------------------------------------\r\n" +
                         "area-single=X   Process one area chart where X is the index in the area chart list\r\n" +
@@ -513,27 +518,27 @@ if (useWebServer === false) {
         else if (sarg.search("area-single") > -1) {
             try {
                 nm = Number(arg[0].split("=")[1]);
-                chart = settings.areachartlist[nm][1].replace("_", " ");
+                chart = configuration.areachartlist[nm][1].replace("_", " ");
                 console.log(`Processing area chart: ${chart}`);
                 parray.push(nm);
                 await processSingles();
             }
             catch {
-                console.log("Index error in argument, format is: area-single=X where X is a valid vfr chart index number (see settings.json.) Exiting chartmaker!");
+                console.log("Index error in argument, format is: area-single=X where X is a valid vfr chart index number (see config.yml.) Exiting chartmaker!");
                 process.exit();
             }
         }
         else if (sarg.search("full-single") > -1) {
             try {
                 nm = Number(arg[0].split("=")[1]);
-                chart = settings.fullchartlist[nm][0].replace("_", " ");
-                if (chart === "DDECUS") chart = settings.fullchartlist[nm][2].replace("_", " ");
+                chart = configuration.fullchartlist[nm][0].replace("_", " ");
+                if (chart === "DDECUS") chart = configuration.fullchartlist[nm][2].replace("_", " ");
                 console.log(`Processing full chart: ${chart}`);
                 parray.push(nm);
                 await processFulls();
             }
             catch {
-                console.log("Index error in argument, format is: full-single=X where X is a valid full chart index number (see settings.json.) Exiting chartmaker!");
+                console.log("Index error in argument, format is: full-single=X where X is a valid full chart index number (see config.yml.) Exiting chartmaker!");
                 process.exit();
             }
         }
@@ -546,7 +551,7 @@ if (useWebServer === false) {
                                 "3 = Process a single full chart from the full chart list\r\n" +
                                 "4 = Process all of the full charts in the full chart list\r\n" +
                                 "5 = Put chartmaker into webserver mode (new feature)\r\n" +
-                                "6 = Output the settings.json file to the console\r\n" +
+                                "6 = Output the config.yml file to the console\r\n" +
                                 "---------------------------------------------------------------------\r\n\r\n" +
                                 "Your selection: "); 
         switch (response) {
@@ -566,7 +571,7 @@ if (useWebServer === false) {
                 enterWebserverMode();
                 break;
             case "6":
-                console.log(settings);
+                console.log(configuration);
                 console.log("\r\n\r\n\r\n");
                 process.exit();
             default:
@@ -579,8 +584,8 @@ if (useWebServer === false) {
 async function processOneArea(area = -1) {
     if (area == -1) {
         let lst = "\nSelect the chart number you want to process from this list\r\n\r\n";
-        for (let i = 0; i <  settings.areachartlist.length; i++) {
-            lst += `${i} ${settings.areachartlist[i].split("_").join(" ")}\r\n`; 
+        for (let i = 0; i <  configuration.areachartlist.length; i++) {
+            lst += `${i} ${configuration.areachartlist[i].split("_").join(" ")}\r\n`; 
         }
         lst += "--------------------------------------------\r\nYour selection: ";
         let response = processPrompt(lst);
@@ -591,7 +596,7 @@ async function processOneArea(area = -1) {
     }
 
     try {
-        if (nm >= 0 && nm < settings.areachartlist.length) {
+        if (nm >= 0 && nm < configuration.areachartlist.length) {
             parray.push(nm);
             await processSingles();
         }
@@ -614,15 +619,15 @@ async function processAllAreas() {
 }
 
 function createAreaChartContext(opt, signal = null) {
-    const chartworkname = settings.areachartlist[opt];
+    const chartworkname = configuration.areachartlist[opt];
     const chartname = chartworkname;
     const clippedShapeFolder = path.join(appdir, "clipshapes", "sectional");
-    const charturl = `${settings.vfrindividualtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
+    const charturl = `${configuration.vfrindividualtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
     return new ChartTaskContext(workarea, chartworkname, chartname, charturl, clippedShapeFolder, false, signal);
 }
 
 function createFullChartContext(opt, signal = null) {
-    const chart = settings.fullchartlist[opt];
+    const chart = configuration.fullchartlist[opt];
     const charttype = chart[1];
     let lcasename = chart[0].toLowerCase();
     const chartworkname = chart[0];
@@ -634,14 +639,14 @@ function createFullChartContext(opt, signal = null) {
     if (charttype === "ifr") {
         isifrchart = true;
         lcasename = chart[2].toLowerCase();
-        charturl = settings.ifrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
+        charturl = configuration.ifrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
         clippedShapeFolder = path.join(appdir, "clipshapes", lcasename);
         chartname = chart[2]; // use alias value for IFR
     } else {
         if (lcasename === "us_vfr_wall_planning") {
-            charturl = `${settings.usvfrwallplanningtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
+            charturl = `${configuration.usvfrwallplanningtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
         } else {
-            charturl = settings.vfrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
+            charturl = configuration.vfrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
         }
         clippedShapeFolder = path.join(appdir, "clipshapes", lcasename);
         chartname = chartworkname;
@@ -700,7 +705,7 @@ async function processSingles(msgid = -1, indices = null, timingsMap = timings, 
 async function processOneFull() {
     let lst = "\nSelect the full chart number you want to process from this list\r\n\r\n";
     let i = 1;
-    settings.fullchartlist.forEach((fullchart) => {
+    configuration.fullchartlist.forEach((fullchart) => {
         let cname = fullchart[0] === "DDECUS" ? fullchart[2] : fullchart[0];
         lst += `${i} ${cname.split("_").join(" ")}\r\n`;
         i++;
@@ -709,7 +714,7 @@ async function processOneFull() {
     let response = processPrompt(lst);
     nm = Number(response); 
 
-    if (nm >= 1 && nm < settings.fullchartlist.length + 1) {
+    if (nm >= 1 && nm < configuration.fullchartlist.length + 1) {
         parray.push(nm - 1);
     }
     else {
@@ -723,8 +728,8 @@ async function processOneFull() {
 }
 
 async function processAllFulls() {
-    settings.fullchartlist.forEach((fullchart) => {
-        parray.push(settings.fullchartlist.indexOf(fullchart))
+    configuration.fullchartlist.forEach((fullchart) => {
+        parray.push(configuration.fullchartlist.indexOf(fullchart))
     });
     const cpt = new ProcessTime(chartname);
     timings.set(chartname, cpt);
@@ -787,7 +792,7 @@ async function runProcessing(ctx = null) {
     normalizeChartNames(ctx);
     await processImages(ctx);
     
-    if (settings.cleanprocessfolders === true) {
+    if (configuration.cleanprocessfolders === true) {
         if (fs.existsSync(ctx.chartfolder)) {
             fs.rmSync(ctx.chartfolder, { recursive: true, force: true });
         }
@@ -822,7 +827,7 @@ function setupEnvironment(ctx = null) {
     if (!fs.existsSync(d2)) fs.mkdirSync(d2, { recursive: true });
     if (!fs.existsSync(d3)) fs.mkdirSync(d3, { recursive: true });
     if (!fs.existsSync(d4)) fs.mkdirSync(d4, { recursive: true });
-    if (settings.logtofile) setupDebugLog(cfolder);
+    if (configuration.logtofile) setupDebugLog(cfolder);
     logEntry(`Created all workarea subfolders for ${cname}`);
 }
 
@@ -902,7 +907,7 @@ function normalizeChartNames(ctx = null) {
  */
 async function processImages(ctx = null) {
     const chartareas = buildChartNameArray(ctx);
-    const cblend = settings.blendpixels;
+    const cblend = configuration.blendpixels;
     const shapeFolder = ctx ? ctx.clippedShapeFolder : clippedShapeFolder;
     const d1 = ctx ? ctx.dir_1_unzipped : dir_1_unzipped;
     const d2 = ctx ? ctx.dir_2_expanded : dir_2_expanded;
@@ -925,7 +930,7 @@ async function processImages(ctx = null) {
         const infojson = JSON.parse(await execCommandAsync(ginfoCmd, false, ctx?.signal));
         let expandopt = "";
         if (infojson.bands.length === 1) {
-            if (settings.outputgrayscale) {
+            if (configuration.outputgrayscale) {
                 expandopt = "-expand gray"; 
             } else {
                 expandopt = "-expand rgb";
@@ -946,10 +951,10 @@ async function processImages(ctx = null) {
     let configargs = "";
     switch (imageformat) {
         case "webp":
-            configargs = `--config WEBP_LOSSLESS_OVERVIEW NO --config WEBP_LEVEL_OVERVIEW ${settings.tileimagequality}`;
+            configargs = `--config WEBP_LOSSLESS_OVERVIEW NO --config WEBP_LEVEL_OVERVIEW ${configuration.tileimagequality}`;
             break;
         case "jpeg":
-            configargs = `--config JPEG_QUALITY_OVERVIEW ${settings.tileimagequality}`;
+            configargs = `--config JPEG_QUALITY_OVERVIEW ${configuration.tileimagequality}`;
             break;     
         default:
             // no adjustments for PNG images
@@ -974,7 +979,7 @@ async function processImages(ctx = null) {
     let mbCmd = `gdal_translate ${bigvrt} ${mbtiles} -of MBTILES ` + 
           `--config GDAL_CACHEMAX 4096 --config GDAL_MAX_DATASET_POOL_SIZE 500 ` +
           `--config OGR_SQLITE_JOURNALMODE MEMORY --config OGR_SQLITE_SYNCHRONOUS OFF ` +
-          `-co TILE_FORMAT=${imgfmt} -co QUALITY=${settings.tileimagequality}`;
+          `-co TILE_FORMAT=${imgfmt} -co QUALITY=${configuration.tileimagequality}`;
     await execCommandAsync(mbCmd, null, ctx?.signal);
 
     logEntry(`>> Adding gdaladdo overviews to ${mbtiles}`);
@@ -989,7 +994,7 @@ async function processImages(ctx = null) {
     await execCommandAsync(`sqlite3 ${mbtiles} "${sql}"`, false, ctx?.signal);
 
     // Insert the metadata attribution information
-    const attribution = settings.attribution.replaceAll("'", "''");
+    const attribution = configuration.attribution.replaceAll("'", "''");
     sql = `INSERT OR REPLACE INTO metadata (name, value) ` + 
           `VALUES ('attribution', '${attribution}');`;
     await execCommandAsync(`sqlite3 ${mbtiles} "${sql}"`, false, ctx?.signal);
@@ -1096,7 +1101,7 @@ function getBestChartDate() {
 function execCommandAsync(command, logstdout = null, signal = null) {
     return new Promise((resolve, reject) => {
         if (logstdout == null) {
-            logstdout = settings.debug;
+            logstdout = configuration.debug;
         }
         const execOptions = { maxBuffer: 50 * 1024 * 1024 };
         if (signal) {
@@ -1186,7 +1191,7 @@ function startPingSender() {
         [...connections.keys()].forEach((ws) => {
             ws.ping();
          });
-    }, settings.pinginterval); 
+    }, configuration.pinginterval); 
     pingSenderId = interval;
 }
 
@@ -1287,8 +1292,8 @@ async function executeMakeJob(job) {
                         let rmt = new AppMessage(AppMessage.mtRunning);
                         rmt.rowindex = ridx;
 
-                        let chart = settings.fullchartlist[opt][0].replace("_", " ");
-                        if (chart === "DDECUS") chart = settings.fullchartlist[opt][2].replace("_", " ");
+                        let chart = configuration.fullchartlist[opt][0].replace("_", " ");
+                        if (chart === "DDECUS") chart = configuration.fullchartlist[opt][2].replace("_", " ");
                         console.log(`Job ${job.jobId} - processing full chart: ${chart}`);
                         rmt.filename = chart;
                         rmt.dbfilename = `${chart.replaceAll(" ", "_")}.mbtiles`;
@@ -1398,11 +1403,11 @@ function processCommandMessage(message) {
                     let strcht = "";
                     switch (tclcmd) {
                         case 0:
-                            strcht = settings.areachartlist[tclcht]
+                            strcht = configuration.areachartlist[tclcht]
                             strcht = strcht.replaceAll("_", " ");
                             break;
                         case 2:
-                            strcht = settings.fullchartlist[tclcht][0];
+                            strcht = configuration.fullchartlist[tclcht][0];
                             strcht = strcht.replaceAll("_", " ");
                             break;
                         default:
@@ -1436,8 +1441,8 @@ function getUniqueUserId(){
         try {
 
             app.use(express.urlencoded({ extended: true }));
-            server.listen(settings.httpport, '0.0.0.0', () => { 
-                console.log(`Web Server listening on port ${settings.httpport}`);
+            server.listen(configuration.httpport, '0.0.0.0', () => { 
+                console.log(`Web Server listening on port ${configuration.httpport}`);
             });
 
             let options = {
@@ -1455,7 +1460,7 @@ function getUniqueUserId(){
 
             let distdir = path.join(appdir, "dist");
             app.use(express.static(distdir, options));
-            if (settings.useauthentication) {
+            if (configuration.useauthentication) {
                 app.use(authentication);
             }
             app.use(express.json());
@@ -1487,9 +1492,8 @@ function getUniqueUserId(){
                 res.end();
             });
 
-            app.get("/settings", (req, res) => {
-                res.send(JSON.stringify(settings));
-                res.end();
+            app.get("/api/config", (req, res) => {
+                res.json(configuration);
             });
             
             app.get("/status", (req, res) => {
@@ -1570,7 +1574,7 @@ function getUniqueUserId(){
 
             // Unified single-port WebSocket server attached directly to the HTTP server
             const wss = new WebSocketServer({ server });
-            console.log(`WebSocket server listening on port ${settings.httpport}`);
+            console.log(`WebSocket server listening on port ${configuration.httpport}`);
             let msg = {};
 
             wss.on('connection', (ws, req) => {

@@ -22,6 +22,7 @@
     "express-basic-auth": "^1.2.1",
     "fs": "0.0.1-security",
     "http": "^0.0.1-security",
+    "js-yaml": "^5.5.0",
     "path": "^0.12.7",
     "readline-sync": "^1.4.10",
     "ws": "^8.18.2"

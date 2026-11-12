@@ -1,4 +1,3 @@
-'use strict'
 
 
 class AppMessage {
@@ -43,7 +42,7 @@ const URL_LOCATION = location.hostname;
 const URL_PROTOCOL = location.protocol;
 const URL_PORT = location.port;
 
-var URL_HOST_BASE = URL_LOCATION;
+let URL_HOST_BASE = URL_LOCATION;
 if (parseInt(URL_PORT) > 0) {
     URL_HOST_BASE += `:${URL_PORT}`;
 }
@@ -51,7 +50,7 @@ if (parseInt(URL_PORT) > 0) {
 const URL_HOST_PROTOCOL = `${URL_PROTOCOL}//`;
 const URL_SERVER = `${URL_HOST_PROTOCOL}${URL_HOST_BASE}`;
 const WS_PROTOCOL = URL_PROTOCOL === "https:" ? "wss:" : "ws:";
-const URL_GET_SETTINGS = `${URL_SERVER}/settings`;
+const URL_GET_CONFIG = `${URL_SERVER}/api/config`;
 const URL_GET_EXISTINGCOUNT = `${URL_SERVER}/existingcount`;
 const URL_POST_SENDEXISTING = `${URL_SERVER}/sendexisting`;
 const URL_GET_STATUS = `${URL_SERVER}/status`;
@@ -110,24 +109,24 @@ function setCookie(name, value, days = 30) {
     document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
 }
 
-var thisUserId = getCookie("chartmaker_uid");
-var websocket;
-var indexlist = [];
-var commandpackage = {
+let thisUserId = getCookie("chartmaker_uid");
+let websocket;
+let indexlist = [];
+let commandpackage = {
     type: "commandpackage",
     commandlist: [],
     uid: thisUserId
 };
-var processitems = [];
-var confcommands = [];
-var settings = {};
-var selectedcommand = -1;
-var selectedchart = -1;
-var blinking = false;
-var inResponseView = false;
-var fullChartNames = [];
-var areaChartNames = [];
-var downloadInProgress = false;
+let processitems = [];
+let confcommands = [];
+let configuration = {};
+let selectedcommand = -1;
+let selectedchart = -1;
+let blinking = false;
+let inResponseView = false;
+let fullChartNames = [];
+let areaChartNames = [];
+let downloadInProgress = false;
 
 const dlchkPrefix = "dlchk";
 
@@ -140,14 +139,14 @@ window.addEventListener("resize", () => {
     console.log("windowresize event");
 });
 
-async function getSettingsFromServer() {
+async function getConfigFromServer() {
     try {
-        const data = await fetch(URL_GET_SETTINGS);
+        const data = await fetch(URL_GET_CONFIG);
         if (!data.ok) {
             throw new Error(`HTTP error! status: ${data.status}`);
         }
-        settings = await data.json();
-        console.log(settings);
+        configuration = await data.json();
+        console.log(configuration);
         checkForExistingDatabases();
         setChartNameArrays();
         await checkJobStateOnLoad();
@@ -302,7 +301,7 @@ function restoreUIFromState(state) {
 /**
  * get the settings object from the server
  */
-getSettingsFromServer();
+getConfigFromServer();
 
 /**
  * See if we need to display the show downloadExisting checkbox
@@ -322,17 +321,17 @@ async function checkForExistingDatabases() {
  */
 function setChartNameArrays() {
     // Full chart names
-    for (let i = 0; i < settings.fullchartlist.length; i++) {
-        let item = settings.fullchartlist[i][0];
+    for (let i = 0; i < configuration.fullchartlist.length; i++) {
+        let item = configuration.fullchartlist[i][0];
         if (item.includes("DDECUS")) {
-            item = settings.fullchartlist[i][2];
+            item = configuration.fullchartlist[i][2];
         }
         fullChartNames.push(item.replaceAll("_", " "));
     }
 
     // Area chart names
-    for (let i = 0; i < settings.areachartlist.length; i++) {
-        let item = settings.areachartlist[i];
+    for (let i = 0; i < configuration.areachartlist.length; i++) {
+        let item = configuration.areachartlist[i];
         areaChartNames.push(item.replaceAll("_", " "));
     }
 };
@@ -358,8 +357,8 @@ function startWebsocketClient() {
     }
     try {
         let wsurl;
-        if (settings.wsport && settings.wsport !== settings.httpport) {
-            wsurl = `${WS_PROTOCOL}//${URL_LOCATION}:${settings.wsport}/ws`;
+        if (configuration.wsport && configuration.wsport !== configuration.httpport) {
+            wsurl = `${WS_PROTOCOL}//${URL_LOCATION}:${configuration.wsport}/ws`;
         } else {
             wsurl = `${WS_PROTOCOL}//${URL_HOST_BASE}/ws`;
         }
@@ -880,7 +879,7 @@ function updateCommandBody(message) {
         }
         else if (message.type === AppMessage.mtDownload) {
             if (message.completed === false) {
-                var tr, td1, td2;
+                let tr, td1, td2;
                 for (let i = 0; i < commandbody.rows.length; i++) {
                     tr = commandbody.rows[i];
                     td1 = tr.children[0];
@@ -967,10 +966,10 @@ function commandSelected() {
 function populateAreaChartList() {
     resetChartOptions();
     txtChart.innerHTML = '<option value="" disabled selected>-- Select area chart --</option>';
-    for (let i = 0; i < settings.areachartlist.length; i++) {
+    for (let i = 0; i < configuration.areachartlist.length; i++) {
         let option = document.createElement('option');
         option.value = String(i);
-        option.textContent = `${settings.areachartlist[i].replaceAll("_", " ")}`;
+        option.textContent = `${configuration.areachartlist[i].replaceAll("_", " ")}`;
         txtChart.appendChild(option);
     }
     txtChart.disabled = false;
@@ -982,12 +981,12 @@ function populateAreaChartList() {
 function populateFullChartList() {
     resetChartOptions();
     txtChart.innerHTML = '<option value="" disabled selected>-- Select full chart --</option>';
-    for (let i = 0; i < settings.fullchartlist.length; i++) {
+    for (let i = 0; i < configuration.fullchartlist.length; i++) {
         let option = document.createElement('option');
         option.value = String(i);
-        let item = settings.fullchartlist[i][0];
+        let item = configuration.fullchartlist[i][0];
         if (i === 5 || i === 6) {
-            item = settings.fullchartlist[i][2];
+            item = configuration.fullchartlist[i][2];
         }
         option.textContent = item.replaceAll("_", " ");
         txtChart.appendChild(option);
@@ -1132,7 +1131,7 @@ function processChunks(chunks) {
     const downloadLink = document.createElement("a");
     downloadLink.style.display = "none";
     downloadLink.href = fileURL;
-    downloadLink.download = settings.zipfilename;
+    downloadLink.download = configuration.zipfilename;
 
     document.body.appendChild(downloadLink);
     downloadLink.click();
