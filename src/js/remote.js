@@ -322,10 +322,7 @@ async function checkForExistingDatabases() {
 function setChartNameArrays() {
     // Full chart names
     for (let i = 0; i < configuration.fullchartlist.length; i++) {
-        let item = configuration.fullchartlist[i][0];
-        if (item.includes("DDECUS")) {
-            item = configuration.fullchartlist[i][2];
-        }
+        let item = configuration.fullchartlist[i][2] || configuration.fullchartlist[i][0];
         fullChartNames.push(item.replaceAll("_", " "));
     }
 
@@ -984,10 +981,7 @@ function populateFullChartList() {
     for (let i = 0; i < configuration.fullchartlist.length; i++) {
         let option = document.createElement('option');
         option.value = String(i);
-        let item = configuration.fullchartlist[i][0];
-        if (i === 5 || i === 6) {
-            item = configuration.fullchartlist[i][2];
-        }
+        let item = configuration.fullchartlist[i][2] || configuration.fullchartlist[i][0];
         option.textContent = item.replaceAll("_", " ");
         txtChart.appendChild(option);
     }

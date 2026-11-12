@@ -20,16 +20,22 @@ configuration:
   pinginterval: 30000
   useauthentication: false
   zipfilename: "Charts.zip"
-
+ 
+  #######################################################
+  # Format: ["Filename", "Chart type", "Display name"]
+  # NOTE: DO NOT REMOVE UNDERSCORES! The application
+  # will not properly process filenames with spaces and 
+  # replaces underscores with spaces for display names.
+  #######################################################
   fullchartlist:
-    - ["Sectional", "vfr", ""]
-    - ["Caribbean", "vfr", ""]
-    - ["Grand_Canyon", "vfr", ""]
-    - ["Terminal", "vfr", ""]
-    - ["Helicopter", "vfr", ""]
+    - ["Sectional", "vfr", "VFR_Sectional"]
+    - ["Caribbean", "vfr", "VFR_Caribbean"]
+    - ["Grand_Canyon", "vfr", "VFR_Grand_Canyon"]
+    - ["Terminal", "vfr", "VFR_Terminal"]
+    - ["Helicopter", "vfr", "VFR_Helicopter"]
     - ["DDECUS", "ifr", "Enroute_Low"]
     - ["DDECUS", "ifr", "Enroute_High"]
-    - ["US_VFR_Wall_Planning", "vfr", ""]
+    - ["US_VFR_Wall_Planning", "vfr", "VFR_Wall_Planning"]
 
   areachartlist:
     - Albuquerque

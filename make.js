@@ -531,8 +531,7 @@ if (useWebServer === false) {
         else if (sarg.search("full-single") > -1) {
             try {
                 nm = Number(arg[0].split("=")[1]);
-                chart = configuration.fullchartlist[nm][0].replace("_", " ");
-                if (chart === "DDECUS") chart = configuration.fullchartlist[nm][2].replace("_", " ");
+                chart = (configuration.fullchartlist[nm][2] || configuration.fullchartlist[nm][0]).replace("_", " ");
                 console.log(`Processing full chart: ${chart}`);
                 parray.push(nm);
                 await processFulls();
@@ -632,7 +631,7 @@ function createFullChartContext(opt, signal = null) {
     let lcasename = chart[0].toLowerCase();
     const chartworkname = chart[0];
     let isifrchart = false;
-    let chartname = "";
+    let chartname = chart[2] || chartworkname;
     let charturl = "";
     let clippedShapeFolder = "";
 
@@ -641,7 +640,6 @@ function createFullChartContext(opt, signal = null) {
         lcasename = chart[2].toLowerCase();
         charturl = configuration.ifrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
         clippedShapeFolder = path.join(appdir, "clipshapes", lcasename);
-        chartname = chart[2]; // use alias value for IFR
     } else {
         if (lcasename === "us_vfr_wall_planning") {
             charturl = `${configuration.usvfrwallplanningtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
@@ -649,7 +647,6 @@ function createFullChartContext(opt, signal = null) {
             charturl = configuration.vfrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
         }
         clippedShapeFolder = path.join(appdir, "clipshapes", lcasename);
-        chartname = chartworkname;
     }
     return new ChartTaskContext(workarea, chartworkname, chartname, charturl, clippedShapeFolder, isifrchart, signal);
 }
@@ -706,7 +703,7 @@ async function processOneFull() {
     let lst = "\nSelect the full chart number you want to process from this list\r\n\r\n";
     let i = 1;
     configuration.fullchartlist.forEach((fullchart) => {
-        let cname = fullchart[0] === "DDECUS" ? fullchart[2] : fullchart[0];
+        let cname = fullchart[2] || fullchart[0];
         lst += `${i} ${cname.split("_").join(" ")}\r\n`;
         i++;
     });
@@ -1293,8 +1290,7 @@ async function executeMakeJob(job) {
                         let rmt = new AppMessage(AppMessage.mtRunning);
                         rmt.rowindex = ridx;
 
-                        let chart = configuration.fullchartlist[opt][0].replace("_", " ");
-                        if (chart === "DDECUS") chart = configuration.fullchartlist[opt][2].replace("_", " ");
+                        let chart = (configuration.fullchartlist[opt][2] || configuration.fullchartlist[opt][0]).replace("_", " ");
                         console.log(`Job ${job.jobId} - processing full chart: ${chart}`);
                         rmt.filename = chart;
                         rmt.dbfilename = `${chart.replaceAll(" ", "_")}.mbtiles`;
@@ -1408,7 +1404,7 @@ function processCommandMessage(message) {
                             strcht = strcht.replaceAll("_", " ");
                             break;
                         case 2:
-                            strcht = configuration.fullchartlist[tclcht][0];
+                            strcht = configuration.fullchartlist[tclcht][2] || configuration.fullchartlist[tclcht][0];
                             strcht = strcht.replaceAll("_", " ");
                             break;
                         default:
