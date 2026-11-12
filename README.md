@@ -20,8 +20,8 @@ Create a new directory, download and place the the docker-compose.yml file in th
 
 #### chartdates.json
 The FAA publishes charts 20 days ***before*** the official chart date, and chartmaker will automatically select the nearest chart date from this file of official FAA chart 56-day release dates, all the way up to the year 2044. If the next chart date is more than 20 days out, chartmaker will get the current chart date.                   
-#### settings.json
-The settings array **fullchartlist** and **areachartlist** are the actual zip filenames the FAA uses and are for reference only. **Changes to the downloadtemplates, chartlists, layertypes, or tiledrivers lists WILL BREAK THE APPLICATION!**    
+#### config.yml
+The arrays **fullchartlist** and **areachartlist** are the actual zip filenames the FAA uses and are for reference only. **Changes to the downloadtemplates, chartlists, layertypes, or tiledrivers lists WILL BREAK THE APPLICATION!**    
 * The **overviewrange** values determine the zoom levels, where **2 4 8 16 32 64 128 256 1024 2048** will give zoom factors from **11 to 0**.                
 * The default **tileimagequality** percentage of ***75*** and **tiledriverindex** index to ***2*** (webp) gives the best resolution at a reasonable mbtiles file size. The smaller the percentage, the fuzzier the chart will be at high zoom levels. **webp** does extremely well at 75%.   
   * Please note that the tiledimagequality setting only works for **webp** images. 
@@ -29,7 +29,7 @@ The settings array **fullchartlist** and **areachartlist** are the actual zip fi
 * To save disk space, you can set **cleanprocessfolders** to true, which will remove all temporary processing files when the processing completes.
 * To preserve the intermediate processed files, you can set **renameworkarea** to true. This will rename the **workarea** folder to include the processed chart date so the next run will not overwrite the folder. This is a convenience setting to allow seeing the intermediate files, but it uses more disk space.
 
-#### other settings.json values
+#### other config.yml values
 * ***attribution*** is a database metadata value that many mapping applications use for acknowledgement of the database creator      
 ```
 "attribution": "Aviation charts <a href='https://github.com/n129bz/chartmaker'>github.com/n129bz/chartmaker</a>"   
