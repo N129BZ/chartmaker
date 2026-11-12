@@ -28,7 +28,7 @@ export default defineConfig({
     },
     server: {
         proxy: {
-            '/settings': backendTarget,
+            '/config': backendTarget,
             '/status': backendTarget,
             '/job-state': backendTarget,
             '/clearjob': backendTarget,
