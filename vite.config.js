@@ -11,7 +11,7 @@ function getBackendPort() {
         const configPath = path.resolve(__dirname, 'config.yml');
         const raw = fs.readFileSync(configPath, 'utf-8');
         const parsed = yaml.load(raw);
-        return parsed?.settings?.httpport || 8500;
+        return parsed?.configuration?.httpport || 8500;
     } catch {
         return 8500;
     }
@@ -28,7 +28,7 @@ export default defineConfig({
     },
     server: {
         proxy: {
-            '/config': backendTarget,
+            '/api/config': backendTarget,
             '/status': backendTarget,
             '/job-state': backendTarget,
             '/clearjob': backendTarget,
