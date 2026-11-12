@@ -92,11 +92,17 @@ configuration:
     - Western_Aleutian_Islands
     - Wichita
 
+  #######################################################
+  # Options: ["baselayer", "overlay"]
+  #######################################################
   layertypeindex: 1
   layertypes:
     - baselayer
     - overlay
-
+  
+  #######################################################
+  # Options: ["png", "jpeg", "webp"]
+  #######################################################
   tiledriverindex: 2
   tiledrivers:
     - png
