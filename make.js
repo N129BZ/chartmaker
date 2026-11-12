@@ -1162,7 +1162,7 @@ function normalizeClipNames(targetFolder = null) {
  */
 function enterWebserverMode() {
     useWebServer = true;
-    console.log("Entering web server mode")
+    //console.log("Entering web server mode")
 }
 
 /**
