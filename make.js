@@ -503,6 +503,7 @@ if (useWebServer === false) {
         }
         else if (sarg.startsWith("-w")) {
             enterWebserverMode();
+            
         }
         else if (sarg === "area-all") {
             await processAllAreas();
