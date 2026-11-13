@@ -1,19 +1,31 @@
 configuration:
+  ########################################################
+  # Section: Download URL Templates
+  ########################################################
   attribution: "Aviation charts <a href='https://github.com/n129bz/chartmaker'>github.com/n129bz/chartmaker</a>"
   vfrdownloadtemplate: "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip"
   vfrindividualtemplate: "https://aeronav.faa.gov/visual/<chartdate>/sectional-files/<charttype>.zip"
   ifrdownloadtemplate: "https://aeronav.faa.gov/enroute/<chartdate>/<charttype>.zip"
   usvfrwallplanningtemplate: "https://aeronav.faa.gov/visual/<chartdate>/Planning/US_WallPlan.zip"
 
+  ########################################################
+  # Internal work area settings
+  ######################################################## 
   renameworkarea: false
   logtofile: false
   cleanprocessfolders: true
 
+  ########################################################
+  # Image proccessing and output settings
+  ########################################################
   outputgrayscale: false
   tileimagequality: 85
-  timezone: "America/Chicago"
   debug: false
-
+  timezone: "America/Chicago"
+  
+  ########################################################
+  # Web server settings
+  ########################################################
   webservermode: true
   httpport: 8500
   pinginterval: 30000
