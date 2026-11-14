@@ -14,7 +14,9 @@
     "build": "vite build",
     "build-client": "vite build",
     "preview": "vite preview",
-    "start": "node make.js"
+    "start": "node make.js",
+    "start:web": "WEBSERVER=true node make.js",
+    "start:cli": "WEBSERVER=false node make.js"
   },
   "dependencies": {
     "child_process": "^1.0.2",
