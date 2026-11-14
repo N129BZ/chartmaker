@@ -1,9 +1,13 @@
 # Chartmaker - Create VFR and IFR digital raster chart MBTILES databases from downloaded FAA geo-referenced TIF images for OpenLayers or Leaflet mapping applications   
 
-### Run this application in Docker     
-Create a new directory, download and place the the docker-compose.yml file in that directory and from that directory, open a terminal and enter the docker compose command ***docker compose pull && docker compose up*** (the web server default is ***localhost:8500***, see screen shots below.) Two local folders will be created within your new directory: ***chartcache***, and ***mbtiles***. The ***settings.json*** file will be created in ***[yourdirectoryname]***, all downloaded raster charts will be placed in ***[yourdirectoryname]/chartcache***, and the generated charts will be placed in ***[yourdirectoryname]/mbtiles***.
+### To run this application in Docker     
+Create a new directory, download and place the the docker-compose.yml file in that directory, open a terminal there and enter the docker compose command that corresponds to the mode you want to run in:  
+  - ***docker compose up -d chartmaker*** (the web server default is ***localhost:8500***, see screen shots below.) 
+  - ***docker compose run --rm chartmaker-cli***    
 
-### Check out my chart viewing application at https://github.com/n129bz/mapclient
+Two local folders will be created within your new directory: ***chartcache***, and ***mbtiles***. The ***config.yml*** file will also be created in the new directory. All downloaded raster charts will be placed in ***[yourdirectoryname]/chartcache***, and the generated charts will be placed in ***[yourdirectoryname]/mbtiles***. In webserver mode, the user can elect to download the finished chart(s) as a .zip file when the processing is completed. 
+
+#### For a chart viewing application see: https://github.com/n129bz/mapserver
  Shows Metars, TAFs, Pireps, Animated Weather, Airport Information including frequencies and runways - and more! Also check out the companion express web server application at https://github.com/n129bz/mapserver    
 
 ### Required installations to run the app locally: gdal-bin (v3.6.2 minimum,) build-essential, libgdal-dev, libssl-dev, sqlite3, curl, unzip, and nodejs + npm (LTS) 
@@ -11,9 +15,8 @@ Create a new directory, download and place the the docker-compose.yml file in th
 #### Installation:
 1.) This node.js application is designed to run on Linux, and also runs well on **WSL** (Windows Subsystem for Linux) and assumes a pre-existing node js installation   
 2.) After installing all requirements, clone this repository, change directory to **chartmaker**, open a terminal and enter **npm install**        
-3.) Run the application in a terminal with the command **node make.js** or to see command line options, **node make.js --help** 
-4.) To run the application as a console app, make the setting **"webservermode": false** (The default is to run from the web server.)    
-5.) If not passing a chart number argument, respond to the prompt for what to process      
+3.) Run the application either as a web server or in a terminal: ***npm run start:web*** or ***npm run start:cli***  
+4.) When running in web mode, open a browser at ***localhost:8500*** or when running in a client mode, simply respond to the prompts for what to process      
 6.) Go do something else... depending on the number of charts and image quality, the full Sectional chart can take up to several hours to complete.     
 
 ### Process Control Files
@@ -138,6 +141,7 @@ tiledriverindex: 2
 #### *Additional information
 The chart zip files are downloaded from the FAA digital raster chart repository and unzipped. After the unzipping process all of the the resultant GEOtiff image names (and their matching tfw world file names) are "normalized" to all lower-case filenames with underscores in place of dashes and spaces and any apostrophes removed. This simplifies the down-stream processing of these files since **GDAL** can interpret spaces as argument separators.   
 
+### *Webserver Mode Browser User Interface*
 <img width="589" height="725" alt="Chartmaker01" src="https://github.com/user-attachments/assets/14f8c991-568a-48f7-8f68-0663ac9e044b" />
 <img width="597" height="841" alt="ChartmakerWeb" src="https://github.com/user-attachments/assets/febfa936-4aff-4439-acf8-7599ea60b934" />
 <img width="591" height="752" alt="ChartmakerMain" src="https://github.com/user-attachments/assets/993b4f0f-a1fd-47c4-a660-e151b10eba20" />
