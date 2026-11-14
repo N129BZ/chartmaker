@@ -7,10 +7,17 @@ Create a new directory, download and place the the docker-compose.yml file in th
 
 Two local folders will be created within your new directory: ***chartcache***, and ***mbtiles***. The ***config.yml*** file will also be created in the new directory. All downloaded raster charts will be placed in ***[yourdirectoryname]/chartcache***, and the generated charts will be placed in ***[yourdirectoryname]/mbtiles***. In webserver mode, the user can elect to download the finished chart(s) as a .zip file when the processing is completed. 
 
-#### For a chart viewing application see: https://github.com/n129bz/mapserver
- Shows Metars, TAFs, Pireps, Animated Weather, Airport Information including frequencies and runways - and more! Also check out the companion express web server application at https://github.com/n129bz/mapserver    
+#### For a chart viewing application see: *https://github.com/n129bz/mapserver* - Shows Metars, TAFs, Pireps, Animated Weather, Airport Information including frequencies and runways - and more!
 
-### Required installations to run the app locally: gdal-bin (v3.6.2 minimum,) build-essential, libgdal-dev, libssl-dev, sqlite3, curl, unzip, and nodejs + npm (LTS) 
+### Required installations to run Chartmaker directly in Node.js:  
+ - ***nodejs + npm (LTS)***
+ - ***gdal-bin (v3.6.2 minimum)***
+ - ***build-essential***
+ - ***libgdal-dev***
+ - ***libssl-dev***
+ - ***sqlite3***
+ - ***curl***
+ - ***unzip***
 
 #### Installation:
 1.) This node.js application is designed to run on Linux, and also runs well on **WSL** (Windows Subsystem for Linux) and assumes a pre-existing node js installation   
