@@ -1,9 +1,12 @@
 services:
   chartmaker:
+    build: .                                  
     image: ghcr.io/n129bz/chartmaker:latest
     container_name: chartmaker
     user: "${UID:-1000}:${GID:-1000}"
-    restart: unless-stopped
+    stdin_open: true                          
+    tty: true                                 
+    restart: "no"                             
     ports:
       - "8500:8500" 
     volumes:
