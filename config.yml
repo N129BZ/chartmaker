@@ -26,11 +26,10 @@ configuration:
   ########################################################
   # Web server settings
   ########################################################
-  webservermode: false
   httpport: 8500
   pinginterval: 30000
   useauthentication: false
-  zipfilename: "Charts.zip"
+  downloadzipfilename: "Charts.zip"
  
   #######################################################
   # Format: ["Filename", "Chart type", "Display name"]

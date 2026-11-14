@@ -440,7 +440,7 @@ function pad2(n) {
 let expiredate = "";
 const chartdate = getBestChartDate();
 const users = JSON.parse(fs.readFileSync(path.join(appdir, "users.json"), "utf-8")).users;
-const zipfilename = configuration.zipfilename;
+const zipfilename = configuration.downloadzipfilename;
 
 
 // used for process timing
