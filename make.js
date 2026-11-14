@@ -942,7 +942,7 @@ async function processImages(ctx = null) {
 
         const whereClause = `chart_category='${chartCategory}' AND chart_name='${area}'`;
         logEntry(`>> gdalwarp warping and clipping ${clipped} using ${cutlineGeoJson} (${whereClause})`);
-        let warpCmd = `gdalwarp -t_srs EPSG:3857 -dstalpha --config GDAL_CACHEMAX 512 ` + 
+        let warpCmd = `gdalwarp -t_srs EPSG:3857 -dstalpha -r lanczos --config GDAL_CACHEMAX 512 ` + 
               `-multi -cutline "${cutlineGeoJson}" -cwhere "${whereClause}" ` +
               `-crop_to_cutline ${expanded} ${clipped}`;
         await execCommandAsync(warpCmd, null, ctx?.signal);
@@ -980,12 +980,13 @@ async function processImages(ctx = null) {
     let mbCmd = `gdal_translate ${bigvrt} ${mbtiles} -of MBTILES ` + 
           `--config GDAL_CACHEMAX 4096 --config GDAL_MAX_DATASET_POOL_SIZE 500 ` +
           `--config OGR_SQLITE_JOURNALMODE MEMORY --config OGR_SQLITE_SYNCHRONOUS OFF ` +
-          `-co TILE_FORMAT=${imgfmt} -co QUALITY=${configuration.tileimagequality}`;
+          `-co TILE_FORMAT=${imgfmt} -co QUALITY=${configuration.tileimagequality} ` +
+          `-co ZOOM_LEVEL_STRATEGY=UPPER -co RESAMPLING=LANCZOS`
     await execCommandAsync(mbCmd, null, ctx?.signal);
 
     logEntry(`>> Adding gdaladdo overviews to ${mbtiles}`);
-    configargs = `--config GDAL_CACHEMAX 4096 --config GDAL_NUM_THREADS ALL_CPUS`;
-    let ovrCmd = `gdaladdo -r average ${configargs} ${mbtiles}`;
+    configargs += `--config GDAL_CACHEMAX 4096 --config GDAL_NUM_THREADS ALL_CPUS`;
+    let ovrCmd = `gdaladdo -r lanczos ${configargs} ${mbtiles}`;
     await execCommandAsync(ovrCmd, null, ctx?.signal);
 
     // Update the metadata table to remove underscore characters from chart name

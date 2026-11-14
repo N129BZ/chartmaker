@@ -19,7 +19,7 @@ configuration:
   # Image proccessing and output settings
   ########################################################
   outputgrayscale: false
-  tileimagequality: 85
+  tileimagequality: 95
   debug: false
   timezone: "America/Chicago"
   
