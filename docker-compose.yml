@@ -1,14 +1,12 @@
 services:
+  # Web server container - launch with: docker compose up -d chartmaker
   chartmaker:
-    build: .                                  
     image: ghcr.io/n129bz/chartmaker:latest
     container_name: chartmaker
     user: "${UID:-1000}:${GID:-1000}"
-    stdin_open: true                          
-    tty: true                                 
-    restart: "no"                             
+    restart: unless-stopped
     ports:
-      - "8500:8500" 
+      - "8500:8500"
     volumes:
       - ./chartcache:/chartmaker/chartcache
       - ./mbtiles:/chartmaker/mbtiles
@@ -16,3 +14,21 @@ services:
     environment:
       - DOCKER=true
       - TZ=America/Chicago
+      - WEBSERVER=true
+      
+  # Interactive CLI container - launch with: docker compose run --rm chartmaker-cli
+  chartmaker-cli:
+    image: ghcr.io/n129bz/chartmaker:latest
+    container_name: chartmaker-cli
+    user: "${UID:-1000}:${GID:-1000}"
+    stdin_open: true
+    tty: true
+    restart: "no"
+    volumes:
+      - ./chartcache:/chartmaker/chartcache
+      - ./mbtiles:/chartmaker/mbtiles
+      - .:/chartmaker/config
+    environment:
+      - DOCKER=true
+      - TZ=America/Chicago
+      - WEBSERVER=false

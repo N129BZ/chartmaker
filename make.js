@@ -382,7 +382,9 @@ if (!parsedConfig || !parsedConfig.configuration) {
     throw new Error(`Invalid or missing 'configuration' section in ${configpath}`);
 }
 const configuration = parsedConfig.configuration;
-const useWebServer = configuration.webservermode;
+let useWebServer = process.env.WEBSERVER !== undefined 
+    ? process.env.WEBSERVER === "true" 
+    : (configuration.webservermode ?? true);
 let timings = new Map();
 
 /** 
