@@ -1,4 +1,4 @@
-# Chartmaker - Create VFR and IFR digital raster chart MBTILES databases from downloaded FAA geo-referenced TIF images for OpenLayers or Leaflet mapping applications   
+# Chartmaker - Create VFR and IFR digital raster chart MBTILES databases from downloaded FAA geo-referenced TIF images for OpenLayers, Leaflet, or other mapping applications that use the mbtiles format   
 
 ### To run this application in Docker     
 Create a new directory, download and place the the docker-compose.yml file in that directory, open a terminal there and enter the docker compose command that corresponds to the mode you want to run in:  
