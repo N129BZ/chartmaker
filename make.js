@@ -951,13 +951,14 @@ async function processImages(ctx = null) {
     }
 
     // setup formatting arguments for overviews        
-    let configargs = "";
+    let configargs = `--config GDAL_CACHEMAX 4096 --config GDAL_NUM_THREADS ALL_CPUS `;
     switch (imageformat) {
         case "webp":
-            configargs = `--config WEBP_LOSSLESS_OVERVIEW NO --config WEBP_LEVEL_OVERVIEW ${configuration.tileimagequality}`;
+            configargs += `--config WEBP_LOSSLESS_OVERVIEW NO ` +
+                          `--config WEBP_LEVEL_OVERVIEW ${configuration.tileimagequality} `;
             break;
         case "jpeg":
-            configargs = `--config JPEG_QUALITY_OVERVIEW ${configuration.tileimagequality}`;
+            configargs += `--config JPEG_QUALITY_OVERVIEW ${configuration.tileimagequality} `;
             break;     
         default:
             // no adjustments for PNG images
@@ -987,7 +988,6 @@ async function processImages(ctx = null) {
     await execCommandAsync(mbCmd, null, ctx?.signal);
 
     logEntry(`>> Adding gdaladdo overviews to ${mbtiles}`);
-    configargs += `--config GDAL_CACHEMAX 4096 --config GDAL_NUM_THREADS ALL_CPUS`;
     let ovrCmd = `gdaladdo -r lanczos ${configargs} ${mbtiles}`;
     await execCommandAsync(ovrCmd, null, ctx?.signal);
 
