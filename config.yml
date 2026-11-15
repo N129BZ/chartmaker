@@ -38,14 +38,14 @@ configuration:
   # replaces underscores with spaces for display names.
   #######################################################
   fullchartlist:
-    - ["Sectional", "vfr", "VFR_Sectional"]
-    - ["Caribbean", "vfr", "VFR_Caribbean"]
+    - ["Sectional", "vfr", "Sectional"]
+    - ["Caribbean", "vfr", "Caribbean"]
     - ["Grand_Canyon", "vfr", "Grand_Canyon_Air_Tour_Operators"]
-    - ["Terminal", "vfr", "VFR_Terminal"]
-    - ["Helicopter", "vfr", "VFR_Helicopter"]
+    - ["Terminal", "vfr", "Terminal"]
+    - ["Helicopter", "vfr", "Helicopter"]
     - ["DDECUS", "ifr", "Enroute_Low"]
     - ["DDECUS", "ifr", "Enroute_High"]
-    - ["US_VFR_Wall_Planning", "vfr", "VFR_Wall_Planning"]
+    - ["US_VFR_Wall_Planning", "vfr", "US_VFR_Wall_Planning"]
 
   areachartlist:
     - Albuquerque
