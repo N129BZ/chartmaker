@@ -9,7 +9,7 @@ configuration:
   usvfrwallplanningtemplate: "https://aeronav.faa.gov/visual/<chartdate>/Planning/US_WallPlan.zip"
 
   ########################################################
-  # Internal work area settings
+  # Work area settings
   ######################################################## 
   renameworkarea: false
   logtofile: false
@@ -18,8 +18,8 @@ configuration:
   ########################################################
   # Image proccessing and output settings
   ########################################################
+  tileimagequality: 80
   outputgrayscale: false
-  tileimagequality: 95
   debug: false
   timezone: "America/Chicago"
   
