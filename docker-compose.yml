@@ -1,10 +1,23 @@
 services:
+  # Ensure host mount directories are owned by the local user instead of root
+  init-perms:
+    image: busybox
+    command: chown -R ${UID:-1000}:${GID:-1000} /data/chartcache /data/mbtiles /data/workarea
+    restart: "no"
+    volumes:
+      - ./chartcache:/data/chartcache
+      - ./mbtiles:/data/mbtiles
+      - ./workarea:/data/workarea
+
   # Web server container - launch with: docker compose up -d chartmaker
   chartmaker:
     image: ghcr.io/n129bz/chartmaker:latest
     container_name: chartmaker
     user: "${UID:-1000}:${GID:-1000}"
     restart: unless-stopped
+    depends_on:
+      init-perms:
+        condition: service_completed_successfully
     ports:
       - "8500:8500"
     volumes:
@@ -25,6 +38,9 @@ services:
     stdin_open: true
     tty: true
     restart: "no"
+    depends_on:
+      init-perms:
+        condition: service_completed_successfully
     volumes:
       - ./chartcache:/chartmaker/chartcache
       - ./mbtiles:/chartmaker/mbtiles
