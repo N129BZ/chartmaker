@@ -101,12 +101,13 @@ class ProcessTime {
 };
 
 class ChartTaskContext {
-    constructor(workarea, chartworkname, chartname, charturl, clippedShapeFolder, isifrchart = false, signal = null) {
+    constructor(workarea, chartworkname, chartname, charturl, clippedShapeFolder, isifrchart = false, signal = null, cdate = getBestChartDate()) {
         this.chartworkname = chartworkname;
         this.chartname = chartname;
         this.charturl = charturl;
         this.clippedShapeFolder = clippedShapeFolder;
         this.isifrchart = isifrchart;
+        this.chartdate = cdate;
         this.metadataDescription = chartname.replaceAll("_", " ");
         this.chartfolder = path.join(workarea, chartname);
         this.dir_1_unzipped = path.join(this.chartfolder, "1_unzipped");
@@ -283,7 +284,7 @@ class JobQueue {
     getStatus() {
         return {
             running: this.isBusy,
-            chartdate: chartdate,
+            chartdate: getBestChartDate(),
             currentChart: this.currentChart || chartname || "",
             currentJobId: this.currentJob ? this.currentJob.jobId : null,
             queueLength: this.queue.length
@@ -438,7 +439,7 @@ function pad2(n) {
 
 // Get the current chart date from the chartdates.json file
 let expiredate = "";
-const chartdate = getBestChartDate();
+let chartdate = getBestChartDate();
 const users = JSON.parse(fs.readFileSync(path.join(appdir, "users.json"), "utf-8")).users;
 const zipfilename = configuration.downloadzipfilename;
 
@@ -620,14 +621,18 @@ async function processAllAreas() {
 }
 
 function createAreaChartContext(opt, signal = null) {
+    const currentChartDate = getBestChartDate();
+    chartdate = currentChartDate;
     const chartworkname = configuration.areachartlist[opt];
     const chartname = chartworkname;
     const clippedShapeFolder = path.join(appdir, "clipshapes", "sectional");
-    const charturl = `${configuration.vfrindividualtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
-    return new ChartTaskContext(workarea, chartworkname, chartname, charturl, clippedShapeFolder, false, signal);
+    const charturl = `${configuration.vfrindividualtemplate.replace("<chartdate>", currentChartDate).replace("<charttype>", chartworkname)}`;
+    return new ChartTaskContext(workarea, chartworkname, chartname, charturl, clippedShapeFolder, false, signal, currentChartDate);
 }
 
 function createFullChartContext(opt, signal = null) {
+    const currentChartDate = getBestChartDate();
+    chartdate = currentChartDate;
     const chart = configuration.fullchartlist[opt];
     const charttype = chart[1];
     let lcasename = chart[0].toLowerCase();
@@ -640,17 +645,17 @@ function createFullChartContext(opt, signal = null) {
     if (charttype === "ifr") {
         isifrchart = true;
         lcasename = chart[2].toLowerCase();
-        charturl = configuration.ifrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
+        charturl = configuration.ifrdownloadtemplate.replace("<chartdate>", currentChartDate).replace("<charttype>", chartworkname);
         clippedShapeFolder = path.join(appdir, "clipshapes", lcasename);
     } else {
         if (lcasename === "us_vfr_wall_planning") {
-            charturl = `${configuration.usvfrwallplanningtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname)}`;
+            charturl = `${configuration.usvfrwallplanningtemplate.replace("<chartdate>", currentChartDate).replace("<charttype>", chartworkname)}`;
         } else {
-            charturl = configuration.vfrdownloadtemplate.replace("<chartdate>", chartdate).replace("<charttype>", chartworkname);
+            charturl = configuration.vfrdownloadtemplate.replace("<chartdate>", currentChartDate).replace("<charttype>", chartworkname);
         }
         clippedShapeFolder = path.join(appdir, "clipshapes", lcasename);
     }
-    return new ChartTaskContext(workarea, chartworkname, chartname, charturl, clippedShapeFolder, isifrchart, signal);
+    return new ChartTaskContext(workarea, chartworkname, chartname, charturl, clippedShapeFolder, isifrchart, signal, currentChartDate);
 }
 
 async function processSingles(msgid = -1, indices = null, timingsMap = timings, signal = null) {
@@ -681,7 +686,7 @@ async function processSingles(msgid = -1, indices = null, timingsMap = timings, 
             const month = String(birthDate.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
             const day = String(birthDate.getDate()).padStart(2, '0');
             const formattedDate = `${month}-${day}-${year}`;
-            if (formattedDate === chartdate) {
+            if (formattedDate === ctx.chartdate) {
                 // Current version of this chart exists, no processing needed
                 doProcessing = false;
             }
@@ -831,29 +836,50 @@ function setupEnvironment(ctx = null) {
 }
 
 /**
+ * Parse a chart date string in MM-DD-YYYY format into a timestamp for comparison.
+ * @returns {number|null}
+ */
+function parseChartDateString(dateStr) {
+    if (!/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) return null;
+    const [m, d, y] = dateStr.split("-").map(Number);
+    return new Date(y, m - 1, d).getTime();
+}
+
+/**
  * Get the desired chart zip file from the FAA's digital sources URL
  */
 async function downloadCharts(ctx = null) {
     const cworkname = ctx ? ctx.chartworkname : chartworkname;
     const curl = ctx ? ctx.charturl : charturl;
+    const targetDate = ctx?.chartdate || getBestChartDate();
+    const targetTimestamp = parseChartDateString(targetDate);
 
-    let chartzip = path.join(chartcache, `${cworkname}-${chartdate}.zip`);
+    // Check chartcache for any existing zip files for this chart with a previous date
+    const escapedName = cworkname.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const cachePattern = new RegExp(`^${escapedName}-(\\d{2}-\\d{2}-\\d{4})\\.zip$`);
+    const cachedFiles = fs.readdirSync(chartcache);
+
+    for (const file of cachedFiles) {
+        const match = file.match(cachePattern);
+        if (match) {
+            const cachedDateStr = match[1];
+            const cachedTimestamp = parseChartDateString(cachedDateStr);
+            if (targetTimestamp !== null && cachedTimestamp !== null && targetTimestamp > cachedTimestamp) {
+                logEntry(`Found older cached chart ${file} (${cachedDateStr}); deleting because newer chart date ${targetDate} is available.`);
+                fs.rmSync(path.join(chartcache, file), { force: true });
+            }
+        }
+    }
+
+    const chartzip = path.join(chartcache, `${cworkname}-${targetDate}.zip`);
     if (fs.existsSync(chartzip)) {
         logEntry(`Using cached ${chartzip}`);
         return;
     }
-    else { 
-        let oldfiles = fs.readdirSync(chartcache);
-        for (let i = 0; i < oldfiles.length; i++) {
-            if (oldfiles[i].startsWith(cworkname)) {
-                fs.rmSync(path.join(chartcache, oldfiles[i]));
-                break;
-            }
-        }
-        logEntry(`Downloading ${chartzip}`);
-        const dlcmd = `curl ${curl} -v -o ${chartzip}`;
-        await execCommandAsync(dlcmd, true, ctx?.signal);
-    }
+
+    logEntry(`Downloading ${chartzip}`);
+    const dlcmd = `curl ${curl} -v -o ${chartzip}`;
+    await execCommandAsync(dlcmd, true, ctx?.signal);
 }
 
 /**
@@ -864,8 +890,9 @@ async function unzipCharts(ctx = null) {
     const cname = ctx ? ctx.chartname : chartname;
     const d1 = ctx ? ctx.dir_1_unzipped : dir_1_unzipped;
     const isifr = ctx ? ctx.isifrchart : isifrchart;
+    const cdate = ctx?.chartdate || chartdate;
 
-    let chartzip = path.join(chartcache, `${cworkname}-${chartdate}.zip`);
+    let chartzip = path.join(chartcache, `${cworkname}-${cdate}.zip`);
     let unzipcmd = `unzip -o ${chartzip} -x '*.htm' -d ${d1}`;
     await execCommandAsync(unzipcmd, null, ctx?.signal);
 
@@ -951,7 +978,8 @@ async function processImages(ctx = null) {
     }
 
     // setup formatting arguments for overviews        
-    let configargs = `--config GDAL_CACHEMAX 4096 --config GDAL_NUM_THREADS ALL_CPUS `;
+    let configargs = `--config GDAL_CACHEMAX 4096 --config GDAL_NUM_THREADS ALL_CPUS ` +
+                     `--config OGR_SQLITE_JOURNALMODE MEMORY --config OGR_SQLITE_SYNCHRONOUS OFF `;
     switch (imageformat) {
         case "webp":
             configargs += `--config WEBP_LOSSLESS_OVERVIEW NO ` +
@@ -1062,7 +1090,7 @@ function getBestChartDate() {
         cdates.push(new Date(cdate))
     });
 
-    let sortedDates = cdates.sort((a, b) => b.date - a.date);
+    let sortedDates = cdates.sort((a, b) => b.getTime() - a.getTime());
 
     sortedDates.forEach((dateobj) => {
         if (!found) {
@@ -1778,7 +1806,7 @@ async function sendExistingDatabases(message) {
             let msg = new AppMessage(AppMessage.mtExistingDb);  
             const spl = file.split(".");
             msg.filename = spl[0];
-            msg.filedate = chartdate;
+            msg.filedate = getBestChartDate();
             msg.dbfilename = file;
             msg.rowindex = idx;
             items.existingdblist.push(msg);

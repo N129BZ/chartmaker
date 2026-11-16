@@ -10,6 +10,7 @@ services:
     volumes:
       - ./chartcache:/chartmaker/chartcache
       - ./mbtiles:/chartmaker/mbtiles
+      - ./workarea:/chartmaker/workarea
       - .:/chartmaker/config
     environment:
       - DOCKER=true
@@ -27,6 +28,7 @@ services:
     volumes:
       - ./chartcache:/chartmaker/chartcache
       - ./mbtiles:/chartmaker/mbtiles
+      - ./workarea:/chartmaker/workarea
       - .:/chartmaker/config
     environment:
       - DOCKER=true
