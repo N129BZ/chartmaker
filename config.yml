@@ -40,12 +40,12 @@ configuration:
   fullchartlist:
     - ["Sectional", "vfr", "Sectional"]
     - ["Caribbean", "vfr", "Caribbean"]
-    - ["Grand_Canyon", "vfr", "Grand_Canyon_Air_Tour_Operators"]
+    - ["Grand_Canyon", "vfr", "Grand_Canyon_Air_Tour"]
     - ["Terminal", "vfr", "Terminal"]
     - ["Helicopter", "vfr", "Helicopter"]
     - ["DDECUS", "ifr", "Enroute_Low"]
     - ["DDECUS", "ifr", "Enroute_High"]
-    - ["US_VFR_Wall_Planning", "vfr", "US_VFR_Wall_Planning"]
+    - ["US_VFR_Wall_Planning", "vfr", "VFR_Wall_Planning"]
 
   areachartlist:
     - Albuquerque
