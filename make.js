@@ -470,7 +470,6 @@ let dir_2_expanded = "";
 let dir_3_clipped = "";
 let dir_4_mbtiles = "";
 let isifrchart = false;
-let metadataDescription = "";
 
 /**
  * Chart processing starts here
@@ -479,141 +478,75 @@ let parray = [];
 let nm = 0;
 
 const processes = getProcessCount();
-const arg = process.argv.slice(2);
 
-if (useWebServer === false) {
-    if (arg.length >= 1) {
-        let chart = "";
-        let sarg = arg[0].toLowerCase();
-        if (sarg.startsWith("-s")) {
-            // output config.yml
-            
-            console.log("\r\n\r\n----------------------------------------------------------------------------------\r\n" +
-                        "config.yml\r\n" +
-                        "----------------------------------------------------------------------------------\r\n");
-            console.log(configuration);
-            console.log("\r\n\r\n\r\n");
-            process.exit();
-        }
-        else if (sarg.startsWith("-h")) {
-            console.log("Command line options:\r\n" +
-                        "----------------------------------------------------------------------------------\r\n" +
-                        "-h, --help         Show this help\r\n" +
-                        "-s, --settings     Show all values in config.yml\r\n" +
-                        "-w, --webserver    Start the web server\r\n" +
-                        "----------------------------------------------------------------------------------\r\n" +
-                        "area-single=X   Process one area chart where X is the index in the area chart list\r\n" +
-                        "area-all        Process all 53 area VFR charts individually\r\n" +
-                        "full-single=X   Process one full chart where X is an index in the full chart list\r\n" +
-                        "full-all        Process all of the full charts in the full chart list\r\n" +
-                        "----------------------------------------------------------------------------------\r\n");
-                        process.exit();
-        }
-        else if (sarg.startsWith("-w")) {
-            enterWebserverMode();
-        }
-        else if (sarg === "area-all") {
-            await processAllAreas();
-        }
-        else if (sarg === "full-all") {
-            await processFulls();
-        }
-        else if (sarg.search("area-single") > -1) {
-            try {
-                nm = Number(arg[0].split("=")[1]);
-                chart = configuration.areachartlist[nm][1].replace("_", " ");
-                console.log(`Processing area chart: ${chart}`);
-                parray.push(nm);
-                await processSingles();
-            }
-            catch {
-                console.log("Index error in argument, format is: area-single=X where X is a valid vfr chart index number (see config.yml.) Exiting chartmaker!");
-                process.exit();
-            }
-        }
-        else if (sarg.search("full-single") > -1) {
-            try {
-                nm = Number(arg[0].split("=")[1]);
-                chart = (configuration.fullchartlist[nm][2] || configuration.fullchartlist[nm][0]).replace("_", " ");
-                console.log(`Processing full chart: ${chart}`);
-                parray.push(nm);
-                await processFulls();
-            }
-            catch {
-                console.log("Index error in argument, format is: full-single=X where X is a valid full chart index number (see config.yml.) Exiting chartmaker!");
-                process.exit();
-            }
-        }
-    }
-    else {
-        let exitMenu = false;
-        while (!exitMenu && !useWebServer) {
-            let response = processPrompt("\r\nSelect:\r\n" +
-                                    "--------------------------------------------------------------------\r\n" +
-                                    "1 = Process a single area VFR chart\r\n" +
-                                    "2 = Process all 53 area VFR charts individually\r\n" +
-                                    "3 = Process a single full chart from the full chart list\r\n" +
-                                    "4 = Process all of the full charts in the full chart list\r\n" +
-                                    "5 = Put chartmaker into webserver mode (new feature)\r\n" +
-                                    "6 = Output the config.yml file to the console\r\n" +
-                                    "7 = Exit chartmaker\r\n" +
-                                    "---------------------------------------------------------------------\r\n\r\n" +
-                                    "Your selection: ").trim();
-            switch (response) {
-                case "1":
-                    try {
-                        await processOneArea();
-                    } catch (err) {
-                        console.error(err);
-                    } finally {
-                        resetGlobalVariables();
-                    }
-                    break;
-                case "2":
-                    try {
-                        await processAllAreas();
-                    } catch (err) {
-                        console.error(err);
-                    } finally {
-                        resetGlobalVariables();
-                    }
-                    break;
-                case "3":
-                    try {
-                        await processOneFull();
-                    } catch (err) {
-                        console.error(err);
-                    } finally {
-                        resetGlobalVariables();
-                    }
-                    break;
-                case "4":
-                    try {
-                        await processAllFulls();
-                    } catch (err) {
-                        console.error(err);
-                    } finally {
-                        resetGlobalVariables();
-                    }
-                    break;
-                case "5":
-                    enterWebserverMode();
-                    break;
-                case "6":
-                    console.log(configuration);
-                    console.log("\r\n\r\n\r\n");
-                    break;
-                case "7":
-                case "q":
-                case "Q":
-                case "exit":
-                    console.log("Exiting chartmaker!");
-                    exitMenu = true;
-                    break;
-                default:
-                    console.log("Invalid selection, please try again.\r\n");
-                    break;
-            }
+if (!useWebServer) {
+    let exitMenu = false;
+    while (!exitMenu && !useWebServer) {
+        let response = processPrompt("\r\nSelect:\r\n" +
+                                "--------------------------------------------------------------------\r\n" +
+                                "1 = Process a single area VFR chart\r\n" +
+                                "2 = Process all 53 area VFR charts individually\r\n" +
+                                "3 = Process a single full chart from the full chart list\r\n" +
+                                "4 = Process all of the full charts in the full chart list\r\n" +
+                                "5 = Put chartmaker into webserver mode (new feature)\r\n" +
+                                "6 = Output contents of the config.yml file to the console\r\n" +
+                                "7 = Exit chartmaker\r\n" +
+                                "---------------------------------------------------------------------\r\n\r\n" +
+                                "Your selection: ").trim();
+        switch (response) {
+            case "1":
+                try {
+                    await processOneArea();
+                } catch (err) {
+                    console.error(err);
+                } finally {
+                    resetGlobalVariables();
+                }
+                break;
+            case "2":
+                try {
+                    await processAllAreas();
+                } catch (err) {
+                    console.error(err);
+                } finally {
+                    resetGlobalVariables();
+                }
+                break;
+            case "3":
+                try {
+                    await processOneFull();
+                } catch (err) {
+                    console.error(err);
+                } finally {
+                    resetGlobalVariables();
+                }
+                break;
+            case "4":
+                try {
+                    await processAllFulls();
+                } catch (err) {
+                    console.error(err);
+                } finally {
+                    resetGlobalVariables();
+                }
+                break;
+            case "5":
+                enterWebserverMode();
+                break;
+            case "6":
+                console.log(configuration);
+                console.log("\r\n\r\n\r\n");
+                break;
+            case "7":
+            case "q":
+            case "Q":
+            case "exit":
+                console.log("Exiting chartmaker!");
+                exitMenu = true;
+                break;
+            default:
+                console.log("Invalid selection, please try again.\r\n");
+                break;
         }
     }
 }
@@ -705,15 +638,14 @@ async function processSingles(msgid = -1, indices = null, timingsMap = timings, 
         clippedShapeFolder = ctx.clippedShapeFolder;
         charturl = ctx.charturl;
         isifrchart = ctx.isifrchart;
-        metadataDescription = ctx.metadataDescription;
-
+        
         const cpt = new ProcessTime(ctx.chartname);
         timingsMap.set(ctx.chartname, cpt);
         console.log(`${cpt.startdate}\n`);
         console.log(ctx.charturl);
 
         let doProcessing = true;
-        let chartdbfile = path.join(dbfolder, `${ctx.chartname}.mbtiles`);
+        let chartdbfile = path.join(dbfolder, `${ctx.chartname.toLowerCase()}.mbtiles`);
         if (fs.existsSync(chartdbfile)) {
             let stat = fs.statSync(chartdbfile);    
             const birthDate = stat.birthtime;
@@ -788,13 +720,12 @@ async function processFulls(msgid = -1, indices = null, timingsMap = timings, si
         clippedShapeFolder = ctx.clippedShapeFolder;
         charturl = ctx.charturl;
         isifrchart = ctx.isifrchart;
-        metadataDescription = ctx.metadataDescription;
 
         const cpt = new ProcessTime(ctx.chartname);
         timingsMap.set(ctx.chartname, cpt);
         console.log(`${cpt.startdate}\n`);
 
-        let chartdbfile = path.join(dbfolder, `${ctx.chartname}.mbtiles`);
+        let chartdbfile = path.join(dbfolder, `${ctx.chartname.toLowerCase()}.mbtiles`);
         if (!fs.existsSync(chartdbfile)) {
             await runProcessing(ctx);
         }
@@ -1442,7 +1373,6 @@ function resetGlobalVariables() {
     dir_3_clipped = "";
     dir_4_mbtiles = "";
     isifrchart = false;
-    metadataDescription = "";
     parray.splice(0, parray.length);
     nm = 0;
 }
