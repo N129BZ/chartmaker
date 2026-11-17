@@ -546,39 +546,74 @@ if (useWebServer === false) {
         }
     }
     else {
-        let response = processPrompt("Select:\r\n" +
-                                "--------------------------------------------------------------------\r\n" +
-                                "1 = Process a single area VFR chart\r\n" +
-                                "2 = Process all 53 area VFR charts individually\r\n" +
-                                "3 = Process a single full chart from the full chart list\r\n" +
-                                "4 = Process all of the full charts in the full chart list\r\n" +
-                                "5 = Put chartmaker into webserver mode (new feature)\r\n" +
-                                "6 = Output the config.yml file to the console\r\n" +
-                                "---------------------------------------------------------------------\r\n\r\n" +
-                                "Your selection: "); 
-        switch (response) {
-            case "1":
-                await processOneArea();
-                break;
-            case "2":
-                await processAllAreas();
-                break;
-            case "3":
-                await processOneFull();
-                break;
-            case "4":
-                await processAllFulls();
-                break;
-            case "5":
-                enterWebserverMode();
-                break;
-            case "6":
-                console.log(configuration);
-                console.log("\r\n\r\n\r\n");
-                process.exit();
-            default:
-                console.log("Exiting chartmaker!");
-                break;
+        let exitMenu = false;
+        while (!exitMenu && !useWebServer) {
+            let response = processPrompt("\r\nSelect:\r\n" +
+                                    "--------------------------------------------------------------------\r\n" +
+                                    "1 = Process a single area VFR chart\r\n" +
+                                    "2 = Process all 53 area VFR charts individually\r\n" +
+                                    "3 = Process a single full chart from the full chart list\r\n" +
+                                    "4 = Process all of the full charts in the full chart list\r\n" +
+                                    "5 = Put chartmaker into webserver mode (new feature)\r\n" +
+                                    "6 = Output the config.yml file to the console\r\n" +
+                                    "7 = Exit chartmaker\r\n" +
+                                    "---------------------------------------------------------------------\r\n\r\n" +
+                                    "Your selection: ").trim();
+            switch (response) {
+                case "1":
+                    try {
+                        await processOneArea();
+                    } catch (err) {
+                        console.error(err);
+                    } finally {
+                        resetGlobalVariables();
+                    }
+                    break;
+                case "2":
+                    try {
+                        await processAllAreas();
+                    } catch (err) {
+                        console.error(err);
+                    } finally {
+                        resetGlobalVariables();
+                    }
+                    break;
+                case "3":
+                    try {
+                        await processOneFull();
+                    } catch (err) {
+                        console.error(err);
+                    } finally {
+                        resetGlobalVariables();
+                    }
+                    break;
+                case "4":
+                    try {
+                        await processAllFulls();
+                    } catch (err) {
+                        console.error(err);
+                    } finally {
+                        resetGlobalVariables();
+                    }
+                    break;
+                case "5":
+                    enterWebserverMode();
+                    break;
+                case "6":
+                    console.log(configuration);
+                    console.log("\r\n\r\n\r\n");
+                    break;
+                case "7":
+                case "q":
+                case "Q":
+                case "exit":
+                    console.log("Exiting chartmaker!");
+                    exitMenu = true;
+                    break;
+                default:
+                    console.log("Invalid selection, please try again.\r\n");
+                    break;
+            }
         }
     }
 }
@@ -591,7 +626,7 @@ async function processOneArea(area = -1) {
         }
         lst += "--------------------------------------------\r\nYour selection: ";
         let response = processPrompt(lst);
-        nm = +response;
+        nm = response.trim() === "" ? -1 : Number(response);
     }
     else {
         nm = +area;
@@ -603,8 +638,8 @@ async function processOneArea(area = -1) {
             await processSingles();
         }
         else {
-            console.log("Invalid response, exiting chartmaker!");
-            process.exit();
+            console.log("Invalid selection, returning to main menu.\r\n");
+            return;
         }
     }
     catch(err) {
@@ -722,8 +757,8 @@ async function processOneFull() {
         parray.push(nm - 1);
     }
     else {
-        console.log("Invalid response, exiting!");
-        process.exit();
+        console.log("Invalid selection, returning to main menu.\r\n");
+        return;
     }
 	const cpt = new ProcessTime(chartname);
 	timings.set(chartname, cpt);
