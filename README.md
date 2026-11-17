@@ -1,10 +1,10 @@
 # Chartmaker - Create VFR and IFR digital raster chart MBTILES databases from downloaded FAA geo-referenced TIF images for OpenLayers, Leaflet, or other mapping applications that use the mbtiles format   
-### To run this application in Docker     
+### Run this application in Docker     
 Create a new directory, download and place the the docker-compose.yml file in that directory, open a terminal there and enter the docker compose command that corresponds to the mode you want to run in:  
   - ***docker compose up -d chartmaker*** (the web server default is ***localhost:8500***, see screen shots below.) 
   - ***docker compose run --rm chartmaker-cli***    
 
-Two local folders will be created within your new directory: ***chartcache***, and ***mbtiles***. The ***config.yml*** file will also be created in the new directory. All downloaded raster charts will be placed in ***[yourdirectoryname]/chartcache***, and the generated charts will be placed in ***[yourdirectoryname]/mbtiles***. In webserver mode, the user can elect to download the finished chart(s) as a .zip file when the processing is completed. 
+Three local folders will be created within your new directory: ***chartcache***, ***mbtiles***, and ***workarea***. The ***config.yml*** file will also be created in the new directory. All downloaded raster charts will be placed in ***[yourdirectoryname]/chartcache***, and the generated charts will be placed in ***[yourdirectoryname]/mbtiles***. In webserver mode, the user can elect to download the finished chart(s) as a .zip file when the processing is completed. ***[yourdirectoryname]/workarea*** is where the step-by-step intermediate processing files are stored during image processing.
 
 #### For a chart viewing application see: *https://github.com/n129bz/mapserver* - Shows Metars, TAFs, Pireps, Animated Weather, Airport Information including frequencies and runways - and more!
 
@@ -20,9 +20,10 @@ Two local folders will be created within your new directory: ***chartcache***, a
 
 #### Installation:
 1.) This node.js application is designed to run on Linux, and also runs well on **WSL** (Windows Subsystem for Linux) and assumes a pre-existing node js installation   
-2.) After installing all requirements, clone this repository, change directory to **chartmaker**, open a terminal and enter **npm install**        
-3.) Run the application either as a web server or in a terminal: ***npm run start:web*** or ***npm run start:cli***  
-4.) When running in web mode, open a browser at ***localhost:8500*** or when running in a client mode, simply respond to the prompts for what to process      
+2.) After installing all requirements, clone this repository, change directory to **chartmaker**, open a terminal and enter **npm install**.  
+3.) If you will be running as a web server, also go to the **client** subdirectory and run **npm install** there as well, this will install the web app dependencies.
+4.) Run the application either as a web server or in a terminal: ***npm run start:web*** or ***npm run start:cli***  
+5.) When running in web mode, open a browser at ***localhost:8500*** or when running in a client mode, simply respond to the prompts for what to process      
 6.) Go do something else... depending on the number of charts and image quality, the full Sectional chart can take up to several hours to complete.     
 
 ### Process Control Files
