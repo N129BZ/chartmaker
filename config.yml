@@ -45,7 +45,6 @@ configuration:
     - ["Helicopter", "vfr", "Helicopter"]
     - ["DDECUS", "ifr", "Enroute_Low"]
     - ["DDECUS", "ifr", "Enroute_High"]
-    - ["US_VFR_Wall_Planning", "vfr", "US_Wall_Planning"]
 
   areachartlist:
     - Albuquerque
