@@ -1,7 +1,7 @@
 
 import fs from 'node:fs';
 import http from 'node:http';
-import { exec, execSync, spawn } from 'node:child_process';
+import { exec, execSync } from 'node:child_process';
 import readlineSync from 'readline-sync';
 import path from 'node:path';
 import express from 'express';
@@ -34,16 +34,6 @@ class AppMessage {
         this.getexisting = false;
         this.dbfilename = "";
         this.uid = "";
-    }
-}
-
-class MakeCommand {
-    constructor(command, chart, rowindex, chartname, layertype) {
-        this.command = command;
-        this.chart = chart;
-        this.rowindex = rowindex;
-        this.chartname = chartname;
-        this.layertype = layertype;
     }
 }
 
@@ -249,7 +239,6 @@ class JobQueue {
 
         const job = this.queue.shift();
         this.currentJob = job;
-        inMakeLoop = true;
         job.status = "running";
         job.startedAt = new Date();
         if (job.uid) {
@@ -274,7 +263,6 @@ class JobQueue {
             this.currentJob = null;
             this.currentChart = "";
             this.currentContext = null;
-            inMakeLoop = this.queue.length > 0;
             if (this.queue.length > 0) {
                 this.processNext();
             }
@@ -331,7 +319,6 @@ const jobQueue = new JobQueue();
 
 // create websocket variables
 const connections = new Map();
-let inMakeLoop = false;
 let pingSenderId = 0;
 
 // set the base application folder, this will change if running in docker
@@ -438,7 +425,6 @@ function pad2(n) {
 }
 
 // Get the current chart date from the chartdates.json file
-let expiredate = "";
 let chartdate = getBestChartDate();
 const users = JSON.parse(fs.readFileSync(path.join(appdir, "users.json"), "utf-8")).users;
 const zipfilename = configuration.downloadzipfilename;
@@ -463,7 +449,6 @@ let chartworkname = "";
 let chartname = "";
 let charturl = "";
 let clippedShapeFolder = "";
-let cmd = "";
 let chartfolder = "";
 let dir_1_unzipped = "";
 let dir_2_expanded = "";
@@ -477,7 +462,7 @@ let isifrchart = false;
 let parray = [];
 let nm = 0;
 
-const processes = getProcessCount();
+getProcessCount();
 
 if (!useWebServer) {
     let exitMenu = false;
@@ -986,7 +971,7 @@ async function processImages(ctx = null) {
     await execCommandAsync(ovrCmd, null, ctx?.signal);
 
     // Update the metadata table to remove underscore characters from chart name
-    let metaDesc = cname.replaceAll("_", " ");
+    let metaDesc = ctx?.metadataDescription || cname.replaceAll("_", " ");
     let sql = `UPDATE metadata SET value = '${metaDesc}' ` + 
               `WHERE name IN ('name', 'description');`;
     await execCommandAsync(`sqlite3 ${mbtiles} "${sql}"`, false, ctx?.signal);
@@ -1070,14 +1055,6 @@ function getBestChartDate() {
                 let y = dateobj.getFullYear();
                 selectedDate = `${m}-${d}-${y}`;
                 found = true;
-            }
-        }
-        else {
-            if (expiredate === "") {
-                let m = pad2(dateobj.getMonth() + 1); // months (0-11)
-                let d = pad2(dateobj.getDate());      // day (1-31)
-                let y = dateobj.getFullYear();
-                expiredate = `${m}-${d}-${y}`;
             }
         }
     });
@@ -1194,16 +1171,6 @@ function startPingSender() {
     pingSenderId = interval;
 }
 
-function getTimingJsonObject() {
-    let ptimes = [];
-    [...timings.keys()].forEach((key) => {
-        let cpt = timings.get(key);
-        ptimes.push({chart: cpt.processname, timing: cpt.totaltime});
-    });
-    let tjson = {processtimes: ptimes};
-    return tjson;
-};
-
 /**
  * Handle app closure and log the results
  */
@@ -1244,7 +1211,7 @@ async function executeMakeJob(job) {
         sendMessageToClients(msg, userid);
         sendMessageToClients(msgclist, userid);
 
-        outerloop: for (let i = 0; i < list.length; i++) {
+        for (let i = 0; i < list.length; i++) {
             if (job.cancelled) {
                 console.log(`Job ${job.jobId} cancelled. Exiting chart processing loop.`);
                 break;
@@ -1353,20 +1320,11 @@ async function executeMakeJob(job) {
     }
 }
 
-/**
- * Convenience wrapper: enqueues the command message into the FIFO jobQueue
- * @param {*} message JSON object message
- */
-async function processMakeCommands(message) {
-    return jobQueue.enqueue(message);
-}
-
 function resetGlobalVariables() {
     chartworkname = "";
     chartname = "";
     charturl = "";
     clippedShapeFolder = "";
-    cmd = "";
     chartfolder = "";
     dir_1_unzipped = "";
     dir_2_expanded = "";
@@ -1449,7 +1407,7 @@ function getUniqueUserId(){
                 extensions: ['html'],
                 index: false,
                 redirect: false,
-                setHeaders: function (res, path, stat) {
+                setHeaders: function (res) {
                     res.set('x-timestamp', Date.now());
                     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
                 }
@@ -1572,7 +1530,6 @@ function getUniqueUserId(){
             // Unified single-port WebSocket server attached directly to the HTTP server
             const wss = new WebSocketServer({ server });
             console.log(`WebSocket server listening on port ${configuration.httpport}`);
-            let msg = {};
 
             wss.on('connection', (ws, req) => {
                 const cookies = parseCookies(req?.headers?.cookie);
