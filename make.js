@@ -532,9 +532,16 @@ async function processOneArea(area = -1) {
         for (let i = 0; i <  configuration.areachartlist.length; i++) {
             lst += `${i} ${configuration.areachartlist[i].split("_").join(" ")}\r\n`; 
         }
+        const startOverIndex = configuration.areachartlist.length;
+        lst += `${startOverIndex} Previous menu\r\n`;
         lst += "--------------------------------------------\r\nYour selection: ";
-        let response = processPrompt(lst);
-        nm = response.trim() === "" ? -1 : Number(response);
+        let response = processPrompt(lst).trim();
+        const lower = response.toLowerCase();
+        if (lower === "p" || lower === "previous menu" || Number(response) === startOverIndex) {
+            console.log("Returning to main menu.\r\n");
+            return;
+        }
+        nm = response === "" ? -1 : Number(response);
     }
     else {
         nm = +area;
@@ -649,8 +656,15 @@ async function processOneFull() {
         lst += `${i} ${cname.split("_").join(" ")}\r\n`;
         i++;
     });
+    const startOverIndex = i;
+    lst += `${startOverIndex} Previous menu\r\n`;
     lst += "--------------------------------------------\r\nYour selection: ";
-    let response = processPrompt(lst);
+    let response = processPrompt(lst).trim();
+    const lower = response.toLowerCase();
+    if (lower === "p" || lower === "previous menu" || Number(response) === startOverIndex) {
+        console.log("Returning to main menu.\r\n");
+        return;
+    }
     nm = Number(response); 
 
     if (nm >= 1 && nm < configuration.fullchartlist.length + 1) {
