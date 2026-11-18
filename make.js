@@ -950,8 +950,8 @@ async function processImages(ctx = null) {
     }
 
     const imgfmt = imageformat.toUpperCase();
-    const mbtiles = path.join(d4, cname) + ".mbtiles";
-    const finalmbtiles = path.join(dbfolder, cname) + ".mbtiles";
+    const mbtiles = path.join(d4, cname.toLowerCase()) + ".mbtiles";
+    const finalmbtiles = path.join(dbfolder, cname.toLowerCase()) + ".mbtiles";
     const bigvrt = path.join(d3, cname) + ".vrt";
     const infiles = `${d3}/*.vrt`;
     logEntry(`>> Building single chart VRT file: ${bigvrt}`);
@@ -1229,7 +1229,7 @@ async function executeMakeJob(job) {
                         let rmt = new AppMessage(AppMessage.mtRunning); 
                         rmt.rowindex = ridx;
                         rmt.filename = item.chartname;
-                        rmt.dbfilename = `${item.chartname.replaceAll(" ", "_")}.mbtiles`;
+                        rmt.dbfilename = `${item.chartname.toLowerCase().replaceAll(" ", "_")}.mbtiles`;
                         jobQueue.currentChart = item.chartname;
                         job.currentChart = item.chartname;
                         job.currentRowIndex = ridx;
@@ -1241,7 +1241,7 @@ async function executeMakeJob(job) {
                         cmt.rowindex = ridx; 
                         cmt.payload = cpt.totaltime;
                         cmt.filename = item.chartname;
-                        cmt.dbfilename = `${cpt.processname.replaceAll(" ", "_")}.mbtiles`;
+                        cmt.dbfilename = `${cpt.processname.toLowerCase().replaceAll(" ", "_")}.mbtiles`;
                         job.completedItems.push({
                             type: AppMessage.mtComplete,
                             rowindex: ridx,
@@ -1261,7 +1261,7 @@ async function executeMakeJob(job) {
                         let chart = (configuration.fullchartlist[opt][2] || configuration.fullchartlist[opt][0]).replace("_", " ");
                         console.log(`Job ${job.jobId} - processing full chart: ${chart}`);
                         rmt.filename = chart;
-                        rmt.dbfilename = `${chart.replaceAll(" ", "_")}.mbtiles`;
+                        rmt.dbfilename = `${chart.toLowerCase().replaceAll(" ", "_")}.mbtiles`;
                         jobQueue.currentChart = chart;
                         job.currentChart = chart;
                         job.currentRowIndex = ridx;
@@ -1273,7 +1273,7 @@ async function executeMakeJob(job) {
                         cmt.rowindex = ridx;
                         cmt.payload = cpt.totaltime;
                         cmt.filename = chart;
-                        cmt.dbfilename = `${cpt.processname.replaceAll(" ", "_")}.mbtiles`;
+                        cmt.dbfilename = `${cpt.processname.toLowerCase().replaceAll(" ", "_")}.mbtiles`;
                         job.completedItems.push({
                             type: AppMessage.mtComplete,
                             rowindex: ridx,
