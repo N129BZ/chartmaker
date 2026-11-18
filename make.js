@@ -273,7 +273,7 @@ class JobQueue {
         return {
             running: this.isBusy,
             chartdate: getBestChartDate(),
-            currentChart: this.currentChart || chartname || "",
+            currentChart: this.currentChart || this.currentContext?.chartname || "",
             currentJobId: this.currentJob ? this.currentJob.jobId : null,
             queueLength: this.queue.length
         };
@@ -445,16 +445,6 @@ let dbfolder = path.join(appdir, "mbtiles");
 if (!fs.existsSync(dbfolder)) fs.mkdirSync(dbfolder, { recursive: true });
 
 let imageformat = configuration.tiledrivers[configuration.tiledriverindex];
-let chartworkname = "";
-let chartname = "";
-let charturl = "";
-let clippedShapeFolder = "";
-let chartfolder = "";
-let dir_1_unzipped = "";
-let dir_2_expanded = "";
-let dir_3_clipped = "";
-let dir_4_mbtiles = "";
-let isifrchart = false;
 
 /**
  * Chart processing starts here
@@ -616,13 +606,6 @@ async function processSingles(msgid = -1, indices = null, timingsMap = timings, 
     for (let idx = 0; idx < listToProcess.length; idx++) {
         const areaOpt = listToProcess[idx];
         const ctx = createAreaChartContext(areaOpt, signal);
-
-        chartworkname = ctx.chartworkname;
-        chartname = ctx.chartname;
-        chartfolder = ctx.chartfolder;
-        clippedShapeFolder = ctx.clippedShapeFolder;
-        charturl = ctx.charturl;
-        isifrchart = ctx.isifrchart;
         
         const cpt = new ProcessTime(ctx.chartname);
         timingsMap.set(ctx.chartname, cpt);
@@ -677,9 +660,6 @@ async function processOneFull() {
         console.log("Invalid selection, returning to main menu.\r\n");
         return;
     }
-	const cpt = new ProcessTime(chartname);
-	timings.set(chartname, cpt);
-    console.log(`${cpt.startdate}\n`);
     await processFulls();
 }
 
@@ -687,9 +667,6 @@ async function processAllFulls() {
     configuration.fullchartlist.forEach((fullchart) => {
         parray.push(configuration.fullchartlist.indexOf(fullchart))
     });
-    const cpt = new ProcessTime(chartname);
-    timings.set(chartname, cpt);
-    console.log(`${cpt.startdate}\n`);
     await processFulls();
 }
 
@@ -698,13 +675,6 @@ async function processFulls(msgid = -1, indices = null, timingsMap = timings, si
     for (let idx = 0; idx < listToProcess.length; idx++) { 
         const fullOpt = listToProcess[idx];
         const ctx = createFullChartContext(fullOpt, signal);
-
-        chartworkname = ctx.chartworkname;
-        chartname = ctx.chartname;
-        chartfolder = ctx.chartfolder;
-        clippedShapeFolder = ctx.clippedShapeFolder;
-        charturl = ctx.charturl;
-        isifrchart = ctx.isifrchart;
 
         const cpt = new ProcessTime(ctx.chartname);
         timingsMap.set(ctx.chartname, cpt);
@@ -722,24 +692,7 @@ async function processFulls(msgid = -1, indices = null, timingsMap = timings, si
     };
 }
 
-async function generateGeoTIFF() {
-    let question = "Enter the full path and filename of your mbtiles file: ";
-    let mbtilesfile = processPrompt(question);
-    if (fs.existsSync(mbtilesfile)) {
-        question = "Enter the full path and filename of the geoTIFF that will be created: "
-        let geotiff = processPrompt(question);
-        cmd = `gdal_translate -of GTiff -co BIGTIFF=YES ${mbtilesfile} ${geotiff}`;
-        await execCommandAsync(cmd);
-    }
-    else {
-        console.log("ERROR: The specified mbtiles file does not exist, exiting chartmaker!");
-    }
-}
-
-async function runProcessing(ctx = null) {
-    if (!ctx) {
-        ctx = new ChartTaskContext(workarea, chartworkname, chartname, charturl, clippedShapeFolder, isifrchart);
-    }
+async function runProcessing(ctx) {
     jobQueue.currentContext = ctx;
     setupEnvironment(ctx);
     await downloadCharts(ctx);
@@ -761,13 +714,13 @@ async function runProcessing(ctx = null) {
 /**
  * Generate all of the working folders for image processing
  */
-function setupEnvironment(ctx = null) {
-    const cfolder = ctx ? ctx.chartfolder : chartfolder;
-    const d1 = ctx ? ctx.dir_1_unzipped : dir_1_unzipped;
-    const d2 = ctx ? ctx.dir_2_expanded : dir_2_expanded;
-    const d3 = ctx ? ctx.dir_3_clipped : dir_3_clipped;
-    const d4 = ctx ? ctx.dir_4_mbtiles : dir_4_mbtiles;
-    const cname = ctx ? ctx.chartname : chartname;
+function setupEnvironment(ctx) {
+    const cfolder = ctx.chartfolder;
+    const d1 = ctx.dir_1_unzipped;
+    const d2 = ctx.dir_2_expanded;
+    const d3 = ctx.dir_3_clipped;
+    const d4 = ctx.dir_4_mbtiles;
+    const cname = ctx.chartname;
 
     // make sure the working folder for this chart is cleared out
     if (fs.existsSync(cfolder)) {
@@ -799,10 +752,10 @@ function parseChartDateString(dateStr) {
 /**
  * Get the desired chart zip file from the FAA's digital sources URL
  */
-async function downloadCharts(ctx = null) {
-    const cworkname = ctx ? ctx.chartworkname : chartworkname;
-    const curl = ctx ? ctx.charturl : charturl;
-    const targetDate = ctx?.chartdate || getBestChartDate();
+async function downloadCharts(ctx) {
+    const cworkname = ctx.chartworkname;
+    const curl = ctx.charturl;
+    const targetDate = ctx.chartdate || getBestChartDate();
     const targetTimestamp = parseChartDateString(targetDate);
 
     // Check chartcache for any existing zip files for this chart with a previous date
@@ -836,12 +789,12 @@ async function downloadCharts(ctx = null) {
 /**
  * Unzip chart file
  */
-async function unzipCharts(ctx = null) {
-    const cworkname = ctx ? ctx.chartworkname : chartworkname;
-    const cname = ctx ? ctx.chartname : chartname;
-    const d1 = ctx ? ctx.dir_1_unzipped : dir_1_unzipped;
-    const isifr = ctx ? ctx.isifrchart : isifrchart;
-    const cdate = ctx?.chartdate || chartdate;
+async function unzipCharts(ctx) {
+    const cworkname = ctx.chartworkname;
+    const cname = ctx.chartname;
+    const d1 = ctx.dir_1_unzipped;
+    const isifr = ctx.isifrchart;
+    const cdate = ctx.chartdate || chartdate;
 
     let chartzip = path.join(chartcache, `${cworkname}-${cdate}.zip`);
     let unzipcmd = `unzip -o ${chartzip} -x '*.htm' -d ${d1}`;
@@ -868,8 +821,8 @@ async function unzipCharts(ctx = null) {
 /** 
  * Clean up chart tif names by converting spaces and dashes to underscores
  */
-function normalizeChartNames(ctx = null) {
-    const d1 = ctx ? ctx.dir_1_unzipped : dir_1_unzipped;
+function normalizeChartNames(ctx) {
+    const d1 = ctx.dir_1_unzipped;
     let files = fs.readdirSync(d1);
     for (const file of files) {
         if (file.endsWith(".tif") || file.endsWith(".tfw") || file.endsWith(".tfwx")) {
@@ -882,14 +835,14 @@ function normalizeChartNames(ctx = null) {
 /**
  * Perform GDAL operations on all the unzipped chart tif images 
  */
-async function processImages(ctx = null) {
+async function processImages(ctx) {
     const chartareas = buildChartNameArray(ctx);
-    const shapeFolder = ctx ? ctx.clippedShapeFolder : clippedShapeFolder;
-    const d1 = ctx ? ctx.dir_1_unzipped : dir_1_unzipped;
-    const d2 = ctx ? ctx.dir_2_expanded : dir_2_expanded;
-    const d3 = ctx ? ctx.dir_3_clipped : dir_3_clipped;
-    const d4 = ctx ? ctx.dir_4_mbtiles : dir_4_mbtiles;
-    const cname = ctx ? ctx.chartname : chartname;
+    const shapeFolder = ctx.clippedShapeFolder;
+    const d1 = ctx.dir_1_unzipped;
+    const d2 = ctx.dir_2_expanded;
+    const d3 = ctx.dir_3_clipped;
+    const d4 = ctx.dir_4_mbtiles;
+    const cname = ctx.chartname;
 
     // Derive chart_category from the existing .geojson file's chart
     // category name (e.g., "sectional", "terminal", "enroute_low", etc.)
@@ -992,8 +945,8 @@ async function processImages(ctx = null) {
  * Called by processImages() so it can iterate through all unzipped chart names
  * @returns array containing all of the chart names to be processed
  */
-function buildChartNameArray(ctx = null) {
-    const d1 = ctx ? ctx.dir_1_unzipped : dir_1_unzipped;
+function buildChartNameArray(ctx) {
+    const d1 = ctx.dir_1_unzipped;
     let files = fs.readdirSync(d1);
     let chartnames = [];
     files.forEach((file) => {
@@ -1321,16 +1274,6 @@ async function executeMakeJob(job) {
 }
 
 function resetGlobalVariables() {
-    chartworkname = "";
-    chartname = "";
-    charturl = "";
-    clippedShapeFolder = "";
-    chartfolder = "";
-    dir_1_unzipped = "";
-    dir_2_expanded = "";
-    dir_3_clipped = "";
-    dir_4_mbtiles = "";
-    isifrchart = false;
     parray.splice(0, parray.length);
     nm = 0;
 }
