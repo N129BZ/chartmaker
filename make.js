@@ -638,7 +638,6 @@ async function processSingles(msgid = -1, indices = null, timingsMap = timings, 
         }
         
         cpt.calculateProcessTime();
-        console.log(`${cpt.totaltime}\r\n`);
         
         // if this was a single chart process request,
         // return the resulting timing class object
@@ -719,10 +718,6 @@ async function runProcessing(ctx) {
             fs.rmSync(ctx.chartfolder, { recursive: true, force: true });
         }
     }   
-    
-    if (!useWebServer) {
-        ProcessTime.reportProcessingTime(startdate);
-    }
 }
 
 /**
