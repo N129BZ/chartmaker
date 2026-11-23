@@ -117,3 +117,11 @@ configuration:
     - png
     - jpeg
     - webp
+
+  #######################################################
+  # Output File Type ptions: ["mbtiles", "pmtiles"]
+  #######################################################
+  outputfiletypeindex: 1
+  outputfiletypes:
+    - mbtiles
+    - pmtiles

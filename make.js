@@ -91,13 +91,14 @@ class ProcessTime {
 };
 
 class ChartTaskContext {
-    constructor(workarea, chartworkname, chartname, charturl, clippedShapeFolder, isifrchart = false, signal = null, cdate = getBestChartDate()) {
+    constructor(workarea, chartworkname, chartname, charturl, clippedShapeFolder, isifrchart = false, signal = null, cdate = getBestChartDate(), outputfiletypeindex = configuration?.outputfiletypeindex ?? 0) {
         this.chartworkname = chartworkname;
         this.chartname = chartname;
         this.charturl = charturl;
         this.clippedShapeFolder = clippedShapeFolder;
         this.isifrchart = isifrchart;
         this.chartdate = cdate;
+        this.outputfiletypeindex = Number(outputfiletypeindex);
         this.metadataDescription = chartname.replaceAll("_", " ");
         this.chartfolder = path.join(workarea, chartname);
         this.dir_1_unzipped = path.join(this.chartfolder, "1_unzipped");
@@ -128,6 +129,9 @@ class JobQueue {
             jobId,
             uid: message.uid || "",
             commandlist: message.commandlist || [],
+            outputfiletypeindex: message.outputfiletypeindex !== undefined
+                ? Number(message.outputfiletypeindex)
+                : Number(configuration.outputfiletypeindex ?? 0),
             message,
             status: "queued",
             cancelled: false,
@@ -296,6 +300,7 @@ class JobQueue {
             status: job.status,
             position,
             commandlist: job.commandlist,
+            outputfiletypeindex: job.outputfiletypeindex,
             completedItems: job.completedItems,
             currentChart: job.currentChart,
             currentRowIndex: job.currentRowIndex,
@@ -444,6 +449,20 @@ if (!fs.existsSync(chartcache)) fs.mkdirSync(chartcache);
 let dbfolder = path.join(appdir, "mbtiles");
 if (!fs.existsSync(dbfolder)) fs.mkdirSync(dbfolder, { recursive: true });
 
+let pmtilesfolder = path.join(appdir, "pmtiles");
+if (!fs.existsSync(pmtilesfolder)) fs.mkdirSync(pmtilesfolder, { recursive: true });
+
+const pmtilesBin = fs.existsSync("/usr/local/bin/pmtiles")
+    ? "/usr/local/bin/pmtiles"
+    : (process.env.HOME && fs.existsSync(path.join(process.env.HOME, ".local/bin/pmtiles"))
+        ? path.join(process.env.HOME, ".local/bin/pmtiles")
+        : "pmtiles");
+
+function getOutputExtension(outputTypeIndex = configuration.outputfiletypeindex ?? 0) {
+    const types = configuration.outputfiletypes || ["mbtiles", "pmtiles"];
+    return types[Number(outputTypeIndex)] || "mbtiles";
+}
+
 let imageformat = configuration.tiledrivers[configuration.tiledriverindex];
 
 /**
@@ -570,17 +589,17 @@ async function processAllAreas() {
     await processSingles();
 }
 
-function createAreaChartContext(opt, signal = null) {
+function createAreaChartContext(opt, signal = null, outputfiletypeindex = configuration.outputfiletypeindex ?? 0) {
     const currentChartDate = getBestChartDate();
     chartdate = currentChartDate;
     const chartworkname = configuration.areachartlist[opt];
     const chartname = chartworkname;
     const clippedShapeFolder = path.join(appdir, "clipshapes", "sectional");
     const charturl = `${configuration.vfrindividualtemplate.replace("<chartdate>", currentChartDate).replace("<charttype>", chartworkname)}`;
-    return new ChartTaskContext(workarea, chartworkname, chartname, charturl, clippedShapeFolder, false, signal, currentChartDate);
+    return new ChartTaskContext(workarea, chartworkname, chartname, charturl, clippedShapeFolder, false, signal, currentChartDate, outputfiletypeindex);
 }
 
-function createFullChartContext(opt, signal = null) {
+function createFullChartContext(opt, signal = null, outputfiletypeindex = configuration.outputfiletypeindex ?? 0) {
     const currentChartDate = getBestChartDate();
     chartdate = currentChartDate;
     const chart = configuration.fullchartlist[opt];
@@ -605,14 +624,14 @@ function createFullChartContext(opt, signal = null) {
         }
         clippedShapeFolder = path.join(appdir, "clipshapes", lcasename);
     }
-    return new ChartTaskContext(workarea, chartworkname, chartname, charturl, clippedShapeFolder, isifrchart, signal, currentChartDate);
+    return new ChartTaskContext(workarea, chartworkname, chartname, charturl, clippedShapeFolder, isifrchart, signal, currentChartDate, outputfiletypeindex);
 }
 
-async function processSingles(msgid = -1, indices = null, timingsMap = timings, signal = null) {
+async function processSingles(msgid = -1, indices = null, timingsMap = timings, signal = null, outputfiletypeindex = configuration.outputfiletypeindex ?? 0) {
     const listToProcess = indices !== null ? indices : parray;
     for (let idx = 0; idx < listToProcess.length; idx++) {
         const areaOpt = listToProcess[idx];
-        const ctx = createAreaChartContext(areaOpt, signal);
+        const ctx = createAreaChartContext(areaOpt, signal, outputfiletypeindex);
         
         const cpt = new ProcessTime(ctx.chartname);
         timingsMap.set(ctx.chartname, cpt);
@@ -621,6 +640,7 @@ async function processSingles(msgid = -1, indices = null, timingsMap = timings, 
 
         let doProcessing = true;
         let chartdbfile = path.join(dbfolder, `${ctx.chartname.toLowerCase()}.mbtiles`);
+        let chartpmfile = path.join(pmtilesfolder, `${ctx.chartname.toLowerCase()}.pmtiles`);
         if (fs.existsSync(chartdbfile)) {
             let stat = fs.statSync(chartdbfile);    
             const birthDate = stat.birthtime;
@@ -635,6 +655,8 @@ async function processSingles(msgid = -1, indices = null, timingsMap = timings, 
         }
         if (doProcessing) {
             await runProcessing(ctx);
+        } else if (getOutputExtension(ctx.outputfiletypeindex) === "pmtiles" && !fs.existsSync(chartpmfile)) {
+            await convertMbtilesToPmtiles(chartdbfile, chartpmfile, workarea, ctx?.signal);
         }
         
         cpt.calculateProcessTime();
@@ -683,19 +705,22 @@ async function processAllFulls() {
     await processFulls();
 }
 
-async function processFulls(msgid = -1, indices = null, timingsMap = timings, signal = null) {
+async function processFulls(msgid = -1, indices = null, timingsMap = timings, signal = null, outputfiletypeindex = configuration.outputfiletypeindex ?? 0) {
     const listToProcess = indices !== null ? indices : parray;
     for (let idx = 0; idx < listToProcess.length; idx++) { 
         const fullOpt = listToProcess[idx];
-        const ctx = createFullChartContext(fullOpt, signal);
+        const ctx = createFullChartContext(fullOpt, signal, outputfiletypeindex);
 
         const cpt = new ProcessTime(ctx.chartname);
         timingsMap.set(ctx.chartname, cpt);
         console.log(`${cpt.startdate}\n`);
 
         let chartdbfile = path.join(dbfolder, `${ctx.chartname.toLowerCase()}.mbtiles`);
+        let chartpmfile = path.join(pmtilesfolder, `${ctx.chartname.toLowerCase()}.pmtiles`);
         if (!fs.existsSync(chartdbfile)) {
             await runProcessing(ctx);
+        } else if (getOutputExtension(ctx.outputfiletypeindex) === "pmtiles" && !fs.existsSync(chartpmfile)) {
+            await convertMbtilesToPmtiles(chartdbfile, chartpmfile, workarea, ctx?.signal);
         }
         
         cpt.calculateProcessTime();
@@ -948,6 +973,32 @@ async function processImages(ctx) {
     logEntry(`>> Moving finished MBTILES file to: ${finalmbtiles}`);
     await execCommandAsync(`mv -f "${mbtiles}" "${finalmbtiles}"`, null, ctx?.signal);
     fs.chmodSync(finalmbtiles, 0o666);
+
+    // If PMTiles output is selected, convert the finished MBTiles database into a PMTiles archive
+    if (getOutputExtension(ctx?.outputfiletypeindex) === "pmtiles") {
+        const finalpmtiles = path.join(pmtilesfolder, cname.toLowerCase()) + ".pmtiles";
+        await convertMbtilesToPmtiles(finalmbtiles, finalpmtiles, d4, ctx?.signal);
+    }
+}
+
+/**
+ * Convert an MBTiles SQLite database into a PMTiles v3 single-file archive
+ */
+async function convertMbtilesToPmtiles(sourceMbtiles, finalPmtiles, tmpDir = workarea, signal = null) {
+    if (!fs.existsSync(pmtilesfolder)) {
+        fs.mkdirSync(pmtilesfolder, { recursive: true });
+    }
+    if (!fs.existsSync(tmpDir)) {
+        fs.mkdirSync(tmpDir, { recursive: true });
+    }
+    const tmpPmtiles = path.join(tmpDir, path.basename(finalPmtiles));
+    logEntry(`>> Converting MBTILES to PMTILES: ${tmpPmtiles}`);
+    let pmCmd = `"${pmtilesBin}" convert "${sourceMbtiles}" "${tmpPmtiles}" --tmpdir="${tmpDir}"`;
+    await execCommandAsync(pmCmd, null, signal);
+
+    logEntry(`>> Moving finished PMTILES file to: ${finalPmtiles}`);
+    await execCommandAsync(`mv -f "${tmpPmtiles}" "${finalPmtiles}"`, null, signal);
+    fs.chmodSync(finalPmtiles, 0o666);
 }
 
 /**
@@ -1184,6 +1235,8 @@ async function executeMakeJob(job) {
             opt = Number(item.chart);
 
             console.log(`Job ${job.jobId} - command: ${idx}, chart: ${opt}`);
+            const outTypeIdx = job.outputfiletypeindex ?? configuration.outputfiletypeindex ?? 0;
+            const outExt = getOutputExtension(outTypeIdx);
             switch (idx) {
                 case 0:
                     if (opt >= 0 && opt <= 52) {
@@ -1191,19 +1244,19 @@ async function executeMakeJob(job) {
                         let rmt = new AppMessage(AppMessage.mtRunning); 
                         rmt.rowindex = ridx;
                         rmt.filename = item.chartname;
-                        rmt.dbfilename = `${item.chartname.toLowerCase().replaceAll(" ", "_")}.mbtiles`;
+                        rmt.dbfilename = `${item.chartname.toLowerCase().replaceAll(" ", "_")}.${outExt}`;
                         jobQueue.currentChart = item.chartname;
                         job.currentChart = item.chartname;
                         job.currentRowIndex = ridx;
                         sendMessageToClients(rmt, userid);
 
-                        let cpt = await processSingles(i, [opt], job.timings, job.abortController.signal);
+                        let cpt = await processSingles(i, [opt], job.timings, job.abortController.signal, outTypeIdx);
 
                         let cmt = new AppMessage(AppMessage.mtComplete); 
                         cmt.rowindex = ridx; 
                         cmt.payload = cpt.totaltime;
                         cmt.filename = item.chartname;
-                        cmt.dbfilename = `${cpt.processname.toLowerCase().replaceAll(" ", "_")}.mbtiles`;
+                        cmt.dbfilename = `${cpt.processname.toLowerCase().replaceAll(" ", "_")}.${outExt}`;
                         job.completedItems.push({
                             type: AppMessage.mtComplete,
                             rowindex: ridx,
@@ -1223,19 +1276,19 @@ async function executeMakeJob(job) {
                         let chart = (configuration.fullchartlist[opt][2] || configuration.fullchartlist[opt][0]).replace("_", " ");
                         console.log(`Job ${job.jobId} - processing full chart: ${chart}`);
                         rmt.filename = chart;
-                        rmt.dbfilename = `${chart.toLowerCase().replaceAll(" ", "_")}.mbtiles`;
+                        rmt.dbfilename = `${chart.toLowerCase().replaceAll(" ", "_")}.${outExt}`;
                         jobQueue.currentChart = chart;
                         job.currentChart = chart;
                         job.currentRowIndex = ridx;
                         sendMessageToClients(rmt, userid);
 
-                        let cpt = await processFulls(i, [opt], job.timings, job.abortController.signal);
+                        let cpt = await processFulls(i, [opt], job.timings, job.abortController.signal, outTypeIdx);
 
                         let cmt = new AppMessage(AppMessage.mtComplete);
                         cmt.rowindex = ridx;
                         cmt.payload = cpt.totaltime;
                         cmt.filename = chart;
-                        cmt.dbfilename = `${cpt.processname.toLowerCase().replaceAll(" ", "_")}.mbtiles`;
+                        cmt.dbfilename = `${cpt.processname.toLowerCase().replaceAll(" ", "_")}.${outExt}`;
                         job.completedItems.push({
                             type: AppMessage.mtComplete,
                             rowindex: ridx,
@@ -1427,7 +1480,7 @@ function getUniqueUserId(){
             });
 
             app.get("/existingcount", async (req, res) => {
-                let data = await getExistingCount();
+                let data = await getExistingCount(req.query.type);
                 res.send(JSON.stringify({ existingcount: data }));
                 res.end();
             });
@@ -1593,7 +1646,9 @@ async function uploadArchiveFile(message, response) {
     // Collect valid file paths
     const filesToZip = [];
     charts.forEach((item, index) => {
-        const filePath = path.join(dbfolder, item.dbfilename);
+        const safeName = path.basename(item.dbfilename);
+        const targetFolder = safeName.endsWith(".pmtiles") ? pmtilesfolder : dbfolder;
+        const filePath = path.join(targetFolder, safeName);
         if (fs.existsSync(filePath)) {
             filesToZip.push(filePath);
             let msg = new AppMessage(AppMessage.mtDownload);
@@ -1643,14 +1698,13 @@ async function uploadArchiveFile(message, response) {
  * Get the count of current pre-existing database files
  * @returns number
  */
-async function getExistingCount() {
+async function getExistingCount(outputTypeIndex = configuration.outputfiletypeindex ?? 0) {
     try {
-        const extensionsToOmit = ['.zip']; 
-        const files = fs.readdirSync(dbfolder);
-        const filteredfiles = files.filter(file => {
-            const fileExtension = path.extname(file);
-            return !extensionsToOmit.includes(fileExtension);
-        });
+        const ext = `.${getOutputExtension(outputTypeIndex)}`;
+        const targetFolder = ext === ".pmtiles" ? pmtilesfolder : dbfolder;
+        if (!fs.existsSync(targetFolder)) return 0;
+        const files = fs.readdirSync(targetFolder);
+        const filteredfiles = files.filter(file => path.extname(file).toLowerCase() === ext);
 
         return filteredfiles.length;
     }
@@ -1666,14 +1720,20 @@ async function getExistingCount() {
  * @returns an Appmessage.mtExistingDb message with a list of databases
  */
 async function sendExistingDatabases(message) {
-    const extensionsToOmit = ['.zip', '.txt']; 
+    const outIdx = message?.outputfiletypeindex !== undefined
+        ? Number(message.outputfiletypeindex)
+        : (configuration.outputfiletypeindex ?? 0);
+    const ext = `.${getOutputExtension(outIdx)}`;
+    const targetFolder = ext === ".pmtiles" ? pmtilesfolder : dbfolder;
     const items = { existingdblist: [] };
     try {
-        const files = fs.readdirSync(dbfolder);
-        const filteredfiles = files.filter(file => {
-            const fileExtension = path.extname(file);
-            return !extensionsToOmit.includes(fileExtension);
-        });
+        if (!fs.existsSync(targetFolder)) {
+            message.items = items;
+            message.completed = true;
+            return message;
+        }
+        const files = fs.readdirSync(targetFolder);
+        const filteredfiles = files.filter(file => path.extname(file).toLowerCase() === ext);
         let idx = -1;
         filteredfiles.forEach(file => {
             idx ++;

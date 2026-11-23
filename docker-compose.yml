@@ -2,11 +2,12 @@ services:
   # Ensure host mount directories are owned by the local user instead of root
   init-perms:
     image: busybox
-    command: chown -R ${UID:-1000}:${GID:-1000} /data/chartcache /data/mbtiles /data/workarea
+    command: chown -R ${UID:-1000}:${GID:-1000} /data/chartcache /data/mbtiles /data/pmtiles /data/workarea
     restart: "no"
     volumes:
       - ./chartcache:/data/chartcache
       - ./mbtiles:/data/mbtiles
+      - ./pmtiles:/data/pmtiles
       - ./workarea:/data/workarea
 
   # Web server container - launch with: docker compose up -d chartmaker
@@ -23,13 +24,14 @@ services:
     volumes:
       - ./chartcache:/chartmaker/chartcache
       - ./mbtiles:/chartmaker/mbtiles
+      - ./pmtiles:/chartmaker/pmtiles
       - ./workarea:/chartmaker/workarea
       - .:/chartmaker/config
     environment:
       - DOCKER=true
       - TZ=America/Chicago
       - WEBSERVER=true
-      
+
   # Interactive CLI container - launch with: docker compose run --rm chartmaker-cli
   chartmaker-cli:
     image: ghcr.io/n129bz/chartmaker:latest
@@ -44,6 +46,7 @@ services:
     volumes:
       - ./chartcache:/chartmaker/chartcache
       - ./mbtiles:/chartmaker/mbtiles
+      - ./pmtiles:/chartmaker/pmtiles
       - ./workarea:/chartmaker/workarea
       - .:/chartmaker/config
     environment:

@@ -76,6 +76,8 @@ const btnProcessCharts = document.getElementById("btnProcessCharts");
 const btnCancel = document.getElementById("btnCancel");
 const chkForExisting = document.getElementById("checkForExisting");
 const processInfo = document.getElementById("processInformation");
+const radioMbtiles = document.getElementById("radioMbtiles");
+const radioPmtiles = document.getElementById("radioPmtiles");
 
 function showCancelButton(isVisible) {
     if (btnCancel) {
@@ -122,6 +124,7 @@ let confcommands = [];
 let configuration = {};
 let selectedcommand = -1;
 let selectedchart = -1;
+let selectedOutputTypeIndex = 1;
 let blinking = false;
 let inResponseView = false;
 let fullChartNames = [];
@@ -147,6 +150,7 @@ async function getConfigFromServer() {
         }
         configuration = await data.json();
         console.log(configuration);
+        initOutputFileTypeRadios();
         checkForExistingDatabases();
         setChartNameArrays();
         await checkJobStateOnLoad();
@@ -155,6 +159,34 @@ async function getConfigFromServer() {
     }
     catch (err) {
         console.log(err.message);
+    }
+}
+
+function initOutputFileTypeRadios() {
+    selectedOutputTypeIndex = Number(configuration.outputfiletypeindex ?? 0);
+    if (radioMbtiles && radioPmtiles) {
+        radioMbtiles.checked = (selectedOutputTypeIndex === 0);
+        radioPmtiles.checked = (selectedOutputTypeIndex === 1);
+    }
+    commandpackage.outputfiletypeindex = selectedOutputTypeIndex;
+}
+
+function handleOutputTypeChange() {
+    if (radioPmtiles && radioPmtiles.checked) {
+        selectedOutputTypeIndex = 1;
+    } else {
+        selectedOutputTypeIndex = 0;
+    }
+    commandpackage.outputfiletypeindex = selectedOutputTypeIndex;
+    if (chkForExisting && chkForExisting.checked) {
+        getExistingDatabaseList().then((success) => {
+            if (!success) {
+                chkForExisting.checked = false;
+                resetFromDownloadState();
+            }
+        });
+    } else {
+        checkForExistingDatabases();
     }
 }
 
@@ -193,6 +225,14 @@ function restoreUIFromState(state) {
     commandpackage = new AppMessage(AppMessage.mtCommandPackage);
     commandpackage.commandlist = [...state.commandlist];
     commandpackage.uid = thisUserId;
+    if (state.outputfiletypeindex !== undefined) {
+        selectedOutputTypeIndex = Number(state.outputfiletypeindex);
+        if (radioMbtiles && radioPmtiles) {
+            radioMbtiles.checked = (selectedOutputTypeIndex === 0);
+            radioPmtiles.checked = (selectedOutputTypeIndex === 1);
+        }
+    }
+    commandpackage.outputfiletypeindex = selectedOutputTypeIndex;
     processitems = [];
 
     // Populate rows with chart labels
@@ -561,7 +601,8 @@ function resetEverything() {
     commandpackage = {
         type: "commandpackage",
         commandlist: [],
-        uid: ""
+        uid: "",
+        outputfiletypeindex: selectedOutputTypeIndex
     };
     commandpackage.uid = thisUserId;
     if (thisUserId) {
@@ -583,6 +624,7 @@ function resetEverything() {
 async function sendCommandsToServer() {
     if (commandpackage.commandlist.length > 0) {
         commandpackage.uid = thisUserId;
+        commandpackage.outputfiletypeindex = selectedOutputTypeIndex;
         addItemsMenu.style.display = "none";
         inResponseView = true;
         blinkSendButton(true);
@@ -1144,6 +1186,7 @@ async function getExistingDatabaseList() {
 
     dlreq.uid = thisUserId;
     dlreq.getexisting = true;
+    dlreq.outputfiletypeindex = selectedOutputTypeIndex;
     const response = await fetch(URL_POST_SENDEXISTING, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1178,7 +1221,7 @@ async function getExistingDatabaseList() {
  * @returns true if the returned count > 0
  */
 async function hasExistingDatabases() {
-    const response = await fetch(URL_GET_EXISTINGCOUNT, { method: 'GET' });
+    const response = await fetch(`${URL_GET_EXISTINGCOUNT}?type=${selectedOutputTypeIndex}`, { method: 'GET' });
     const data = await response.json();
     return (data.existingcount > 0);
 }
@@ -1186,6 +1229,12 @@ async function hasExistingDatabases() {
 /*********************************************
  *      VARIOUS ELEMENT EVENT HANDLERS
  *********************************************/
+if (radioMbtiles) {
+    radioMbtiles.addEventListener('change', handleOutputTypeChange);
+}
+if (radioPmtiles) {
+    radioPmtiles.addEventListener('change', handleOutputTypeChange);
+}
 txtCommand.addEventListener('change', () => {
     commandSelected();
 });

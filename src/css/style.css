@@ -47,6 +47,34 @@ body {
     text-align: left;
 }
 
+.outputTypeMenu {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: medium;
+    width: 513px;
+    text-align: left;
+    position: relative;
+    top: -26px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.radioLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    font-weight: normal;
+}
+
+.radioLabel input[type="radio"] {
+    accent-color: rgb(70, 70, 180);
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    cursor: pointer;
+}
+
 .processInformation {
     outline: 3px solid rgb(67, 67, 207);
     font-family: Arial, Helvetica, sans-serif;
@@ -654,6 +682,15 @@ button:disabled {
         width: 100%;
         height: 40px;
         margin-top: 4px;
+    }
+
+    .outputTypeMenu {
+        position: static;
+        width: 100%;
+        margin-top: 12px;
+        margin-bottom: 4px;
+        flex-wrap: wrap;
+        gap: 12px;
     }
 
     .processInformation {
