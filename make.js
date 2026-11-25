@@ -104,7 +104,7 @@ class ChartTaskContext {
         this.dir_1_unzipped = path.join(this.chartfolder, "1_unzipped");
         this.dir_2_expanded = path.join(this.chartfolder, "2_expanded");
         this.dir_3_clipped = path.join(this.chartfolder, "3_clipped");
-        this.dir_4_mbtiles = path.join(this.chartfolder, "4_mbtiles");
+        this.dir_4_tiles = path.join(this.chartfolder, "4_tiles");
         this.signal = signal;
     }
 }
@@ -449,10 +449,25 @@ if (!fs.existsSync(chartcache)) fs.mkdirSync(chartcache);
 let tilesfolder = path.join(appdir, "tiles");
 if (!fs.existsSync(tilesfolder)) fs.mkdirSync(tilesfolder, { recursive: true });
 
-const pmtilesBin = fs.existsSync("/usr/local/bin/pmtiles")
-    ? "/usr/local/bin/pmtiles"
-    : (process.env.HOME && fs.existsSync(path.join(process.env.HOME, ".local/bin/pmtiles"))
-        ? path.join(process.env.HOME, ".local/bin/pmtiles")
+const binDir = path.join(appdir, "bin");
+const bundledPmtiles = path.join(binDir, "pmtiles");
+const bundledPmtilesArchive = path.join(binDir, "pmtiles.tar.gz");
+if (!fs.existsSync(bundledPmtiles) && fs.existsSync(bundledPmtilesArchive)) {
+    try {
+        logEntry(`Extracting bundled pmtiles binary from ${bundledPmtilesArchive}...`);
+        execSync(`tar -xzf "${bundledPmtilesArchive}" -C "${binDir}"`);
+    } catch (err) {
+        console.error("Failed to extract bundled pmtiles archive:", err.message);
+    }
+}
+if (fs.existsSync(bundledPmtiles)) {
+    try { fs.chmodSync(bundledPmtiles, 0o755); } catch {}
+}
+
+const pmtilesBin = fs.existsSync(bundledPmtiles)
+    ? bundledPmtiles
+    : (fs.existsSync("/usr/local/bin/pmtiles")
+        ? "/usr/local/bin/pmtiles"
         : "pmtiles");
 
 function getOutputExtension(outputTypeIndex = configuration.outputfiletypeindex ?? 0) {

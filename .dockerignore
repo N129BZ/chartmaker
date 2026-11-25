@@ -6,7 +6,10 @@ externalcharts
 workarea
 dist
 charts
+tiles
 mbtiles
+pmtiles
+bin/pmtiles
 mbutil
 tiledatabases
 appimages

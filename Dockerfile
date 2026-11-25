@@ -17,18 +17,17 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-RUN ARCH=$(uname -m) && \
-    if [ "$ARCH" = "aarch64" ]; then PM_ARCH="arm64"; else PM_ARCH="x86_64"; fi && \
-    curl -fsSL "https://github.com/protomaps/go-pmtiles/releases/download/v1.31.2/go-pmtiles_1.31.2_Linux_${PM_ARCH}.tar.gz" \
-    | tar -xz -C /usr/local/bin pmtiles && \
-    chmod +x /usr/local/bin/pmtiles
-
 WORKDIR /chartmaker
 
 COPY package*.json ./
 RUN npm ci
 
 COPY . .
+
+RUN if [ -f /chartmaker/bin/pmtiles.tar.gz ]; then \
+        tar -xzf /chartmaker/bin/pmtiles.tar.gz -C /chartmaker/bin && \
+        chmod +x /chartmaker/bin/pmtiles; \
+    fi
 
 RUN sed -i 's/indocker = (r.search("\/docker\/") > -1);/indocker = (r.search("\/docker\/") > -1) || fs.existsSync("\/\.dockerenv") || process.env.DOCKER === "true";/' make.js
 

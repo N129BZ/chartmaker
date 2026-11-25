@@ -7,10 +7,9 @@
 **/tiledatabases
 **/charts
 **/tiles
-**/mbtiles
-**/pmtiles
 **/appimages
 **/dist
 **/implementation_plan*
 **/implementation-plans*
 /debug.log
+/bin/pmtiles
