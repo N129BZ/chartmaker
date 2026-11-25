@@ -4,7 +4,7 @@ Create a new directory, download and place the the docker-compose.yml file in th
   - ***docker compose up -d chartmaker*** (the web server default is ***localhost:8500***, see screen shots below.) 
   - ***docker compose run --rm chartmaker-cli***    
 
-Three local folders will be created within your new directory: ***chartcache***, ***mbtiles***, and ***workarea***. The ***config.yml*** file will also be created in the new directory. All downloaded raster charts will be placed in ***[yourdirectoryname]/chartcache***, and the generated charts will be placed in ***[yourdirectoryname]/mbtiles***. In webserver mode, the user can elect to download the finished chart(s) as a .zip file when the processing is completed. ***[yourdirectoryname]/workarea*** is where the step-by-step intermediate processing files are stored during image processing.
+Three local folders will be created within your new directory: ***chartcache***, ***tiles***, and ***workarea***. The ***config.yml*** file will also be created in the new directory. All downloaded raster charts will be placed in ***[yourdirectoryname]/chartcache***, and the generated charts will be placed in ***[yourdirectoryname]/tiles***. In webserver mode, the user can elect to download the finished chart(s) as a .zip file when the processing is completed. ***[yourdirectoryname]/workarea*** is where the step-by-step intermediate processing files are stored during image processing.
 
 #### For a chart viewing application see: *https://github.com/n129bz/mapserver* - Shows Metars, TAFs, Pireps, Animated Weather, Airport Information including frequencies and runways - and more!
 
