@@ -559,13 +559,40 @@ if (!useWebServer) {
 
 async function processOneArea(area = -1) {
     if (area == -1) {
-        let lst = "\nSelect the chart number you want to process from this list\r\n\r\n";
-        for (let i = 0; i <  configuration.areachartlist.length; i++) {
-            lst += `${i} ${configuration.areachartlist[i].split("_").join(" ")}\r\n`; 
-        }
         const startOverIndex = configuration.areachartlist.length;
-        lst += `${startOverIndex} Previous menu\r\n`;
-        lst += "--------------------------------------------\r\nYour selection: ";
+        const items = configuration.areachartlist.map((name, i) =>
+            `${String(i).padStart(2, " ")} ${name.split("_").join(" ")}`
+        );
+        items.push(`${String(startOverIndex).padStart(2, " ")} Previous menu`);
+
+        const numCols = 3;
+        const numRows = Math.ceil(items.length / numCols);
+        const colWidths = [];
+        for (let c = 0; c < numCols; c++) {
+            let maxW = 0;
+            for (let r = 0; r < numRows; r++) {
+                const idx = c * numRows + r;
+                if (idx < items.length && items[idx].length > maxW) {
+                    maxW = items[idx].length;
+                }
+            }
+            colWidths.push(maxW + 4);
+        }
+
+        let lst = "\nSelect the chart number you want to process from this list\r\n\r\n";
+        for (let r = 0; r < numRows; r++) {
+            let line = "";
+            for (let c = 0; c < numCols; c++) {
+                const idx = c * numRows + r;
+                if (idx < items.length) {
+                    line += (c < numCols - 1)
+                        ? items[idx].padEnd(colWidths[c], " ")
+                        : items[idx];
+                }
+            }
+            lst += `${line}\r\n`;
+        }
+        lst += "------------------------------------------------------------------------\r\nYour selection: ";
         let response = processPrompt(lst).trim();
         const lower = response.toLowerCase();
         if (lower === "p" || lower === "previous menu" || Number(response) === startOverIndex) {
