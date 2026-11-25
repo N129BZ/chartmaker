@@ -121,7 +121,7 @@ configuration:
   #######################################################
   # Output File Type ptions: ["mbtiles", "pmtiles"]
   #######################################################
-  outputfiletypeindex: 1
+  outputfiletypeindex: 0
   outputfiletypes:
     - mbtiles
     - pmtiles
