@@ -149,10 +149,11 @@ tiledriverindex: 2
 The chart zip files are downloaded from the FAA digital raster chart repository and unzipped. After the unzipping process all of the the resultant GEOtiff image names (and their matching tfw world file names) are "normalized" to all lower-case filenames with underscores in place of dashes and spaces and any apostrophes removed. This simplifies the down-stream processing of these files since **GDAL** can interpret spaces as argument separators.   
 
 ### *Webserver Mode Browser User Interface*
-<img width="589" height="725" alt="Chartmaker01" src="https://github.com/user-attachments/assets/14f8c991-568a-48f7-8f68-0663ac9e044b" />
-<img width="597" height="841" alt="ChartmakerWeb" src="https://github.com/user-attachments/assets/febfa936-4aff-4439-acf8-7599ea60b934" />
-<img width="591" height="752" alt="ChartmakerMain" src="https://github.com/user-attachments/assets/993b4f0f-a1fd-47c4-a660-e151b10eba20" />
-<img width="581" height="526" alt="Chartmaker04" src="https://github.com/user-attachments/assets/62c13b7c-7d08-4f27-b8b0-793ff2a14aed" />
+<img alt="Chartmaker-01" src="./images/Chartmaker-01.png" />
+<img alt="Chartmaker-02" src="./images/Chartmaker-02.png" />
+<img alt="Chartmaker-03" src="./images/Chartmaker-03.png" />
+<img alt="Chartmaker-04" src="./images/Chartmaker-04.png" />
+<img alt="Chartmaker-05" src="./images/Chartmaker-05.png" />
 
 ### ToDo:
 
