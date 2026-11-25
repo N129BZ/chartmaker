@@ -772,7 +772,7 @@ function setupEnvironment(ctx) {
     const d1 = ctx.dir_1_unzipped;
     const d2 = ctx.dir_2_expanded;
     const d3 = ctx.dir_3_clipped;
-    const d4 = ctx.dir_4_mbtiles;
+    const d4 = ctx.dir_4_tiles;
     const cname = ctx.chartname;
 
     // make sure the working folder for this chart is cleared out
@@ -894,7 +894,7 @@ async function processImages(ctx) {
     const d1 = ctx.dir_1_unzipped;
     const d2 = ctx.dir_2_expanded;
     const d3 = ctx.dir_3_clipped;
-    const d4 = ctx.dir_4_mbtiles;
+    const d4 = ctx.dir_4_tiles;
     const cname = ctx.chartname;
 
     // Derive chart_category from the existing .geojson file's chart
