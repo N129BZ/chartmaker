@@ -35,7 +35,7 @@ RUN sed -i 's/indocker = (r.search("\/docker\/") > -1);/indocker = (r.search("\/
 RUN npm run build && npm prune --omit=dev
 ENV NODE_ENV=production
 
-RUN mkdir -p /chartmaker/chartcache /chartmaker/mbtiles /chartmaker/pmtiles /chartmaker/config \ 
+RUN mkdir -p /chartmaker/chartcache /chartmaker/tiles /chartmaker/config \ 
     && chmod 777 /chartmaker
 
 EXPOSE 8500

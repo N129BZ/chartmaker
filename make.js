@@ -446,11 +446,8 @@ if (!fs.existsSync(workarea)) fs.mkdirSync(workarea)
 let chartcache = path.join(appdir, "chartcache");
 if (!fs.existsSync(chartcache)) fs.mkdirSync(chartcache);
 
-let dbfolder = path.join(appdir, "mbtiles");
-if (!fs.existsSync(dbfolder)) fs.mkdirSync(dbfolder, { recursive: true });
-
-let pmtilesfolder = path.join(appdir, "pmtiles");
-if (!fs.existsSync(pmtilesfolder)) fs.mkdirSync(pmtilesfolder, { recursive: true });
+let tilesfolder = path.join(appdir, "tiles");
+if (!fs.existsSync(tilesfolder)) fs.mkdirSync(tilesfolder, { recursive: true });
 
 const pmtilesBin = fs.existsSync("/usr/local/bin/pmtiles")
     ? "/usr/local/bin/pmtiles"
@@ -639,10 +636,13 @@ async function processSingles(msgid = -1, indices = null, timingsMap = timings, 
         console.log(ctx.charturl);
 
         let doProcessing = true;
-        let chartdbfile = path.join(dbfolder, `${ctx.chartname.toLowerCase()}.mbtiles`);
-        let chartpmfile = path.join(pmtilesfolder, `${ctx.chartname.toLowerCase()}.pmtiles`);
-        if (fs.existsSync(chartdbfile)) {
-            let stat = fs.statSync(chartdbfile);    
+        const outExt = getOutputExtension(ctx.outputfiletypeindex);
+        let chartoutfile = path.join(tilesfolder, `${ctx.chartname.toLowerCase()}.${outExt}`);
+        let chartdbfile = path.join(tilesfolder, `${ctx.chartname.toLowerCase()}.mbtiles`);
+        let chartpmfile = path.join(tilesfolder, `${ctx.chartname.toLowerCase()}.pmtiles`);
+        const fileToCheck = fs.existsSync(chartoutfile) ? chartoutfile : (fs.existsSync(chartdbfile) ? chartdbfile : null);
+        if (fileToCheck) {
+            let stat = fs.statSync(fileToCheck);    
             const birthDate = stat.birthtime;
             const year = birthDate.getFullYear();
             const month = String(birthDate.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
@@ -655,7 +655,7 @@ async function processSingles(msgid = -1, indices = null, timingsMap = timings, 
         }
         if (doProcessing) {
             await runProcessing(ctx);
-        } else if (getOutputExtension(ctx.outputfiletypeindex) === "pmtiles" && !fs.existsSync(chartpmfile)) {
+        } else if (outExt === "pmtiles" && !fs.existsSync(chartpmfile) && fs.existsSync(chartdbfile)) {
             await convertMbtilesToPmtiles(chartdbfile, chartpmfile, workarea, ctx?.signal);
         }
         
@@ -715,12 +715,16 @@ async function processFulls(msgid = -1, indices = null, timingsMap = timings, si
         timingsMap.set(ctx.chartname, cpt);
         console.log(`${cpt.startdate}\n`);
 
-        let chartdbfile = path.join(dbfolder, `${ctx.chartname.toLowerCase()}.mbtiles`);
-        let chartpmfile = path.join(pmtilesfolder, `${ctx.chartname.toLowerCase()}.pmtiles`);
-        if (!fs.existsSync(chartdbfile)) {
-            await runProcessing(ctx);
-        } else if (getOutputExtension(ctx.outputfiletypeindex) === "pmtiles" && !fs.existsSync(chartpmfile)) {
-            await convertMbtilesToPmtiles(chartdbfile, chartpmfile, workarea, ctx?.signal);
+        const outExt = getOutputExtension(ctx.outputfiletypeindex);
+        let chartoutfile = path.join(tilesfolder, `${ctx.chartname.toLowerCase()}.${outExt}`);
+        let chartdbfile = path.join(tilesfolder, `${ctx.chartname.toLowerCase()}.mbtiles`);
+        let chartpmfile = path.join(tilesfolder, `${ctx.chartname.toLowerCase()}.pmtiles`);
+        if (!fs.existsSync(chartoutfile)) {
+            if (outExt === "pmtiles" && fs.existsSync(chartdbfile)) {
+                await convertMbtilesToPmtiles(chartdbfile, chartpmfile, workarea, ctx?.signal);
+            } else {
+                await runProcessing(ctx);
+            }
         }
         
         cpt.calculateProcessTime();
@@ -931,14 +935,14 @@ async function processImages(ctx) {
             break;
     }
 
-    // ensure output database folder exists
-    if (!fs.existsSync(dbfolder)) {
-        fs.mkdirSync(dbfolder, { recursive: true });
+    // ensure output tiles folder exists
+    if (!fs.existsSync(tilesfolder)) {
+        fs.mkdirSync(tilesfolder, { recursive: true });
     }
 
     const imgfmt = imageformat.toUpperCase();
     const mbtiles = path.join(d4, cname.toLowerCase()) + ".mbtiles";
-    const finalmbtiles = path.join(dbfolder, cname.toLowerCase()) + ".mbtiles";
+    const finalmbtiles = path.join(tilesfolder, cname.toLowerCase()) + ".mbtiles";
     const bigvrt = path.join(d3, cname) + ".vrt";
     const infiles = `${d3}/*.vrt`;
     logEntry(`>> Building single chart VRT file: ${bigvrt}`);
@@ -969,15 +973,15 @@ async function processImages(ctx) {
           `VALUES ('attribution', '${attribution}');`;
     await execCommandAsync(`sqlite3 ${mbtiles} "${sql}"`, false, ctx?.signal);
 
-    // Move the finished mbtiles database to the external mbtiles folder
-    logEntry(`>> Moving finished MBTILES file to: ${finalmbtiles}`);
-    await execCommandAsync(`mv -f "${mbtiles}" "${finalmbtiles}"`, null, ctx?.signal);
-    fs.chmodSync(finalmbtiles, 0o666);
-
-    // If PMTiles output is selected, convert the finished MBTiles database into a PMTiles archive
+    // If PMTiles output is selected, convert the MBTiles database into a PMTiles archive in tilesfolder;
+    // otherwise move the finished MBTiles database to tilesfolder.
     if (getOutputExtension(ctx?.outputfiletypeindex) === "pmtiles") {
-        const finalpmtiles = path.join(pmtilesfolder, cname.toLowerCase()) + ".pmtiles";
-        await convertMbtilesToPmtiles(finalmbtiles, finalpmtiles, d4, ctx?.signal);
+        const finalpmtiles = path.join(tilesfolder, cname.toLowerCase()) + ".pmtiles";
+        await convertMbtilesToPmtiles(mbtiles, finalpmtiles, d4, ctx?.signal);
+    } else {
+        logEntry(`>> Moving finished MBTILES file to: ${finalmbtiles}`);
+        await execCommandAsync(`mv -f "${mbtiles}" "${finalmbtiles}"`, null, ctx?.signal);
+        fs.chmodSync(finalmbtiles, 0o666);
     }
 }
 
@@ -985,8 +989,8 @@ async function processImages(ctx) {
  * Convert an MBTiles SQLite database into a PMTiles v3 single-file archive
  */
 async function convertMbtilesToPmtiles(sourceMbtiles, finalPmtiles, tmpDir = workarea, signal = null) {
-    if (!fs.existsSync(pmtilesfolder)) {
-        fs.mkdirSync(pmtilesfolder, { recursive: true });
+    if (!fs.existsSync(tilesfolder)) {
+        fs.mkdirSync(tilesfolder, { recursive: true });
     }
     if (!fs.existsSync(tmpDir)) {
         fs.mkdirSync(tmpDir, { recursive: true });
@@ -1647,8 +1651,7 @@ async function uploadArchiveFile(message, response) {
     const filesToZip = [];
     charts.forEach((item, index) => {
         const safeName = path.basename(item.dbfilename);
-        const targetFolder = safeName.endsWith(".pmtiles") ? pmtilesfolder : dbfolder;
-        const filePath = path.join(targetFolder, safeName);
+        const filePath = path.join(tilesfolder, safeName);
         if (fs.existsSync(filePath)) {
             filesToZip.push(filePath);
             let msg = new AppMessage(AppMessage.mtDownload);
@@ -1701,9 +1704,8 @@ async function uploadArchiveFile(message, response) {
 async function getExistingCount(outputTypeIndex = configuration.outputfiletypeindex ?? 0) {
     try {
         const ext = `.${getOutputExtension(outputTypeIndex)}`;
-        const targetFolder = ext === ".pmtiles" ? pmtilesfolder : dbfolder;
-        if (!fs.existsSync(targetFolder)) return 0;
-        const files = fs.readdirSync(targetFolder);
+        if (!fs.existsSync(tilesfolder)) return 0;
+        const files = fs.readdirSync(tilesfolder);
         const filteredfiles = files.filter(file => path.extname(file).toLowerCase() === ext);
 
         return filteredfiles.length;
@@ -1724,15 +1726,14 @@ async function sendExistingDatabases(message) {
         ? Number(message.outputfiletypeindex)
         : (configuration.outputfiletypeindex ?? 0);
     const ext = `.${getOutputExtension(outIdx)}`;
-    const targetFolder = ext === ".pmtiles" ? pmtilesfolder : dbfolder;
     const items = { existingdblist: [] };
     try {
-        if (!fs.existsSync(targetFolder)) {
+        if (!fs.existsSync(tilesfolder)) {
             message.items = items;
             message.completed = true;
             return message;
         }
-        const files = fs.readdirSync(targetFolder);
+        const files = fs.readdirSync(tilesfolder);
         const filteredfiles = files.filter(file => path.extname(file).toLowerCase() === ext);
         let idx = -1;
         filteredfiles.forEach(file => {
