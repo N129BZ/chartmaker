@@ -6,8 +6,7 @@ configuration:
   vfrdownloadtemplate: "https://aeronav.faa.gov/visual/<chartdate>/All_Files/<charttype>.zip"
   vfrindividualtemplate: "https://aeronav.faa.gov/visual/<chartdate>/sectional-files/<charttype>.zip"
   ifrdownloadtemplate: "https://aeronav.faa.gov/enroute/<chartdate>/<charttype>.zip"
-  usvfrwallplanningtemplate: "https://aeronav.faa.gov/visual/<chartdate>/Planning/US_WallPlan.zip"
-
+  
   ########################################################
   # Work area settings
   ######################################################## 
